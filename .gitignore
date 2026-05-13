@@ -1,0 +1,10 @@
+# Obsidian 工作区配置（本地设置，不提交）
+.obsidian/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak

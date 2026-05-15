@@ -1,76 +1,369 @@
 ---
-title: "Native TLS 方案"
-created: 2026-05-13
-updated: 2026-05-13
-type: stealth
-tags: [native, tls, fallback, stealth, tier-2]
-related: ["[[stealth]]", "[[reality]]", "[[shadowtls]]", "[[restls]]", "[[pipeline]]"]
+title: "native — 原生 TLS 伪装方案（兜底）"
+source: "include/prism/stealth/native.hpp"
+module: "stealth"
+type: api
+tags: [stealth, native, 方案, tier2, 兜底]
+created: 2026-05-15
+updated: 2026-05-15
+related:
+  - "[[stealth/scheme|scheme]]"
+  - "[[stealth/executor|executor]]"
+  - "[[stealth/registry|registry]]"
+  - "[[channel/transport/encrypted|encrypted]]"
+  - "[[protocol/analysis|analysis]]"
 ---
 
-# Native TLS 方案
+# native.hpp
 
-> 源码：`include/prism/stealth/native.hpp` · `src/prism/stealth/native.cpp`
-> 相关：[[stealth]] | [[reality]] | [[shadowtls]] | [[restls]] | [[pipeline]]
+> 源码: `include/prism/stealth/native.hpp`
+> 实现: `src/prism/stealth/native.cpp`
+> 模块: [[stealth|stealth]]
 
-## 1. 概述
+## 概述
 
-Native 是 Prism 的**原生 TLS 伪装方案**，属于 Tier 2 级别（最低优先级）。它不做任何伪装，直接使用服务器的真实证书与客户端进行标准 TLS 握手。当所有其他伪装方案（Reality、ShadowTLS、Restls 等）均未匹配时，Native 作为兜底 fallback 处理连接。
+原生 TLS 伪装方案（兜底）。封装标准 TLS 握手和内层协议检测，继承 [[stealth/scheme|stealth_scheme]] 基类。Native 是 Tier 2 方案，作为兜底处理无法匹配其他方案的 TLS 连接。使用标准 BoringSSL TLS 握手，不进行任何伪装。
 
-## 2. Tier 分级与优先级
+## 依赖关系
 
-Native 在三阶分层检测架构中的位置：
+| 依赖方向 | 模块 | 说明 |
+|----------|------|------|
+| 依赖 | [[stealth/scheme|scheme]] | 继承 stealth_scheme 基类 |
+| 依赖 | [[pipeline/primitives|primitives]] | 使用 ssl_handshake 原语 |
+| 依赖 | [[channel/transport/encrypted|encrypted]] | 创建加密传输层 |
+| 依赖 | [[protocol/analysis|analysis]] | 使用 detect_tls 检测内层协议 |
+| 被依赖 | [[stealth/registry|registry]] | 注册到方案注册表 |
+| 被依赖 | [[stealth/executor|executor]] | 被执行器调用作为兜底 |
 
-| 层级 | 方案 | 特征 |
-|------|------|------|
-| Tier 0 | Reality | session_id[0:3] 独占字节标记 |
-| Tier 1 | ShadowTLS | HMAC 验证 |
-| Tier 2 | Restls / **Native** | 模糊匹配 / SNI 路由 |
+## 命名空间
 
-Native 的 `guess()` 返回固定 score=50（最低），确保所有其他方案优先匹配。当所有方案的 `sniff()`、`verify()`、`guess()` 均未命中时，Native 兜底接管。
+`psm::stealth::schemes`
 
-关键属性：
+---
+
+## 类: native
+
+> 源码: `include/prism/stealth/native.hpp:13`
+
+### 概述
+
+原生 TLS 伪装方案实现。Native 是 Tier 2 方案，作为兜底处理无法匹配其他方案的 TLS 连接。权重分最低（50），确保只有在其他方案都不匹配时才使用。
+
+### 类层次
+
+```
+stealth_scheme [[stealth/scheme|scheme]]
+  └── schemes::native
+```
+
+### 设计意图
+
+Native 是兜底方案，用于处理无法匹配其他方案的 TLS 连接。权重分最低（50），确保只有在其他方案都不匹配时才使用。握手流程：标准 TLS 握手 → 读取内层数据 → 检测内层协议类型。
+
+### 成员函数一览
+
+| 函数 | 功能简述 | 详见 |
+|------|----------|------|
+| name() | 返回 "native" | 下文 |
+| tier() | 返回 2（Tier 2） | 下文 |
+| unique() | 返回 false（无独占特征） | 下文 |
+| active() | 始终返回 true | 下文 |
+| guess() | Tier 2 模糊检测，返回权重分 50 | 下文 |
+| handshake() | 执行标准 TLS 握手并检测内层协议 | 下文 |
+| weight() | 返回权重分 50 | 下文 |
+
+### 生命周期
+
+1. **构造**: 由 [[stealth/registry|registry]] 在启动时创建
+2. **使用**: 被 [[stealth/executor|executor]] 调用，作为兜底方案
+3. **销毁**: 程序退出时自动销毁
+
+### 线程安全
+
+- 所有检测函数是线程安全的
+- `handshake()` 涉及 I/O 操作，需要在协程中调用
+
+### 异常安全
+
+- 所有函数不抛异常，错误通过返回值报告
+
+---
+
+## 函数: name()
+
+> 源码: `include/prism/stealth/native.hpp:17`
+> 实现: `src/prism/stealth/native.cpp:22`
+
+### 功能
+
+返回方案名称 "native"，用于日志记录和调试。
+
+### 签名
 
 ```cpp
-auto tier() const noexcept -> std::uint8_t override { return 2; }      // Tier 2
-auto unique() const noexcept -> bool override { return false; }         // 无独占特征
-auto active(const psm::config &cfg) const noexcept -> bool override {   // 始终启用
-    return true;
-}
-auto weight() const noexcept -> std::uint16_t override { return 50; }   // 最低权重
+[[nodiscard]] auto name() const noexcept -> std::string_view override;
 ```
 
-## 3. 握手流程
+### 参数
 
-`native::handshake()` 的执行步骤：
+无
 
-1. **TLS 握手** — 调用 [[pipeline]] 原语 `primitives::ssl_handshake()`，使用服务器真实 SSL 上下文完成标准 TLS 服务端握手
-2. **包装加密传输** — 将 TLS 流包装为 `channel::transport::encrypted` 传输对象
-3. **内层协议探测** — 从 TLS 明文层预读最多 128 字节，使用 `protocol::analysis::detect_tls()` 检测内层协议类型（Trojan/VLESS/HTTP 等）
-4. **返回结果** — 返回 `handshake_result`，包含加密传输层、检测到的内层协议类型和预读数据
+### 返回值
 
+`std::string_view` — "native"
+
+### 调用（向下）
+
+- 无
+
+### 被调用（向上）
+
+- [[stealth/executor|find_scheme]] — 按名称查找方案
+- [[stealth/registry|scheme_registry::find]] — 注册表查找方案
+
+### 知识域
+
+- [[stealth/scheme|stealth_scheme::name()]] — 基类接口
+
+---
+
+## 函数: tier()
+
+> 源码: `include/prism/stealth/native.hpp:19`
+
+### 功能
+
+返回检测层级 2（Tier 2）。Native 无 ClientHello 独占特征，属于 Tier 2 模糊匹配方案。
+
+### 签名
+
+```cpp
+[[nodiscard]] auto tier() const noexcept -> std::uint8_t override;
 ```
-客户端 ──TLS(真实证书)──▶ Native 握手 ──▶ 内层协议探测 ──▶ dispatch 分发
+
+### 参数
+
+无
+
+### 返回值
+
+`std::uint8_t` — 2
+
+### 调用（向下）
+
+- 无
+
+### 被调用（向上）
+
+- [[recognition/recognition|recognize]] — 识别模块按 tier 分层检测
+
+### 知识域
+
+- [[stealth/scheme|stealth_scheme]] — 分层检测架构（Tier 0/1/2）
+
+---
+
+## 函数: unique()
+
+> 源码: `include/prism/stealth/native.hpp:21`
+
+### 功能
+
+返回 `false`，表示 Native 没有独占特征。Tier 0 命中后不会跳过其他方案。
+
+### 签名
+
+```cpp
+[[nodiscard]] auto unique() const noexcept -> bool override;
 ```
 
-## 4. 与 Reality / ShadowTLS 的区别
+### 参数
 
-| 特性 | Native | Reality | ShadowTLS |
-|------|--------|---------|-----------|
-| 证书来源 | 服务器真实证书 | 伪装目标站点证书 | 第三方 TLS 代理 |
-| 抗检测能力 | 无 | 强（证书不可伪造） | 中（依赖代理可信度） |
-| 配置复杂度 | 零配置 | 需密钥对 + SNI 白名单 | 需代理地址 |
-| 优先级 | Tier 2（最低） | Tier 0（最高） | Tier 1 |
-| 适用场景 | 测试、无需抗检测 | 生产环境首选 | 备选方案 |
+无
 
-## 5. 使用场景
+### 返回值
 
-- **测试与调试环境** — 不需要 DPI 规避时，直接使用原生 TLS 简化部署
-- **内网代理** — 流量不经过审查的网络环境
-- **开发阶段** — 验证协议处理逻辑，排除伪装方案的干扰
-- **兜底保障** — 确保所有 TLS 连接都能被处理，不会因方案不匹配而丢弃连接
+`bool` — `false`
 
-## 6. 设计考量
+### 调用（向下）
 
-Native 始终返回 `active(cfg) = true`，这是有意为之的设计：作为兜底方案，它必须在任何配置下都可用。如果禁用 Native，一旦所有伪装方案都未匹配，连接将被直接丢弃，导致服务不可用。
+- 无
 
-内层协议探测的阈值为 60 字节（`trojan_min`），与 Trojan 协议最小报文长度一致。探测上限为 128 字节，足够覆盖所有支持的协议特征。
+### 被调用（向上）
+
+- [[recognition/recognition|recognize]] — 识别模块判断是否独占
+
+### 知识域
+
+- [[stealth/scheme|stealth_scheme::unique()]] — 独占特征接口
+
+---
+
+## 函数: active()
+
+> 源码: `include/prism/stealth/native.hpp:25`
+> 实现: `src/prism/stealth/native.cpp:17`
+
+### 功能
+
+判断 Native 方案是否启用。始终返回 `true`，因为 Native 是兜底方案，不能被禁用。
+
+### 签名
+
+```cpp
+[[nodiscard]] auto active(const psm::config &cfg) const noexcept -> bool override;
+```
+
+### 参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| cfg | const psm::config& | 服务器配置（未使用） |
+
+### 返回值
+
+`bool` — 始终返回 `true`
+
+### 调用（向下）
+
+- 无
+
+### 被调用（向上）
+
+- [[stealth/executor|execute_pipeline]] — 管道执行前检查方案是否启用
+
+### 知识域
+
+- [[stealth/scheme|stealth_scheme::active()]] — 方案启用检查接口
+
+---
+
+## 函数: guess()
+
+> 源码: `include/prism/stealth/native.hpp:29`
+> 实现: `src/prism/stealth/native.cpp:27`
+
+### 功能
+
+Tier 2 模糊检测。返回权重分（50），供优先级排序。权重分最低，确保只有在其他方案都不匹配时才使用。返回 `solo_flag=0` 表示不独占。
+
+### 签名
+
+```cpp
+[[nodiscard]] auto guess(const psm::config &cfg) const
+    -> verify_result override;
+```
+
+### 参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| cfg | const psm::config& | 服务器配置（未使用） |
+
+### 返回值
+
+`verify_result` — 模糊检测结果，`{score=50, solo_flag=0, note="native TLS fallback"}`
+
+### 调用（向下）
+
+- 无
+
+### 被调用（向上）
+
+- [[stealth/executor|executor]] — Tier 2 检测阶段
+
+### 知识域
+
+- [[stealth/scheme|verify_result]] — 检测结果结构体
+- [[stealth/scheme|stealth_scheme::guess()]] — Tier 2 模糊检测接口
+
+---
+
+## 函数: handshake()
+
+> 源码: `include/prism/stealth/native.hpp:33`
+> 实现: `src/prism/stealth/native.cpp:37`
+
+### 功能
+
+执行标准 TLS 握手并检测内层协议。使用 BoringSSL 进行标准 TLS 握手，握手成功后读取内层数据并调用 [[protocol/analysis|detect_tls]] 检测内层协议类型（如 Trojan、VLESS 等）。检测到的协议类型和加密传输层写入结果。
+
+### 签名
+
+```cpp
+[[nodiscard]] auto handshake(stealth::handshake_context ctx)
+    -> net::awaitable<stealth::handshake_result> override;
+```
+
+### 参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| ctx | stealth::handshake_context | 执行上下文（传输层、预读数据、配置、路由器、会话） |
+
+### 返回值
+
+`net::awaitable<stealth::handshake_result>` — 协程，返回握手结果（传输层、检测到的协议、预读数据）
+
+### 调用（向下）
+
+- [[pipeline/primitives|ssl_handshake]] — 执行标准 TLS 握手
+- [[channel/transport/encrypted|encrypted]] — 创建加密传输层包装
+- [[protocol/analysis|detect_tls]] — 检测内层协议类型
+
+### 被调用（向上）
+
+- [[stealth/executor|execute_single]] — 执行器调用方案握手
+- [[stealth/executor|execute_by_analysis]] — 全部方案失败时 native 兜底
+
+### 知识域
+
+- [[ref/protocol/tls-1.3|TLS 1.3]] — TLS 1.3 握手流程
+- [[protocol/analysis|protocol analysis]] — 内层协议检测
+
+### 流程
+
+1. 检查 session 上下文是否有效
+2. 调用 `ssl_handshake()` 执行标准 TLS 握手
+3. 创建 `encrypted` 加密传输层包装
+4. 注册 cancel/close 回调到 session
+5. 循环读取内层数据（最多 128 字节）
+6. 调用 `detect_tls()` 检测内层协议
+7. 检测成功：返回 transport + detected + preread
+8. 检测失败：返回 `fault::code::protocol_error`
+
+---
+
+## 函数: weight()
+
+> 源码: `include/prism/stealth/native.hpp:37`
+
+### 功能
+
+返回权重分 50。Tier 2 模糊检测时使用，权重分最低，确保只有在其他方案都不匹配时才使用。
+
+### 签名
+
+```cpp
+[[nodiscard]] auto weight() const noexcept -> std::uint16_t override;
+```
+
+### 参数
+
+无
+
+### 返回值
+
+`std::uint16_t` — 50
+
+### 调用（向下）
+
+- 无
+
+### 被调用（向上）
+
+- [[stealth/scheme|stealth_scheme::guess()]] — 基类默认 guess() 使用 weight()
+
+### 知识域
+
+- [[stealth/scheme|stealth_scheme::weight()]] — 权重分接口

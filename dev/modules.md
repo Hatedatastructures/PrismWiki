@@ -80,7 +80,7 @@ listener → balancer → worker → launch → session
 ## 相关页面
 
 - [[agent]] — Agent 模块概述
-- [[agent/architecture]] — 架构设计
+- [[docs/agent/architecture]] — 架构设计
 - [[protocol]] — Protocol 模块
 - [[pipeline]] — Pipeline 模块
 - [[recognition]] — Recognition 模块

@@ -271,6 +271,6 @@ rules:
 
 - [[Mihomo-Clash-Config]] — mihomo 完整配置参考
 - [[mihomo-Meta]] — mihomo 客户端概述
-- [[protocol/proxy-protocols]] — 代理协议概览
+- [[docs/protocol/proxy-protocols]] — 代理协议概览
 - [[client/mihomo-dns]] — DNS 解析与规则的关系
 - [[dev/gfw]] — 防火长城，理解为什么需要规则分流

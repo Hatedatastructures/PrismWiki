@@ -7,9 +7,9 @@ tags: [gfw, censorship, detection, network]
 related:
   - "[[stealth]]"
   - "[[stealth/reality]]"
-  - "[[stealth/proxy-detection]]"
-  - "[[protocol/proxy-protocols]]"
-  - "[[protocol/trojan-gfw]]"
+  - "[[docs/stealth/proxy-detection]]"
+  - "[[docs/protocol/proxy-protocols]]"
+  - "[[docs/protocol/trojan-gfw]]"
   - "[[dev/tls]]"
   - "[[agent]]"
 ---
@@ -131,7 +131,7 @@ GFW 最强大的检测手段，分析数据包内容识别代理流量。
 - 时间间隔：交互式应用 vs 批量传输的模式差异
 - 突发行为：TLS 握手后的数据传输模式
 
-详见 [[stealth/proxy-detection]]。
+详见 [[docs/stealth/proxy-detection]]。
 
 ## TLS 指纹检测
 
@@ -198,7 +198,7 @@ SS (2012) → SSR (2015) → VMess (2015) → Trojan (2019) → VLESS (2020) →
 | VLESS | 轻量但依赖 TLS | 配合 Reality |
 | Reality | 主动探测 + 指纹 | 返回真实网站内容 |
 
-详见 [[protocol/trojan-gfw]] 中 Trojan 协议对抗 GFW 的详细分析。
+详见 [[docs/protocol/trojan-gfw]] 中 Trojan 协议对抗 GFW 的详细分析。
 
 ## Prism 的应对策略
 
@@ -219,8 +219,8 @@ Prism 在设计时充分考虑了 GFW 的检测能力：
 
 - [[stealth]] — 隐蔽技术概览
 - [[stealth/reality]] — Reality TLS 技术
-- [[stealth/proxy-detection]] — 代理检测技术详解
-- [[protocol/proxy-protocols]] — 代理协议概览
-- [[protocol/trojan-gfw]] — Trojan 协议与 GFW 对抗
+- [[docs/stealth/proxy-detection]] — 代理检测技术详解
+- [[docs/protocol/proxy-protocols]] — 代理协议概览
+- [[docs/protocol/trojan-gfw]] — Trojan 协议与 GFW 对抗
 - [[dev/tls]] — TLS 协议基础
 - [[agent]] — Prism Agent 概览

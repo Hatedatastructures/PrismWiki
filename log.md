@@ -79,10 +79,10 @@
 - 更新 index.md，总页面数增至 31
 
 ## [2026-05-12] fix | 断裂 wikilinks 修复
-- gfw.md: [[TLS-指纹]] → [[tls-fingerprint]], [[Traffic-Analysis]] → [[流量分析与对抗]]
-- traffic-analysis.md: [[TLS-指纹]] → [[tls-fingerprint]] (2处)
-- tls-camouflage-comparison.md: [[Traffic-Analysis]] → [[流量分析与对抗]]
-- mihomo-meta.md: [[TUN]] → [[TUN-模式]]
+- gfw.md: [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] → [[ref/anti-censorship/tls-fingerprint]], [[ref/anti-censorship/traffic-analysis]] → [[ref/anti-censorship/traffic-analysis|流量分析与对抗]]
+- traffic-analysis.md: [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] → [[ref/anti-censorship/tls-fingerprint]] (2处)
+- tls-camouflage-comparison.md: [[ref/anti-censorship/traffic-analysis]] → [[ref/anti-censorship/traffic-analysis|流量分析与对抗]]
+- mihomo-meta.md: [[client/tun]] → [[client/tun|TUN 模式]]
 
 ## [2026-05-12] ingest | VLESS + TUN 页面
 - 创建 VLESS 页面 (concepts/vless.md)
@@ -115,12 +115,12 @@
 - 创建 mihomo 代理组页面 (concepts/mihomo-proxy-groups.md)
 
 ## [2026-05-12] fix | Prism 页面断裂引用修复
-- prism-architecture: 添加 [[TCP]], [[TLS]], [[mihomo-Meta]]
-- prism-configuration: 添加 [[Mihomo-Clash-Config]], [[mihomo-Meta]]
-- prism-deployment: 添加 [[mihomo-Meta]], [[GFW]]
-- prism-modules: 添加 [[mihomo-Meta]], [[Proxy-Protocols]]
-- prism-testing: 添加 [[TCP]], [[Proxy-Protocols]]
-- prism-troubleshooting: 添加 [[mihomo-Meta]], [[GFW]], [[DNS]]
+- prism-architecture: 添加 [[dev/tcp]], [[protocol/tls]], [[client/mihomo-meta]]
+- prism-configuration: 添加 [[client/mihomo-clash-config]], [[client/mihomo-meta]]
+- prism-deployment: 添加 [[client/mihomo-meta]], [[dev/gfw]]
+- prism-modules: 添加 [[client/mihomo-meta]], [[docs/protocol/proxy-protocols]]
+- prism-testing: 添加 [[dev/tcp]], [[docs/protocol/proxy-protocols]]
+- prism-troubleshooting: 添加 [[client/mihomo-meta]], [[dev/gfw]], [[resolve/dns]]
 - 更新 index.md，总页面数增至 39
 
 ## [2026-05-12] restructure | 知识库全面重构
@@ -460,3 +460,143 @@ channel, crypto, fault, memory, multiplex, pipeline, protocol, recognition, reso
 - 61 页面，145 唯一链接
 - 断链：0（修复 agent/modules → dev/modules）
 - SCHEMA.md 是元文件，不需要被链接
+
+## [2026-05-15] rewrite | API 文档全面重构（7 字段标准）
+
+### 目标
+为所有 API 文档的每个函数补齐 7 个必填字段：功能说明、签名、参数表格、返回值、调用（向下）、被调用（向上）、知识域。函数只写函数名，不贴实现代码。
+
+### 标准模板
+参考 `crypto/aead.md` 的 `seal()` 函数作为金标准。SCHEMA.md 已更新，新增"API 函数文档标准"章节。
+
+### Phase 1: 修复编码和基础设施
+- `stealth/scheme.md` — 从源码重新生成，修复 mojibake 乱码（中文字符被 `?` 替换）
+- `SCHEMA.md` — 新增 API 函数文档标准（7 字段模板、适用范围、字段说明表）
+
+### Phase 2: Crypto 模块（7 个文件）
+- `crypto/aead.md` — 补充 tag_length, nonce_length, nonce, seal_output_size, open_output_size, increment_nonce
+- `crypto/hkdf.md` — 完整重写，8 个函数（hmac_sha256, hmac_sha512, hkdf_extract, hkdf_expand, hkdf_expand_label, sha256×3）
+- `crypto/x25519.md` — 完整重写，3 个函数 + 2 个结构体
+- `crypto/blake3.md` — 完整重写，2 个 derive_key 重载
+- `crypto/block.md` — 完整重写，aes_ecb_encrypt, aes_ecb_decrypt
+- `crypto/base64.md` — 完整重写，base64_encode, base64_decode + 内部辅助函数
+- `crypto/sha224.md` — 完整重写，sha224, is_hex_string, normalize_credential
+
+### Phase 3: Agent 模块（12 个文件）
+- `agent/front/listener.md` — listener, listen, make_affinity, accept_loop
+- `agent/front/balancer.md` — balancer, select, dispatch, size, mix_hash, score, refresh_state
+- `agent/session/session.md` — session, ~session, start, close, diversion, release_resources, make_session + setter
+- `agent/worker/worker.md` — worker, run, dispatch_socket, load_snapshot
+- `agent/worker/launch.md` — migrate_executor, prime, start, dispatch
+- `agent/worker/stats.md` — state 构造, session_open/close, handoff_push/pop, session_counter, snapshot, observe
+- `agent/worker/tls.md` — configure, make
+- `agent/account/directory.md` — 9 个函数（upsert, insert, find, reserve, clear, try_acquire, contains 等）
+- `agent/account/entry.md` — 10 个函数 + lease 类
+- `agent/dispatch/table.md` — handler_func, handle_unknown, handler_table, dispatch
+- `agent/config.md` — 全部结构体字段说明
+- `agent/context.md` — server_context, worker_context, session_context
+
+### Phase 4: Channel 模块（9 个文件）
+- `channel/transport/transmission.md` — 13 个函数（async_read_some, async_write_some, close, cancel 等）
+- `channel/transport/reliable.md` — 3 构造 + 9 方法 + 3 工厂函数
+- `channel/transport/encrypted.md` — 1 构造 + 9 方法 + 1 工厂函数
+- `channel/transport/unreliable.md` — 2 构造 + 11 方法 + 2 工厂函数
+- `channel/transport/snapshot.md` — 1 构造 + 9 方法 + 1 工厂函数
+- `channel/adapter/connector.md` — 3 构造 + 11 方法
+- `channel/connection/pool.md` — make_endpoint_key, endpoint_hash, pooled_connection, connection_pool 全部方法
+- `channel/eyeball/racer.md` — race, race_endpoint, race_context::complete
+- `channel/health.md` — health, healthy_fast
+
+### Phase 5: Protocol 模块（28 个文件，含 6 个新建）
+- `protocol/analysis.md` — 5 个函数
+- `protocol/tls/types.md` — 3 个写函数 + client_hello_features 结构
+- `protocol/tls/signal.md` — 3 个函数
+- `protocol/tls/feature_bitmap.md` — 3 个函数 + feature_bit 枚举
+- `protocol/socks5/` — wire(10), stream(15+), constants(4 枚举), config
+- `protocol/trojan/` — format(10), relay(多方法), constants(2 枚举), config
+- `protocol/vless/` — format(4), relay(多方法), constants(多枚举), config
+- `protocol/shadowsocks/` — format(4), relay(多方法), salts(2), replay(1), constants, config
+- **新建** `protocol/common/address.md` — IPv4/IPv6/域名地址结构
+- **新建** `protocol/common/form.md` — 协议表单枚举
+- **新建** `protocol/common/read.md` — read_at_least, read_remaining
+- **新建** `protocol/common/udp_relay.md` — udp_buffers, relay_udp_packet
+- **新建** `protocol/http/parser.md` — parse_proxy_request, authenticate_proxy_request 等
+- **新建** `protocol/http/relay.md` — relay 类全部方法
+
+### Phase 6: Pipeline 模块（6 个文件）
+- `pipeline/primitives.md` — 17 个函数/方法（含 preview 类成员）
+- `pipeline/protocols/http.md` — http() 完整 7 字段
+- `pipeline/protocols/socks5.md` — socks5() 完整 7 字段
+- `pipeline/protocols/trojan.md` — trojan() 完整 7 字段
+- `pipeline/protocols/vless.md` — vless() 完整 7 字段
+- `pipeline/protocols/shadowsocks.md` — shadowsocks() 完整 7 字段
+
+### Phase 7: Recognition 模块（7 个文件）
+- `recognition/recognition.md` — recognize, identify + 4 个结构体
+- `recognition/layered_pipeline.md` — detect, detect_tier0/1/2
+- `recognition/scheme_route_table.md` — 全部方法
+- `recognition/probe/probe.md` — probe() 函数
+- `recognition/probe/analyzer.md` — 全部检测函数
+- `recognition/confidence.md` — 枚举值说明
+- `recognition/result.md` — 结构体字段说明
+
+### Phase 8: Stealth 模块（约 25 个文件）
+- `stealth/scheme.md` — **完整重写**（修复乱码），10 个虚函数 + shared_scheme
+- `stealth/executor.md` — 9 个函数
+- `stealth/registry.md` — 5 个函数
+- `stealth/native.md` — 7 个函数
+- `stealth/reality/` — scheme(8), handshake(4), auth(4+2), keygen(3), request(2), response(3), seal(11)
+- `stealth/shadowtls/` — scheme(9), handshake(1+5 内部), auth(5)
+- `stealth/restls/scheme.md` — 8 个函数
+- `stealth/anytls/scheme.md` — 9 个函数
+- `stealth/trusttunnel/scheme.md` — 8 个函数
+- `stealth/ech/decrypt.md` — 1 函数 + 1 结构
+
+### Phase 9: Multiplex 模块（11 个文件）
+- `multiplex/core.md` — 8 个函数
+- `multiplex/bootstrap.md` — 2 个函数
+- `multiplex/config.md` — 枚举 + 结构体
+- `multiplex/duct.md` — 9 个函数
+- `multiplex/parcel.md` — 12 个函数
+- `multiplex/smux/craft.md` — 14 个函数
+- `multiplex/smux/frame.md` — 8 个函数
+- `multiplex/smux/config.md` — 1 结构体
+- `multiplex/yamux/craft.md` — 24 个函数
+- `multiplex/yamux/frame.md` — 10 个函数
+- `multiplex/yamux/config.md` — 1 结构体
+
+### Phase 10: Resolve 模块（8 个文件）
+- `resolve/router.md` — 9 个函数
+- `resolve/dns/dns.md` — 5 个函数 + query_pipeline 概述
+- `resolve/dns/upstream.md` — 10 个函数
+- `resolve/dns/detail/cache.md` — 8 个函数
+- `resolve/dns/detail/coalescer.md` — 6 个函数
+- `resolve/dns/detail/rules.md` — 12 个函数
+- `resolve/dns/detail/format.md` — 14 个函数
+- `resolve/dns/detail/utility.md` — 1 个函数
+
+### Phase 11: 基础设施模块（7 个文件）
+- `memory.md` — 12 个函数/类型
+- `fault.md` — 20+ 函数/类型（含 64 值错误码枚举）
+- `exception.md` — 21 个函数（deviant/network/protocol/security 四层）
+- `trace.md` — 8 个函数
+- `transformer.md` — 7 个函数
+- `loader.md` — 2 个函数
+- `outbound.md` — 11 个函数/类型
+
+### Phase 12: 收尾
+- `index.md` — 全面重写，新增约 80 个 API 文档条目
+- `log.md` — 记录本次操作
+
+### 修复的问题
+- **mojibake 乱码**: `stealth/scheme.md` 中文字符被 `?` 替换，从源码重新生成
+- **自引用链接**: 多个文件的知识域部分指向自身，替换为出站链接
+- **缺少 `related` 字段**: SCHEMA.md 要求但所有 API 文档均缺失，全部补齐
+- **函数文档不完整**: 大量函数缺少参数/返回值/调用链/知识域字段
+
+### 最终状态
+- 约 120 个 API 文档文件，全部符合 7 字段标准
+- 每个函数包含：功能说明、签名、参数表格、返回值、调用（向下）、被调用（向上）、知识域
+- 所有文件有 `related` frontmatter 字段
+- 所有页面至少 3 个出站 wikilink
+- 无自引用链接、无 mojibake 乱码

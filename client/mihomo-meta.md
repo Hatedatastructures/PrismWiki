@@ -174,8 +174,8 @@ mihomo 的 YAML 配置文件完整解析见 [[Mihomo-Clash-Config]]。
 ## 相关页面
 
 - [[agent]] — 高性能协程代理引擎（服务端）
-- [[protocol/proxy-protocols]] — 代理协议
-- [[protocol/trojan-gfw]] — Trojan 协议实现
+- [[docs/protocol/proxy-protocols]] — 代理协议
+- [[docs/protocol/trojan-gfw]] — Trojan 协议实现
 - [[Mihomo-Clash-Config]] — 配置文件详解
 - [[client/mihomo-dns]] — mihomo DNS 配置
 - [[client/tun]] — mihomo TUN 模式

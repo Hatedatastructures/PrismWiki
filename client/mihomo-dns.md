@@ -10,7 +10,7 @@ related:
   - "[[client/mihomo-rules]]"
   - "[[resolve]]"
   - "[[dev/tcp]]"
-  - "[[protocol/proxy-protocols]]"
+  - "[[docs/protocol/proxy-protocols]]"
   - "[[agent]]"
 ---
 
@@ -181,4 +181,4 @@ Prism 的 [[resolve]] 模块采用不同的设计理念：
 - [[client/mihomo-rules]] — 规则系统详解
 - [[resolve]] — Prism 解析模块
 - [[dev/tcp]] — TCP 协议基础
-- [[protocol/proxy-protocols]] — 代理协议概览
+- [[docs/protocol/proxy-protocols]] — 代理协议概览

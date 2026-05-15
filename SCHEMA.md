@@ -119,3 +119,55 @@ fix_commit: commit hash (if applicable)
 2. 更新相关模块的链接
 3. 在 index.md 中添加新页面
 4. 在 log.md 中记录操作
+
+## API 函数文档标准
+
+每个公开函数必须包含以下 7 个字段：
+
+```markdown
+### `函数名()`
+
+> 源码: include/prism/module/file.hpp:XX | 实现: src/prism/module/file.cpp:XX
+
+**功能**: 一句话描述函数的作用。
+
+**签名**:
+```cpp
+auto function_name(参数列表) -> 返回类型;
+```
+
+**参数**:
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `param1` | `type` | 描述 |
+
+**返回值**: `type` — 描述返回值含义和可能的错误码。
+
+**调用（向下）**: `callee1()`, `callee2()` — 描述调用了哪些函数
+
+**被调用（向上）**: `caller1()`, `caller2()` — 描述被哪些函数调用
+
+**知识域**: `[[ref/...|知识域1]]`, `[[ref/...|知识域2]]`
+```
+
+### 字段说明
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| 功能 | 是 | 一句话描述函数作用，不贴实现代码 |
+| 参数/返回值 | 是 | 参数表格 + 返回值描述 |
+| 调用（向下） | 是 | 该函数调用的其他函数，用 wikilink 链接 |
+| 被调用（向上） | 是 | 调用该函数的其他函数/模块，用 wikilink 链接 |
+| 涉及的知识域 | 是 | 相关的密码学/协议/网络知识域，链接到 ref/ 页面 |
+| 源码位置 | 是 | 头文件路径:行号 + 实现文件路径:行号 |
+| 交叉引用 | 是 | 至少 3 个出站 wikilink |
+
+### 适用范围
+
+此标准适用于以下模块的 API 文档：
+- agent/、channel/、crypto/、pipeline/、protocol/、recognition/、resolve/、stealth/、multiplex/
+- 根目录基础设施：memory.md、fault.md、exception.md、trace.md、transformer.md、loader.md、outbound.md
+
+不适用于：client/、dev/、ref/、performance/、docs/
+

@@ -309,7 +309,7 @@ proxy-groups:
 
 - [[Mihomo-Clash-Config]] — mihomo 完整配置参考
 - [[mihomo-Meta]] — mihomo 客户端概述
-- [[protocol/proxy-protocols]] — 代理协议概览
+- [[docs/protocol/proxy-protocols]] — 代理协议概览
 - [[mihomo-rules]] — 规则如何将流量导向代理组
 - [[protocol/http]] — 代理节点使用的协议
 - [[SOCKS5]] — 本地代理协议

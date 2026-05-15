@@ -6,7 +6,7 @@ type: dev
 tags: [tls, encryption, security, certificate]
 related:
   - "[[stealth/reality]]"
-  - "[[stealth/pki-certificates]]"
+  - "[[docs/stealth/pki-certificates]]"
   - "[[crypto]]"
   - "[[dev/tcp]]"
   - "[[protocol/trojan]]"
@@ -77,7 +77,7 @@ Root CA
 4. 检查证书是否过期
 5. 检查证书是否被吊销（CRL/OCSP）
 
-详见 [[stealth/pki-certificates]]。
+详见 [[docs/stealth/pki-certificates]]。
 
 ## TLS 指纹
 
@@ -201,7 +201,7 @@ Reality 的优势：
 ## 相关页面
 
 - [[stealth/reality]] — Reality TLS 伪装技术
-- [[stealth/pki-certificates]] — PKI 证书体系
+- [[docs/stealth/pki-certificates]] — PKI 证书体系
 - [[crypto]] — 密码学概览
 - [[dev/tcp]] — TCP 协议基础
 - [[protocol/trojan]] — Trojan 协议

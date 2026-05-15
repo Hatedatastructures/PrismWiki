@@ -688,7 +688,7 @@ tun:
 - [[mihomo-Meta]] — mihomo 项目介绍
 - [[client/mihomo-dns]] — DNS 配置详解
 - [[client/tun]] — TUN 模式配置
-- [[protocol/proxy-protocols]] — 各协议的技术细节
+- [[docs/protocol/proxy-protocols]] — 各协议的技术细节
 - [[stealth/reality]] — Reality 伪装配置
 - [[dev/tcp]] — TCP 传输优化
 - [[dev/udp]] — UDP 代理处理

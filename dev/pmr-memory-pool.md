@@ -155,5 +155,5 @@ public:
 - [[agent]] — 使用 PMR 的服务端代理引擎
 - [[cpp23-coroutines]] — 协程，协程帧也从 PMR 池分配
 - [[dev/tcp]] — 传输层协议，每个 TCP 连接的缓冲区使用 PMR
-- [[protocol/proxy-protocols]] — 代理协议，协议解析对象使用 PMR 分配
+- [[docs/protocol/proxy-protocols]] — 代理协议，协议解析对象使用 PMR 分配
 - [[Mihomo-Clash-Config]] — mihomo 客户端配置参考

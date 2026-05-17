@@ -1,77 +1,113 @@
 # PrismWiki
 
-Prism 高性能协程代理引擎的项目知识库。
+Prism 高性能协程代理引擎的项目知识库 — 四层分离架构。
 
 ## 这是什么
 
-PrismWiki 是 Prism 代理引擎的完整技术文档，覆盖模块设计、协议实现、伪装方案、客户端对接、调试排障等所有方面。所有文档基于 Prism C++ 源码分析撰写，不是泛泛的协议介绍。
+PrismWiki 是 Prism 代理引擎的完整技术文档，采用四层分离架构，知识不重复原则。所有文档基于 Prism C++ 源码分析撰写。
 
-**当前状态：** 196 个文档页面，覆盖 16 个核心模块 + 7 种伪装方案 + 6 个代理协议 + 客户端对接 + 开发笔记 + 39 篇技术参考。
+**当前状态：** 389 个文档页面，四层架构（core/dev/docs/ref），覆盖 20+ 模块、25 种代理协议、6 种 TLS 伪装方案。
 
 ## 目录结构
 
 ```
 PrismWiki/
-├── agent/                      # 前端监听、会话管理、负载均衡
-│   ├── config.md               # 运行时配置
-│   ├── context.md              # 运行时上下文
-│   ├── front/                  # 监听器 + 负载均衡器
-│   ├── session/                # 会话生命周期
-│   ├── worker/                 # Worker 线程、启动、统计、TLS
-│   ├── account/                # 账户目录与条目
-│   └── dispatch/               # 协议处理器分发表
-├── channel/                    # 连接池、传输层抽象
-│   ├── transport/              # 传输层接口（可靠/加密/不可靠/快照）
-│   ├── adapter/                # TLS 连接器
-│   ├── connection/             # 连接池
-│   ├── eyeball/                # Happy Eyeballs 并行连接
-│   └── health.md               # 连接健康检查
-├── crypto/                     # AEAD、Blake3、X25519、HKDF、Base64
-├── memory/                     # PMR 内存池
-├── multiplex/                  # 多路复用核心 + smux/yamux 实现
-├── pipeline/                   # 协议处理管道 + 各协议处理器
-├── protocol/                   # 协议编解码
-│   ├── common/                 # 地址解析、表单、读取工具
-│   ├── tls/                    # TLS 类型、信号、特征位图
-│   ├── http/                   # HTTP 代理
-│   ├── socks5/                 # SOCKS5 协议
-│   ├── trojan/                 # Trojan 协议
-│   ├── vless/                  # VLESS 协议
-│   ├── shadowsocks/            # Shadowsocks 2022
-│   └── analysis.md             # 协议分析与检测
-├── recognition/                # 协议智能识别（分层管道、置信度、探测）
-├── resolve/                    # DNS 路由 + DNS 解析器（缓存/合并/规则）
-├── stealth/                    # TLS 伪装方案
-│   ├── reality/                # Reality（握手/认证/密钥/封装）
-│   ├── shadowtls/              # ShadowTLS
-│   ├── restls/                 # Restls
-│   ├── anytls/                 # AnyTLS
-│   ├── trusttunnel/            # TrustTunnel
-│   ├── ech/                    # ECH 解密
-│   ├── native.md               # 原生 TLS fallback
-│   ├── scheme.md               # 伪装方案基类
-│   ├── executor.md             # 方案执行器
-│   └── registry.md             # 方案注册表
-├── exception.md                # 异常层次结构
-├── fault.md                    # 错误码枚举
-├── trace.md                    # spdlog 日志
-├── transformer.md              # glaze JSON 序列化
-├── loader.md                   # 配置加载
-├── outbound.md                 # 出站代理接口
-├── client/                     # mihomo 客户端对接
-├── dev/                        # 开发笔记（协程、TCP/UDP/TLS、配置、测试）
-├── ref/                        # 技术参考文档
-│   ├── anti-censorship/        # DPI、中间人劫持、探测、指纹、流量分析
-│   ├── crypto/                 # AES-GCM、ChaCha20、ECDHE、HKDF 等
-│   ├── memory/                 # Arena、PMR、零拷贝
-│   ├── network/                # 连接池、Happy Eyeballs、NAT、TCP、UDP
-│   ├── programming/            # Boost.Asio、C++23 协程、constexpr
-│   └── protocol/               # DNS over X、HTTP CONNECT、TLS 1.3、SOCKS5 RFC
-├── docs/                       # 旧版文档归档
-├── index.md                    # 分类索引（Obsidian 入口）
-├── SCHEMA.md                   # 文档规范
-└── log.md                      # 变更日志
+├── core/                       # 模块实现层（详细）
+│   ├── architecture.md         # 六阶段流水线架构
+│   ├── startup.md              # 启动流程详解
+│   ├── flow.md                 # 协议处理流程
+│   ├── infrastructure.md       # 基础设施总览
+│   ├── agent/                  # 前端监听、会话管理、负载均衡
+│   ├── channel/                # 连接池、传输层、Happy Eyeballs
+│   ├── pipeline/               # 协议处理器管道
+│   ├── protocol/               # 协议编解码（SOCKS5/HTTP/Trojan/VLESS/Shadowsocks）
+│   ├── stealth/                # TLS 伪装（Reality/ShadowTLS/Restls/AnyTLS/TrustTunnel/ECH）
+│   ├── recognition/            # 协议智能识别
+│   ├── resolve/                # DNS 解析、路由
+│   ├── multiplex/              # 多路复用（Smux/Yamux）
+│   ├── crypto/                 # 加密模块（AEAD/HKDF/X25519/Blake3）
+│   ├── outbound/               # 出站代理
+│   ├── memory/                 # PMR 内存池
+│   ├── fault/                  # 错误码
+│   ├── exception/              # 异常体系
+│   ├── trace/                  # 日志系统
+│   ├── transformer/            # JSON 序列化
+│   └── loader/                 # 配置加载
+│
+├── dev/                        # 开发排障层（详细）
+│   ├── coding/                 # 编码规范（命名/协程/PMR/注释/生命周期/错误处理）
+│   ├── testing/                # 测试体系（框架/命令/基准/压力）
+│   ├── debugging/              # 排障方法（连接/协议/内存/性能/TLS）
+│   ├── building/               # 构建（CMake/依赖/命令/选项）
+│   ├── performance/            # 性能优化
+│   ├── extending/              # 扩展开发
+│   ├── bugs/                   # Bug 记录
+│   └ roadmap.md                # 开发路线图
+│
+├── docs/                       # 用户指南层（简单）
+│   ├── getting-started.md      # 快速开始
+│   ├── deployment.md           # 部署指南
+│   ├── configuration.md        # 配置说明
+│   ├── client-setup.md         # 客户端配置
+│   ├── troubleshooting.md      # 故障排查
+│   ├── faq.md                  # 常见问题
+│   ├── upgrade.md              # 升级指南
+│   ├── security.md             # 安全注意事项
+│   └ performance-tips.md       # 性能建议
+│
+├── ref/                        # 参考知识层（中等）
+│   ├── mihomo/                 # Mihomo 完整参考
+│   │   ├── protocols/          # 25 种代理协议
+│   │   ├── transport/          # 传输层插件
+│   │   ├── mux/                # 多路复用
+│   │   ├── proxy-groups/       # 代理组
+│   │   ├── rules/              # 规则系统
+│   │   ├── dns/                # DNS 配置
+│   │   ├── tun/                # TUN 模式
+│   │   ├── config/             # 配置模板（YAML）
+│   │   ├── compatibility/      # Prism 兼容性
+│   │   └ listeners/            # 入站监听
+│   │   └ provider/             # Provider
+│   │   └ sniffing/             # 协议嗅探
+│   │   ├── ntp/                # NTP 同步
+│   │   └ experimental/         # 实验性功能
+│   │   └ script/               # 脚本规则
+│   │   └ implementation/       # 实现参考
+│   ├── crypto/                 # 加密知识（AEAD/HKDF/密钥交换）
+│   ├── protocol/               # 协议知识（TLS/SOCKS5/HTTP/QUIC）
+│   ├── network/                # 网络知识（Happy Eyeballs/DNS/GFW）
+│   ├── programming/            # 编程知识（Boost.Asio/C++23 协程/PMR）
+│   └ glossary.md               # 术语表
+│
+├── skills/                     # Claude Code Skills
+│   └ prism-wiki-sync/          # 知识库同步检查
+│
+├── index.md                    # 总索引（Obsidian 入口）
+├── SCHEMA.md                   # 知识库规范
+├── log.md                      # 变更日志
+└── README.md                   # 本文件
 ```
+
+## 四层架构
+
+| 层级 | 目录 | 详细程度 | 职责 |
+|------|------|----------|------|
+| 模块实现层 | core/ | 详细 | 函数实现、调用链、状态变化 |
+| 开发排障层 | dev/ | 详细 | 编码规范、排障方法、Bug记录 |
+| 用户指南层 | docs/ | 简单 | 用户文档、部署、配置 |
+| 参考知识层 | ref/ | 中等 | 协议规范、加密原理、mihomo资料 |
+
+## 知识不重复原则
+
+同一知识点只在一处详细写，其他用 wikilink 引用：
+
+- 函数实现细节 → core/
+- 函数用途概述 → docs/ 或 ref/
+- 相关原理 → ref/
+
+示例：
+- `core/stealth/reality/handshake.md` 详细写 Reality 握手实现
+- `ref/mihomo/protocols/reality.md` 写 Reality 配置，引用实现文档
 
 ## 怎么用
 
@@ -92,22 +128,24 @@ git submodule add <wiki-repo-url> docs/wiki
 
 ```bash
 # 搜索关键词
-grep -rn "Happy Eyeballs" H:/PrismWiki/
+grep -rn "Reality" H:/PrismWiki/core/
 
 # 查看模块概述
-cat H:/PrismWiki/channel/health.md
+cat H:/PrismWiki/core/stealth/overview.md
 
-# 查找所有提到某个协议的文件
-grep -rl "Reality" H:/PrismWiki/
+# 查找 mihomo 协议配置
+cat H:/PrismWiki/ref/mihomo/protocols/vless.md
 ```
 
 ## 文档规范
 
-- 每个模块一个文件夹，按职责拆分为多个细粒度文件
-- YAML frontmatter：title, created, updated, type, tags, related
-- 内部链接使用 Obsidian wikilink：`[[模块名]]`
-- 基于源码分析撰写，不是照抄官方文档
-- `ref/` 目录存放底层技术参考，与 Prism 实现解耦
+详见 `SCHEMA.md`：
+
+- 四层分离架构，知识不重复
+- YAML frontmatter：title, created, updated, layer, tags
+- core 层必须标注 source（源码路径）
+- 内部链接使用 Obsidian wikilink：`[[core/module/path|显示名]]`
+- 复杂函数逐行解释，标注调用链
 
 ## 许可证
 

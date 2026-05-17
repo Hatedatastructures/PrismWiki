@@ -1,0 +1,221 @@
+---
+title: "DNS 配置模板"
+layer: ref
+category: "mihomo"
+type: config
+module: ref/mihomo/config
+format: yaml
+tags: [mihomo, config, dns, fake-ip, doh, fallback]
+created: 2026-05-17
+updated: 2026-05-17
+related:
+  - "[[ref/mihomo/config/overview]]"
+  - "[[ref/mihomo/dns/overview]]"
+---
+
+# DNS 配置模板
+
+**类别**: Mihomo 配置模板 | **文件**: dns.yaml
+
+## 配置内容
+
+```yaml
+# mihomo DNS 配置模板
+# DNS 处理是防泄露和优化解析的关键
+
+# ========== 基础 DNS 配置 ==========
+dns:
+  enable: true
+  listen: 0.0.0.0:1053
+
+  enhanced-mode: fake-ip       # 模式: fake-ip/redir-host
+  fake-ip-range: 198.18.0.1/16
+
+  nameserver:
+    - https://dns.alidns.com/dns-query
+
+  fallback:
+    - https://dns.google/dns-query
+
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+
+# ========== 完整 DNS 配置 ==========
+dns:
+  enable: true
+  listen: 0.0.0.0:1053
+  listen-tcp: true
+  ipv6: false
+
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+
+  # fake-ip 过滤列表
+  fake-ip-filter:
+    - "*.lan"
+    - "*.local"
+    - "*.localhost"
+    - "*.localdomain"
+    - "dns.msftncsi.com"
+    - "www.msftncsi.com"
+    - "+.msftconnecttest.com"
+    - "+.apple.com"
+    - "*.ntp.org.cn"
+    - "time.*.com"
+    - "+.stun.*"
+    - "+.bank"
+    - "+.pay"
+
+  # 缓存配置
+  cache-size: 4096
+  cache-timeout: 300
+
+  # 默认 DNS（用于解析 nameserver 域名）
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+  # 国内 DNS（直连）
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+
+  # 代理节点域名解析
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+
+  # 海外 DNS（代理）
+  fallback:
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.nextdns.io/dns-query
+
+  # fallback 过滤
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geoip-url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@release/Country.mmdb"
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.1/32
+    domain:
+      - "+.google.com"
+      - "+.youtube.com"
+      - "+.github.com"
+      - "+.facebook.com"
+      - "+.twitter.com"
+      - "+.telegram.org"
+
+# ========== DNS 规则配置 ==========
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+
+  nameserver:
+    - https://dns.alidns.com/dns-query
+
+  fallback:
+    - https://dns.google/dns-query
+
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+
+  # DNS 规则
+  rules:
+    - geosite: google
+      nameserver:
+        - https://dns.google/dns-query
+
+    - geosite: github
+      nameserver:
+        - https://dns.google/dns-query
+
+    - geosite: telegram
+      nameserver:
+        - https://dns.google/dns-query
+
+    - geosite: cn
+      nameserver:
+        - https://dns.alidns.com/dns-query
+
+    # 广告域名拒绝
+    - geosite: category-ads-all
+      nameserver:
+        - rcode: success
+
+# ========== DoT 配置 ==========
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+
+  nameserver:
+    - tls://dns.alidns.com:853
+    - tls://dns.google:853
+
+  fallback:
+    - tls://dns.google:853
+
+# ========== 流媒体 DNS 配置 ==========
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+
+  # 流媒体域名使用真实解析
+  fake-ip-filter:
+    - "+.netflix.com"
+    - "+.nflxvideo.net"
+    - "+.disneyplus.com"
+    - "+.hulu.com"
+
+  # 流媒体 DNS 规则
+  rules:
+    - domain-suffix: netflix.com
+      nameserver:
+        - https://dns.google/dns-query
+
+    - domain-suffix: disneyplus.com
+      nameserver:
+        - https://dns.google/dns-query
+
+# ========== hosts 配置 ==========
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+
+  hosts:
+    "localhost": "127.0.0.1"
+    "myserver.local": "192.168.1.100"
+    "blocked.ads.com": "0.0.0.0"
+```
+
+## 参数详解
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| enable | bool | 启用 DNS 模块 |
+| enhanced-mode | string | fake-ip/redir-host |
+| fake-ip-range | string | fake-ip 地址池 |
+| fake-ip-filter | list | fake-ip 过滤域名 |
+| nameserver | list | 默认 DNS 服务器 |
+| fallback | list | 备用 DNS 服务器 |
+| fallback-filter | object | fallback 过滤条件 |
+| cache-size | int | 缓存大小 |
+| cache-timeout | int | 缓存 TTL |
+
+## DNS 协议格式
+
+| 格式 | 示例 | 说明 |
+|------|------|------|
+| UDP | `8.8.8.8` | 普通 UDP DNS |
+| DoH | `https://dns.google/dns-query` | DNS over HTTPS |
+| DoT | `tls://dns.google:853` | DNS over TLS |
+
+## 相关链接
+
+- [[overview]] — 配置总览
+- [[ref/mihomo/dns/overview]] — DNS 参考总览
+- [[client/mihomo-dns]] — DNS 处理机制
+- [[advanced.yaml]] — 高级配置模板

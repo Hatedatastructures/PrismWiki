@@ -1,0 +1,204 @@
+---
+title: "TUN 配置模板"
+layer: ref
+category: "mihomo"
+type: config
+module: ref/mihomo/config
+format: yaml
+tags: [mihomo, config, tun, transparent-proxy, routing]
+created: 2026-05-17
+updated: 2026-05-17
+related:
+  - "[[ref/mihomo/config/overview]]"
+  - "[[ref/mihomo/tun/overview]]"
+---
+
+# TUN 配置模板
+
+**类别**: Mihomo 配置模板 | **文件**: tun.yaml
+
+## 配置内容
+
+```yaml
+# mihomo TUN 模式配置模板
+# 透明代理配置，全局流量劫持
+
+# ========== 基础 TUN 配置 ==========
+tun:
+  enable: true              # 启用 TUN 模式
+  stack: gvisor             # 网络栈: gvisor/system/mixed
+
+  # DNS 劫持
+  dns-hijack:
+    - any:53                # 劫持所有 UDP DNS
+    - tcp://any:53          # 劫持所有 TCP DNS
+
+  # 自动路由
+  auto-route: true          # 自动配置系统路由
+  auto-detect-interface: true  # 自动检测出站接口
+
+  # MTU 设置
+  mtu: 9000                 # 最大传输单元
+
+# ========== 完整 TUN 配置 ==========
+tun:
+  enable: true
+  stack: gvisor
+
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+  auto-route: true
+  auto-detect-interface: true
+
+  mtu: 9000
+  strict-route: false       # 严格路由模式
+
+  # 代理地址范围
+  route-address:
+    - 0.0.0.0/0             # 代理所有 IPv4
+    - "::/0"                # 代理所有 IPv6
+
+  # 排除地址
+  route-exclude-address:
+    - 192.168.0.0/16        # 局域网
+    - 10.0.0.0/8            # 私有网络 A类
+    - 172.16.0.0/12         # 私有网络 B类
+    - 127.0.0.0/8           # 本地回环
+
+# ========== Windows 配置 ==========
+tun:
+  enable: true
+  stack: gvisor              # Windows 推荐 gvisor
+
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+  auto-route: true
+  auto-detect-interface: true
+
+  # 可选：指定接口 GUID
+  # interface-guid: xxxxxx
+
+# ========== Linux 配置 ==========
+tun:
+  enable: true
+  stack: system              # Linux 推荐 system
+
+  dns-hijack:
+    - any:53
+
+  auto-route: true
+
+  # 可选：TUN 文件描述符
+  # fd: -1
+
+  # 可选：接口名称
+  # interface-name: tun0
+
+# ========== macOS 配置 ==========
+tun:
+  enable: true
+  stack: gvisor
+
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+  auto-route: true
+  auto-detect-interface: true
+
+# ========== 高性能配置 ==========
+tun:
+  enable: true
+  stack: system              # 使用内核网络栈
+
+  dns-hijack:
+    - any:53
+
+  auto-route: true
+  auto-detect-interface: true
+
+  mtu: 1500                  # 标准以太网 MTU
+  strict-route: true         # 强制路由优先
+
+# ========== 与其他 VPN 共存 ==========
+tun:
+  enable: true
+  stack: gvisor
+
+  dns-hijack:
+    - any:53
+
+  auto-route: true
+  auto-detect-interface: true
+
+  strict-route: false        # 不强制路由
+
+  route-exclude-address:
+    - 10.8.0.0/16            # 其他 VPN 网段
+
+# ========== 企业内网配置 ==========
+tun:
+  enable: true
+  stack: gvisor
+
+  dns-hijack:
+    - any:53
+
+  auto-route: true
+  auto-detect-interface: true
+
+  route-exclude-address:
+    # 企业内网
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    # 特定服务器
+    - 192.168.1.100/32       # 内网服务器
+    - 192.168.1.101/32       # 内网服务
+
+# ========== UDP 优化配置 ==========
+tun:
+  enable: true
+  stack: mixed               # TCP system + UDP gvisor
+
+  dns-hijack:
+    - any:53
+
+  auto-route: true
+  auto-detect-interface: true
+
+  mtu: 1500
+```
+
+## 参数详解
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| enable | bool | false | 启用 TUN |
+| stack | string | gvisor | 网络栈实现 |
+| dns-hijack | list | [] | DNS 劫持规则 |
+| auto-route | bool | false | 自动路由 |
+| auto-detect-interface | bool | false | 自动检测接口 |
+| mtu | int | 9000 | MTU 值 |
+| strict-route | bool | false | 严格路由 |
+| route-address | list | [] | 代理地址范围 |
+| route-exclude-address | list | [] | 排除地址 |
+
+## Stack 选择建议
+
+| 平台 | 推荐 | 原因 |
+|------|------|------|
+| Windows | gvisor | 兼容性最好 |
+| macOS | gvisor | 避免权限问题 |
+| Linux | system | 性能最优 |
+
+## 相关链接
+
+- [[overview]] — 配置总览
+- [[ref/mihomo/tun/overview]] — TUN 参考总览
+- [[ref/mihomo/tun/stack]] — Stack 配置详解
+- [[ref/mihomo/tun/dns-hijack]] — DNS 劫持详解
+- [[advanced.yaml]] — 高级配置模板

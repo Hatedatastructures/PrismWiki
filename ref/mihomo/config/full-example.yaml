@@ -1,0 +1,378 @@
+---
+title: "完整配置示例"
+layer: ref
+category: "mihomo"
+type: config
+module: ref/mihomo/config
+format: yaml
+tags: [mihomo, config, full, example, complete, yaml]
+created: 2026-05-17
+updated: 2026-05-17
+related:
+  - "[[ref/mihomo/config/overview]]"
+  - "[[ref/mihomo/config/advanced.yaml]]"
+---
+
+# 完整配置示例
+
+**类别**: Mihomo 配置模板 | **文件**: full-example.yaml
+
+## 配置内容
+
+```yaml
+# mihomo 完整配置示例
+# 包含所有功能模块的生产级配置
+
+# ==================== 基础设置 ====================
+# HTTP/SOCKS5 混合端口
+mixed-port: 7890
+
+# SOCKS5 端口（可选）
+socks-port: 7891
+
+# HTTP 端口（可选）
+port: 7892
+
+# 允许局域网访问
+allow-lan: true
+
+# 绑定地址
+bind-address: "*"
+
+# 运行模式: rule/global/direct
+mode: rule
+
+# 日志级别: silent/error/warning/info/debug
+log-level: info
+
+# IPv6 支持
+ipv6: false
+
+# ==================== 外部控制器 ====================
+# RESTful API
+external-controller: 0.0.0.0:9090
+
+# Web UI
+external-ui: ui
+external-ui-url: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
+
+# API 认证密钥
+secret: "your-secret-key"
+
+# ==================== GEO 数据 ====================
+geodata-mode: true
+geo-auto-update: true
+update-interval: 24
+
+geox-url:
+  geoip: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+  asn: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb"
+
+# ==================== TUN 配置 ====================
+tun:
+  enable: true
+  stack: gvisor
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+  auto-route: true
+  auto-detect-interface: true
+  mtu: 9000
+  strict-route: false
+  route-address:
+    - 0.0.0.0/0
+    - "::/0"
+  route-exclude-address:
+    - 192.168.0.0/16
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 127.0.0.0/8
+
+# ==================== DNS 配置 ====================
+dns:
+  enable: true
+  listen: 0.0.0.0:1053
+  listen-tcp: true
+  ipv6: false
+
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+
+  fake-ip-filter:
+    - "*.lan"
+    - "*.local"
+    - "*.localhost"
+    - "*.localdomain"
+    - "dns.msftncsi.com"
+    - "www.msftncsi.com"
+    - "+.msftconnecttest.com"
+    - "+.apple.com"
+    - "*.ntp.org.cn"
+    - "time.*.com"
+    - "+.stun.*"
+    - "+.bank"
+    - "+.pay"
+
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+
+  fallback:
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.nextdns.io/dns-query
+
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.1/32
+    domain:
+      - "+.google.com"
+      - "+.youtube.com"
+      - "+.github.com"
+      - "+.telegram.org"
+
+  cache-size: 4096
+  cache-timeout: 300
+
+  rules:
+    - geosite: google
+      nameserver:
+        - https://dns.google/dns-query
+    - geosite: github
+      nameserver:
+        - https://dns.google/dns-query
+    - geosite: telegram
+      nameserver:
+        - https://dns.google/dns-query
+    - geosite: cn
+      nameserver:
+        - https://dns.alidns.com/dns-query
+
+# ==================== 代理节点 ====================
+proxies:
+  # Trojan + TLS
+  - name: "trojan-1"
+    type: trojan
+    server: server1.example.com
+    port: 443
+    password: "password123"
+    sni: server1.example.com
+    skip-cert-verify: false
+    udp: true
+
+  # VLESS + Reality
+  - name: "vless-reality"
+    type: vless
+    server: server2.example.com
+    port: 443
+    uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    network: tcp
+    tls: true
+    udp: true
+    flow: xtls-rprx-vision
+    servername: www.microsoft.com
+    reality-opts:
+      public-key: "xxxxxxxxxx"
+      short-id: "xxxxxx"
+
+  # Hysteria2
+  - name: "hysteria2-1"
+    type: hysteria2
+    server: server3.example.com
+    port: 443
+    password: "password123"
+    sni: server3.example.com
+    skip-cert-verify: false
+    up: "100 Mbps"
+    down: "200 Mbps"
+
+  # TUIC
+  - name: "tuic-1"
+    type: tuic
+    server: server4.example.com
+    port: 443
+    uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    password: "password123"
+    alpn:
+      - h3
+    congestion-controller: bbr
+    sni: server4.example.com
+    skip-cert-verify: false
+    udp-relay-mode: native
+    reduce-rtt: true
+
+  # Shadowsocks 2022
+  - name: "ss-2022"
+    type: ss
+    server: server5.example.com
+    port: 8388
+    cipher: 2022-blake3-aes-128-gcm
+    password: "password123"
+    udp: true
+
+  # WireGuard
+  - name: "wg-1"
+    type: wireguard
+    server: server6.example.com
+    port: 51820
+    ip: 10.0.0.2
+    ipv6: fd01:5ca1:ab1e::2
+    private-key: "privateKeyBase64"
+    public-key: "publicKeyBase64"
+    udp: true
+
+# ==================== 代理组 ====================
+proxy-groups:
+  - name: "Proxy"
+    type: select
+    proxies:
+      - Auto
+      - Fallback
+      - trojan-1
+      - vless-reality
+      - hysteria2-1
+      - tuic-1
+      - ss-2022
+      - wg-1
+      - DIRECT
+
+  - name: "Auto"
+    type: url-test
+    proxies:
+      - trojan-1
+      - vless-reality
+      - hysteria2-1
+      - tuic-1
+      - ss-2022
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: true
+
+  - name: "Fallback"
+    type: fallback
+    proxies:
+      - trojan-1
+      - vless-reality
+      - hysteria2-1
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    lazy: true
+
+  - name: "Netflix"
+    type: select
+    proxies:
+      - Proxy
+      - Auto
+      - trojan-1
+
+  - name: "YouTube"
+    type: select
+    proxies:
+      - Proxy
+      - Auto
+
+  - name: "Telegram"
+    type: select
+    proxies:
+      - Proxy
+      - Auto
+
+  - name: "AdBlock"
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+# ==================== 规则 ====================
+rules:
+  # 广告拦截
+  - GEOSITE,category-ads-all,AdBlock
+  - GEOSITE,category-ads,AdBlock
+
+  # 流媒体
+  - GEOSITE,netflix,Netflix
+  - GEOSITE,youtube,YouTube
+
+  # 社交媒体
+  - GEOSITE,telegram,Telegram
+  - GEOSITE,twitter,Proxy
+  - GEOSITE,facebook,Proxy
+
+  # 开发者
+  - GEOSITE,github,Proxy
+  - GEOSITE,google,Proxy
+
+  # 国内直连
+  - GEOSITE,cn,DIRECT
+  - GEOIP,CN,DIRECT
+
+  # 局域网
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+
+  # 最终规则
+  - MATCH,Proxy
+
+# ==================== Sniffing ====================
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+
+# ==================== 其他高级设置 ====================
+# TCP 并发
+tcp-concurrent: true
+
+# Unified Delay
+unified-delay: true
+
+# Keepalive Interval
+keep-alive-interval: 30
+
+# 进程匹配
+find-process-mode: strict
+
+# Client Fingerprint
+global-client-fingerprint: chrome
+```
+
+## 功能模块对照
+
+| 模块 | 文件位置 |
+|------|----------|
+| TUN | [[tun.yaml]] |
+| DNS | [[dns.yaml]] |
+| 代理组 | [[proxy-groups.yaml]] |
+| 规则 | [[rules.yaml]] |
+| Mux | [[mux.yaml]] |
+
+## 相关链接
+
+- [[overview]] — 配置总览
+- [[basic.yaml]] — 基础配置
+- [[advanced.yaml]] — 高级配置
+- [[client/mihomo-meta]] — mihomo 概述

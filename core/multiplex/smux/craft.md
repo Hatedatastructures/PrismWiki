@@ -1,0 +1,157 @@
+---
+layer: core
+source: I:/code/Prism/include/prism/multiplex/smux/craft.hpp
+---
+
+# smux::craft - smux 多路复用会话服务端
+
+## 源码位置
+
+`I:/code/Prism/include/prism/multiplex/smux/craft.hpp`
+
+## 概述
+
+`smux::craft` 继承 [[core/multiplex/core|core]]，实现 smux v1 帧协议和 sing-mux 协议协商。兼容 Mihomo/xtaci/smux v1。
+
+## 帧格式
+
+8 字节定长帧头，小端字节序：
+
+```
+[Version 1B][Cmd 1B][Length 2B LE][StreamID 4B LE][Payload]
+```
+
+最大帧载荷：65535 字节
+
+## 命令类型
+
+| 命令 | 值 | 说明 |
+|------|-----|------|
+| SYN | 0 | 新建流 |
+| FIN | 1 | 半关闭流 |
+| PSH | 2 | 数据推送 |
+| NOP | 3 | 心跳（不回复） |
+
+## 核心成员
+
+```cpp
+using channel_type = net::experimental::concurrent_channel<
+    void(boost::system::error_code, outbound_frame)>;
+mutable channel_type channel_;  // 有界发送通道，串行化多流写入
+```
+
+## outbound_frame 结构
+
+```cpp
+struct outbound_frame
+{
+    std::array<std::byte, frame_header_size> header{};  // 8 字节帧头
+    memory::vector<std::byte> payload;                  // 载荷数据
+};
+```
+
+header 与 payload 分离传递，消除 payload memcpy。
+
+## 公开接口
+
+```cpp
+craft(channel::transport::shared_transmission transport,
+      resolve::router &router,
+      const multiplex::config &cfg,
+      memory::resource_pointer mr = {});
+
+auto send_data(std::uint32_t stream_id,
+               memory::vector<std::byte> payload) const
+    -> net::awaitable<void> override;
+
+void send_fin(std::uint32_t stream_id) override;
+
+net::any_io_executor executor() const override;
+```
+
+## 协程模型
+
+```mermaid
+graph TD
+    A[core::start] --> B[co_spawn run]
+    B --> C[frame_loop]
+    B --> D[send_loop]
+    B --> E[keepalive_loop]
+    
+    C --> F[读取帧头 8B]
+    F --> G[读取载荷]
+    G --> H{Cmd}
+    H -->|SYN| I[handle_syn]
+    H -->|PSH| J[dispatch_push]
+    H -->|FIN| K[handle_fin]
+    H -->|NOP| L[忽略]
+    
+    J --> M{流状态}
+    M -->|pending| N[累积数据]
+    M -->|duct| O[co_spawn on_mux_data]
+    M -->|parcel| P[co_spawn on_mux_data]
+```
+
+## 发送路径
+
+```
+duct::target_read_loop → core::send_data → push_frame → channel_ → send_loop → transport
+```
+
+零拷贝：header 与 payload 分离写入，无需拼接。
+
+## 流打开流程
+
+```
+客户端 SYN → handle_syn → 创建 pending_entry
+客户端首个 PSH → dispatch_push → 累积数据
+数据足够 → try_activate_pending → activate_stream
+解析地址 → router 连接目标 → 创建 duct/parcel → 转发剩余数据
+```
+
+## 帧构建函数
+
+```cpp
+auto make_data_frame(std::uint32_t stream_id,
+                     std::span<const std::byte> payload)
+    -> memory::vector<std::byte>;
+
+auto make_syn_frame(std::uint32_t stream_id)
+    -> std::array<std::byte, frame_header_size>;
+
+auto make_fin_frame(std::uint32_t stream_id)
+    -> std::array<std::byte, frame_header_size>;
+```
+
+## 配置参数
+
+参见 [[core/multiplex/smux/config|smux::config]]：
+- max_streams：最大并发流数
+- buffer_size：每流读取缓冲区
+- keepalive_interval_ms：心跳间隔
+
+## 调用链
+
+```mermaid
+graph TD
+    A[bootstrap] --> B[检测 Protocol=0]
+    B --> C[创建 smux::craft]
+    C --> D[core::start]
+    D --> E[run]
+    E --> F[frame_loop]
+    
+    G[duct::target_read_loop] --> H[send_data]
+    H --> I[push_frame]
+    I --> J[channel_.async_send]
+    E --> K[send_loop]
+    K --> L[channel_.async_receive]
+    L --> M[transport.async_write]
+```
+
+## 关联文档
+
+- [[core/multiplex/core|core]] - 多路复用核心抽象基类
+- [[core/multiplex/smux/frame|smux::frame]] - smux 帧格式定义
+- [[core/multiplex/smux/config|smux::config]] - smux 协议配置
+- [[core/multiplex/duct|duct]] - TCP 流管道
+- [[core/multiplex/parcel|parcel]] - UDP 数据报管道

@@ -1,0 +1,164 @@
+---
+title: "Mux 配置模板"
+layer: ref
+category: "mihomo"
+type: config
+module: ref/mihomo/config
+format: yaml
+tags: [mihomo, config, mux, smux, yamux, brutal]
+created: 2026-05-17
+updated: 2026-05-17
+related:
+  - "[[ref/mihomo/config/overview]]"
+  - "[[ref/mihomo/mux/config]]"
+---
+
+# Mux 配置模板
+
+**类别**: Mihomo 配置模板 | **文件**: mux.yaml
+
+## 配置内容
+
+```yaml
+# mihomo Mux 多路复用配置模板
+# 多路复用可提高连接效率，减少握手开销
+
+# ========== 基础 Mux 配置 ==========
+proxies:
+  - name: "mux-basic"
+    type: trojan
+    server: server.example.com
+    port: 443
+    password: "password123"
+
+    # Mux 配置
+    smux:
+      enabled: true          # 启用多路复用
+      protocol: smux         # 协议类型: smux/yamux/h2mux
+
+# ========== 高级 Mux 配置 ==========
+proxies:
+  - name: "mux-advanced"
+    type: vless
+    server: server.example.com
+    port: 443
+    uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    tls: true
+    servername: server.example.com
+
+    smux:
+      enabled: true
+      protocol: h2mux        # HTTP/2 多路复用
+
+      # 连接控制
+      max-connections: 4     # 最大底层连接数 (1-16)
+      min-streams: 4         # 每连接最小流数
+      max-streams: 0         # 每连接最大流数 (0=无限制)
+
+      # 功能选项
+      padding: false         # 随机填充（增加隐蔽性）
+      statistic: false       # 流量统计
+      only-tcp: false        # 仅 TCP 走 Mux
+
+# ========== TCP Brutal 配置 ==========
+proxies:
+  - name: "mux-brutal"
+    type: trojan
+    server: server.example.com
+    port: 443
+    password: "password123"
+
+    smux:
+      enabled: true
+      protocol: h2mux
+      max-connections: 16    # Brutal 需要多连接
+
+      # TCP Brutal 优化
+      brutal-opts:
+        enabled: true        # 启用 Brutal
+        up: "100 Mbps"       # 上行带宽
+        down: "200 Mbps"     # 下行带宽
+
+# ========== UDP 单独配置 ==========
+proxies:
+  - name: "mux-tcp-only"
+    type: vmess
+    server: server.example.com
+    port: 443
+    uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    alterId: 0
+    cipher: auto
+    tls: true
+
+    smux:
+      enabled: true
+      protocol: smux
+      only-tcp: true         # UDP 不走 Mux，直连
+
+# ========== 服务端 Mux 配置 ==========
+listeners:
+  - name: trojan-mux
+    type: trojan
+    listen: :443
+    users:
+      - password: "password1"
+      - password: "password2"
+
+    # 服务端 Mux
+    mux:
+      padding: false         # 随机填充
+
+      # Brutal 服务端
+      brutal:
+        enabled: true
+        up: "1 Gbps"
+        down: "1 Gbps"
+```
+
+## 参数详解
+
+### smux 配置
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| enabled | bool | false | 启用多路复用 |
+| protocol | string | smux | 协议类型 |
+| max-connections | int | 4 | 最大连接数 |
+| min-streams | int | 4 | 最小流数 |
+| max-streams | int | 0 | 最大流数 |
+| padding | bool | false | 随机填充 |
+| statistic | bool | false | 流量统计 |
+| only-tcp | bool | false | 仅 TCP |
+
+### brutal-opts 配置
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| enabled | bool | 启用 Brutal |
+| up | string | 上行带宽 |
+| down | string | 下行带宽 |
+
+### 带宽格式
+
+| 格式 | 示例 | 说明 |
+|------|------|------|
+| Mbps | `100 Mbps` | Megabits/s |
+| Gbps | `1 Gbps` | Gigabits/s |
+| KB/s | `100 KB/s` | Kilobytes/s |
+| MB/s | `100 MB/s` | Megabytes/s |
+| 数值 | `10000000` | Bytes/s |
+
+## 协议选择
+
+| 协议 | 特点 | 适用场景 |
+|------|------|----------|
+| smux | 简单高效 | 日常使用 |
+| yamux | 功能丰富 | 复杂场景 |
+| h2mux | HTTP/2 特性 | CDN 环境 |
+
+## 相关链接
+
+- [[overview]] — 配置总览
+- [[ref/mihomo/mux/config]] — Mux 参数详解
+- [[ref/mihomo/mux/overview]] — Mux 概览
+- [[advanced.yaml]] — 高级配置模板

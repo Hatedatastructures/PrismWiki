@@ -1,173 +1,224 @@
+---
+title: 知识库规范
+layer: root
+---
+
 # Wiki Schema
 
 ## Domain
-Prism 知识库 — Prism 高性能代理引擎的项目文档，覆盖模块设计、实现细节、调试排障、客户端对接、Bug 记录等。
+Prism 知识库 — Prism 高性能代理引擎的项目文档。
+
+采用四层分离架构，各层职责明确，避免知识重复。
 
 ## 目录结构
 
 ```
 wiki/
-├── agent/              # 前端监听、会话管理、负载均衡、TLS
-│   ├── overview.md     # 项目概览
-│   ├── architecture.md # 分层架构设计
-│   ├── modules.md      # 模块结构
-│   ├── configuration.md # 配置详解
-│   ├── testing.md      # 测试体系
-│   ├── deployment.md   # 部署指南
-│   └── troubleshooting.md # 故障排查
-├── channel/            # 连接池、健康检查、传输层、加密传输
-├── crypto/             # AEAD、Blake3、X25519、HKDF
-├── multiplex/          # smux、yamux 实现细节
-├── pipeline/           # 协议流水线（HTTP、SS、SOCKS5、Trojan、VLESS）
-├── protocol/           # 协议格式、解析、中继
-├── recognition/        # 协议识别、探测分析
-├── resolve/            # DNS 解析、缓存、规则
-├── stealth/            # Reality、ShadowTLS、Restls、ECH
-├── memory/             # 内存池、容器
-├── fault/              # 故障处理、错误码
-├── client/             # mihomo 对接、配置模板、兼容性
-├── bugs/               # Bug 记录（现象→排查→根因→修复）
-├── dev/                # C++ 实现笔记、协程、构建系统
-├── SCHEMA.md           # 本文件
-├── index.md            # 分类索引
-└── log.md              # 操作日志
+├── core/              # 模块实现细节（详细，开发排障）
+│   ├── agent/         # 前端监听、会话管理、负载均衡
+│   ├── channel/       # 连接池、传输层、Happy Eyeballs
+│   ├── pipeline/      # 协议处理器、管道原语
+│   ├── protocol/      # 协议格式、常量、配置
+│   ├── stealth/       # TLS 伪装（Reality/ShadowTLS/Restls/AnyTLS/TrustTunnel/ECH）
+│   ├── recognition/   # 协议识别、探测分析
+│   ├── resolve/       # DNS 解析、缓存、规则
+│   ├── multiplex/     # Smux/Yamux 多路复用
+│   ├── crypto/        # AEAD/HKDF/X25519/Blake3
+│   ├── outbound/      # 出站代理、直连
+│   ├── memory/        # PMR 内存池
+│   ├── fault/         # 错误码
+│   ├── exception/     # 异常体系
+│   ├── trace/         # 日志系统
+│   ├── transformer/   # JSON 序列化
+│   ├── loader/        # 配置加载
+│   ├── architecture.md    # 六阶段流水线架构
+│   ├── startup.md         # 启动流程详解
+│   ├── flow.md            # 协议处理流程
+│   └── infrastructure.md  # 基础设施总览
+│
+├── dev/               # 开发规范、排障方法（详细）
+│   ├── coding/        # 编码规范、协程约定、PMR 使用
+│   ├── testing/       # 测试框架、基准测试、压力测试
+│   ├── debugging/     # 排障方法、日志分析
+│   ├── building/      # CMake 结构、构建命令
+│   ├── performance/   # 性能优化、调优方法
+│   ├── extending/     # 新协议/新伪装方案开发
+│   ├── bugs/          # Bug 记录
+│   └ roadmap.md       # 开发路线图
+│
+├── docs/              # 使用指南（简单）
+│   ├── getting-started.md    # 快速开始
+│   ├── deployment.md         # 部署指南
+│   ├── configuration.md      # 配置说明（简化）
+│   ├── client-setup.md       # 客户端配置
+│   ├── faq.md                # 常见问题
+│   ├── troubleshooting.md   # 故障排查（简化）
+│   └ upgrade.md              # 升级指南
+│   ├── security.md           # 安全注意事项
+│   └ performance-tips.md     # 性能建议
+│
+├── ref/               # 参考知识（中等）
+│   ├── mihomo/        # Mihomo 完整参考
+│   │   ├── protocols/     # 所有出站协议（22个）
+│   │   ├── transport/     # 传输层插件
+│   │   ├── mux/           # 多路复用
+│   │   ├── proxy-groups/  # 代理组
+│   │   ├── rules/         # 规则系统
+│   │   ├── dns/           # DNS 配置
+│   │   ├── tun/           # TUN 模式
+│   │   ├── config/        # 配置模板
+│   │   ├── compatibility/ # Prism 兼容性
+│   │   ├── implementation/# 实现参考
+│   │   ├── sniffing/      # 协议嗅探
+│   │   ├── listeners/     # 入站监听
+│   │   ├── provider/      # Provider
+│   │   ├── ntp/           # NTP 同步
+│   │   └ experimental/    # 实验性功能
+│   ├── crypto/        # 加密知识（原理）
+│   ├── protocol/      # 协议知识（RFC）
+│   ├── network/       # 网络知识
+│   ├── programming/   # 编程知识（Boost.Asio/C++23协程）
+│   └ glossary.md      # 术语表
+│
+├── skills/            # Claude Code Skills
+│   └ prism-wiki-sync/ # 知识库同步检查
+│
+├── SCHEMA.md          # 本文件
+├── index.md           # 总索引
+└── log.md             # 操作日志
 ```
 
-## Conventions
-- 文件名：小写，连字符，无空格（如 `smux-frame-format.md`）
-- 每个页面以 YAML frontmatter 开头
-- 使用 `[[wikilinks]]` 链接其他页面（每个页面 >= 3 个出站链接）
-- 更新页面时更新 `updated` 日期
-- 新页面必须添加到 `index.md`
-- 每个操作必须记录到 `log.md`
-- Bug 记录必须包含：现象、排查过程、根因、修复位置
+## 各层详细程度
+
+### core/（详细层）
+
+- **复杂函数**：逐行解释实现逻辑，包括：
+  - 函数签名、参数、返回值
+  - 每行代码的作用
+  - 为什么这样实现（设计决策）
+  - 调用链：调用者、被调用者（wikilink 标记）
+  
+- **简单函数**：只写用途，不逐行解释
+  - getter/setter
+  - 简单转换函数
+  - 枚举定义
+
+- **复杂判断标准**（综合）：
+  - 代码行数 > 50
+  - 逻辑分支 > 3
+  - 涉及专业知识（加密/协议/协程）
+  - 有复杂状态转换
+
+- **调用链格式**：
+  - 已标注位置：`调用 [[module/file|函数名]]()`
+  - 未标注位置：`调用 [[module/file|函数名]]() — 源码: include/prism/module/file.hpp:45`
+
+### dev/（详细层）
+
+- 编码规范、协程约定等：详细说明每条规则及原因
+- 排障方法：具体步骤、日志示例、常见错误
+- Bug 记录：现象、排查过程、根因、修复位置
+
+### docs/（简单层）
+
+- 一句话说明功能
+- 如何启用/配置
+- 常见问题一句话解答
+
+### ref/（中等层）
+
+- 协议帧格式、字节布局
+- 常量定义、枚举值含义
+- 配置项说明
+- 原理说明（不涉及实现细节）
+
+## 知识不重复原则
+
+同一知识点只在一个地方详细写，其他地方用 wikilink 引用：
+
+- 函数实现细节 → core/
+- 函数用途概述 → docs/ 或 ref/
+- 相关原理 → ref/
+
+示例：
+- `core/stealth/reality/handshake.md` 详细写 Reality 握手实现
+- `ref/mihomo/protocols/reality.md` 写 Reality 配置和兼容性，用 `详见 [[core/stealth/reality/handshake|Reality 握手实现]]` 引用
 
 ## Frontmatter
+
 ```yaml
 ---
 title: Page Title
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
-type: module | bug | config | dev | client
-tags: [from taxonomy below]
-related: [related modules or pages]
+layer: core | dev | docs | ref
+source: 源码路径（core 层必填）
+tags: [module tags]
 ---
 ```
 
 ## Tag Taxonomy
 
-### Prism 模块
-- agent, channel, crypto, multiplex, pipeline, protocol, recognition, resolve, stealth, memory, fault
+### 模块标签
+- agent, channel, pipeline, protocol, stealth, recognition, resolve, multiplex, crypto, outbound, memory, fault, exception, trace, transformer, loader
 
-### 文档类型
-- module, bug, config, dev, client, architecture, testing, deployment
+### 协议标签
+- socks5, http, trojan, vless, shadowsocks, reality, shadowtls, restls, anytls, trusttunnel, ech, hysteria2, tuic, wireguard, vmess
 
-### 协议相关
-- socks5, http, shadowsocks, trojan, vless, tls, reality, shadowtls, restls, ech
+### 类型标签
+- module, architecture, coding, testing, debugging, building, performance, bug, guide, reference
 
-### 实现细节
-- smux, yamux, coroutine, memory-pool, connection-pool, dns, multiplexing
+## wikilink 规范
 
-### 调试排障
-- bug, troubleshooting, error-code, compatibility, regression
+- 使用 Obsidian 格式：`[[path/to/page|显示名]]`
+- 每个页面至少 3 个出站链接
+- 链接到详细页面，不重复写内容
+
+## 源码标注规范
+
+core/ 层页面必须标注源码位置：
+
+```
+> 源码: include/prism/module/file.hpp:XX | 实现: src/prism/module/file.cpp:XX
+```
+
+函数说明中：
+
+```
+**调用（向下）**: `callee1()` — 源码: include/prism/module/file.hpp:45
+**被调用（向上）**: [[caller/module|caller]] 的 `caller_func()`
+```
 
 ## Bug 记录格式
+
+Bug 记录放在 `dev/bugs/`：
+
 ```yaml
 ---
 title: Bug 标题
 created: YYYY-MM-DD
+layer: dev
 type: bug
 severity: critical | major | minor
 modules: [affected modules]
 status: fixed | investigating | workaround
-fix_commit: commit hash (if applicable)
+fix_commit: commit hash
 ---
 ```
 
-### Bug 正文结构
-```
-## 现象
-描述用户可见的症状
-
-## 排查过程
-1. 第一步排查
-2. 第二步排查
-3. ...
-
-## 根因
-根本原因分析
-
-## 修复
-修复方案和代码位置
-
-## 相关模块
-[[module1]] [[module2]]
-
-## 预防措施
-如何避免类似问题
-```
+正文结构：
+- 现象
+- 排查过程（具体步骤）
+- 根因
+- 修复位置
+- 预防措施
 
 ## Page Thresholds
-- **创建页面**：当一个模块有 3+ 个文件或 500+ 行代码时
-- **添加到现有页面**：当发现新的实现细节或 bug 时
-- **不创建页面**：对于临时调试或一次性问题
-- **拆分页面**：当页面超过 ~300 行时
 
-## Update Policy
-当发现新的 bug 或实现细节时：
-1. 直接添加到对应模块页面或创建新 bug 页面
-2. 更新相关模块的链接
-3. 在 index.md 中添加新页面
-4. 在 log.md 中记录操作
+- **创建页面**：模块有独立源码文件时
+- **不创建页面**：临时调试、一次性问题
+- **拆分页面**：页面超过 300 行时
 
-## API 函数文档标准
+## wiki-sync Skill
 
-每个公开函数必须包含以下 7 个字段：
-
-```markdown
-### `函数名()`
-
-> 源码: include/prism/module/file.hpp:XX | 实现: src/prism/module/file.cpp:XX
-
-**功能**: 一句话描述函数的作用。
-
-**签名**:
-```cpp
-auto function_name(参数列表) -> 返回类型;
-```
-
-**参数**:
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `param1` | `type` | 描述 |
-
-**返回值**: `type` — 描述返回值含义和可能的错误码。
-
-**调用（向下）**: `callee1()`, `callee2()` — 描述调用了哪些函数
-
-**被调用（向上）**: `caller1()`, `caller2()` — 描述被哪些函数调用
-
-**知识域**: `[[ref/...|知识域1]]`, `[[ref/...|知识域2]]`
-```
-
-### 字段说明
-
-| 字段 | 必填 | 说明 |
-|------|------|------|
-| 功能 | 是 | 一句话描述函数作用，不贴实现代码 |
-| 参数/返回值 | 是 | 参数表格 + 返回值描述 |
-| 调用（向下） | 是 | 该函数调用的其他函数，用 wikilink 链接 |
-| 被调用（向上） | 是 | 调用该函数的其他函数/模块，用 wikilink 链接 |
-| 涉及的知识域 | 是 | 相关的密码学/协议/网络知识域，链接到 ref/ 页面 |
-| 源码位置 | 是 | 头文件路径:行号 + 实现文件路径:行号 |
-| 交叉引用 | 是 | 至少 3 个出站 wikilink |
-
-### 适用范围
-
-此标准适用于以下模块的 API 文档：
-- agent/、channel/、crypto/、pipeline/、protocol/、recognition/、resolve/、stealth/、multiplex/
-- 根目录基础设施：memory.md、fault.md、exception.md、trace.md、transformer.md、loader.md、outbound.md
-
-不适用于：client/、dev/、ref/、performance/、docs/
-
+每次 push 时运行，检查知识库与源码同步状态。详见 `skills/prism-wiki-sync/SKILL.md`。

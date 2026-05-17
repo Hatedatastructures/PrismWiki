@@ -1,216 +1,229 @@
+---
+title: Prism 知识库索引
+layer: root
+---
+
 # Prism 知识库
 
-> Prism 高性能代理引擎的项目文档 — 覆盖模块设计、实现细节、调试排障、客户端对接、Bug 记录。
-> 最后更新：2026-05-15
+> Prism 高性能代理引擎的项目文档 — 四层分离架构：core（详细）、dev（开发）、docs（用户）、ref（参考）
+> 最后更新：2026-05-17
 
 ---
 
-## 核心模块
+## 知识库架构
 
-- [[memory]] — PMR 内存池、三级池化、帧分配器
-- [[fault]] — 错误码枚举、双轨错误处理
-- [[exception]] — 异常层次结构
-- [[trace]] — spdlog 异步日志
-- [[transformer]] — glaze JSON 序列化
-- [[loader]] — 配置加载、账户目录构建
-- [[outbound]] — 出站代理接口、直连实现
+采用四层分离架构，避免知识重复：
 
-## Agent 模块
+| 层级 | 目录 | 详细程度 | 职责 |
+|------|------|----------|------|
+| 模块实现层 | [[core/overview|core]] | 详细 | 函数实现、调用链、状态变化 |
+| 开发排障层 | [[dev/overview|dev]] | 详细 | 编码规范、排障方法、Bug记录 |
+| 使用指南层 | [[docs/overview|docs]] | 简单 | 用户文档、部署、配置 |
+| 参考知识层 | [[ref/overview|ref]] | 中等 | 协议规范、加密原理、mihomo资料 |
 
-- [[agent/config]] — Agent 运行时配置类型定义
-- [[agent/context]] — Agent 运行时上下文类型定义
-- [[agent/front/listener]] — 前端监听器
-- [[agent/front/balancer]] — 负载均衡器
-- [[agent/session/session]] — 会话生命周期管理
-- [[agent/worker/worker]] — Worker 线程核心实现
-- [[agent/worker/launch]] — 会话启动与连接分发
-- [[agent/worker/stats]] — 负载统计
-- [[agent/worker/tls]] — TLS 上下文初始化
-- [[agent/account/directory]] — 账户目录
-- [[agent/account/entry]] — 账户条目与租约
-- [[agent/dispatch/table]] — 协议处理器分发表
+---
 
-## Channel 模块
+## Core 层 — 模块实现细节
 
-- [[channel/transport/transmission]] — 传输层抽象接口
-- [[channel/transport/reliable]] — TCP 可靠传输
-- [[channel/transport/encrypted]] — TLS 加密传输
-- [[channel/transport/unreliable]] — UDP 不可靠传输
-- [[channel/transport/snapshot]] — 预读快照传输
-- [[channel/adapter/connector]] — TLS 连接器
-- [[channel/connection/pool]] — 连接池
-- [[channel/eyeball/racer]] — Happy Eyeballs 并行连接
-- [[channel/health]] — 连接健康检查
+> 详见 [[core/overview|Core 层总览]]
 
-## Crypto 模块
+### 架构总览
 
-- [[crypto/aead]] — AEAD 加密（AES-GCM / ChaCha20-Poly1305）
-- [[crypto/hkdf]] — HKDF 密钥派生 + HMAC
-- [[crypto/x25519]] — X25519 密钥交换
-- [[crypto/blake3]] — Blake3 哈希
-- [[crypto/block]] — AES-ECB 块加密
-- [[crypto/base64]] — Base64 编解码
-- [[crypto/sha224]] — SHA-224 哈希
+- [[core/architecture|六阶段流水线架构]]
+- [[core/startup|启动流程详解]]
+- [[core/flow|协议处理流程详解]]
+- [[core/infrastructure|基础设施总览]]
 
-## Pipeline 模块
+### 模块列表
 
-- [[pipeline/primitives]] — 协议管道原语操作
-- [[pipeline/protocols/http]] — HTTP 协议处理器
-- [[pipeline/protocols/socks5]] — SOCKS5 协议处理器
-- [[pipeline/protocols/trojan]] — Trojan 协议处理器
-- [[pipeline/protocols/vless]] — VLESS 协议处理器
-- [[pipeline/protocols/shadowsocks]] — Shadowsocks 协议处理器
+| 模块 | 职责 | 源码位置 |
+|------|------|----------|
+| [[core/agent/overview|Agent]] | 前端监听、会话管理 | `include/prism/agent/` |
+| [[core/channel/overview|Channel]] | 连接池、传输层 | `include/prism/channel/` |
+| [[core/pipeline/overview|Pipeline]] | 协议处理器 | `include/prism/pipeline/` |
+| [[core/protocol/overview|Protocol]] | 协议格式、常量 | `include/prism/protocol/` |
+| [[core/stealth/overview|Stealth]] | TLS 伪装 | `include/prism/stealth/` |
+| [[core/recognition/overview|Recognition]] | 协议识别 | `include/prism/recognition/` |
+| [[core/resolve/overview|Resolve]] | DNS 解析 | `include/prism/resolve/` |
+| [[core/multiplex/overview|Multiplex]] | 多路复用 | `include/prism/multiplex/` |
+| [[core/crypto/overview|Crypto]] | 加密模块 | `include/prism/crypto/` |
+| [[core/outbound/overview|Outbound]] | 出站代理 | `include/prism/outbound/` |
 
-## Protocol 模块
+### 基础设施
 
-- [[protocol/analysis]] — 协议分析与检测
-- [[protocol/tls/types]] — TLS 类型定义与常量
-- [[protocol/tls/signal]] — TLS 信号检测
-- [[protocol/tls/feature_bitmap]] — TLS 特征位图
+| 模块 | 职责 |
+|------|------|
+| [[core/memory/overview|Memory]] | PMR 内存池 |
+| [[core/fault/overview|Fault]] | 错误码 |
+| [[core/exception/overview|Exception]] | 异常体系 |
+| [[core/trace/overview|Trace]] | 日志系统 |
+| [[core/transformer/overview|Transformer]] | JSON 序列化 |
+| [[core/loader/overview|Loader]] | 配置加载 |
 
-### 通用组件
+---
 
-- [[protocol/common/address]] — 地址解析（IPv4/IPv6/域名）
-- [[protocol/common/form]] — 协议表单枚举
-- [[protocol/common/read]] — 协议读取工具
-- [[protocol/common/udp_relay]] — UDP 中继公共组件
+## Dev 层 — 开发规范与排障
 
-### HTTP
+> 详见 [[dev/overview|Dev 层总览]]
 
-- [[protocol/http/parser]] — HTTP 代理请求解析
-- [[protocol/http/relay]] — HTTP 中继
+### 编码规范
 
-### SOCKS5
+- [[dev/coding/naming|命名规范]]
+- [[dev/coding/coroutine|协程约定]]
+- [[dev/coding/pmr|PMR 使用规范]]
+- [[dev/coding/doxygen|注释规范]]
+- [[dev/coding/lifecycle|生命周期安全]]
+- [[dev/coding/error|错误处理策略]]
 
-- [[protocol/socks5/wire]] — SOCKS5 线格式编解码
-- [[protocol/socks5/stream]] — SOCKS5 流处理
-- [[protocol/socks5/constants]] — SOCKS5 常量与枚举
-- [[protocol/socks5/config]] — SOCKS5 配置
+### 测试体系
 
-### Trojan
+- [[dev/testing/framework|测试框架]]
+- [[dev/testing/commands|测试命令]]
+- [[dev/testing/benchmark|基准测试]]
+- [[dev/testing/stress|压力测试]]
 
-- [[protocol/trojan/format]] — Trojan 帧格式
-- [[protocol/trojan/relay]] — Trojan 中继
-- [[protocol/trojan/constants]] — Trojan 常量与枚举
-- [[protocol/trojan/config]] — Trojan 配置
+### 排障方法
 
-### VLESS
+- [[dev/debugging/connection|连接问题排查]]
+- [[dev/debugging/protocol|协议问题排查]]
+- [[dev/debugging/memory|内存问题排查]]
+- [[dev/debugging/performance|性能问题排查]]
+- [[dev/debugging/tls|TLS 问题排查]]
+- [[dev/debugging/log-analysis|日志分析方法]]
 
-- [[protocol/vless/format]] — VLESS 帧格式
-- [[protocol/vless/relay]] — VLESS 中继
-- [[protocol/vless/constants]] — VLESS 常量与枚举
-- [[protocol/vless/config]] — VLESS 配置
+### 构建
 
-### Shadowsocks
+- [[dev/building/cmake|CMake 结构]]
+- [[dev/building/commands|构建命令]]
+- [[dev/building/dependencies|依赖管理]]
 
-- [[protocol/shadowsocks/format]] — SS2022 帧格式
-- [[protocol/shadowsocks/relay]] — SS2022 中继
-- [[protocol/shadowsocks/salts]] — SS2022 盐值管理
-- [[protocol/shadowsocks/replay]] — SS2022 重放检测
-- [[protocol/shadowsocks/constants]] — SS2022 常量
-- [[protocol/shadowsocks/config]] — SS2022 配置
+### 扩展开发
 
-## Recognition 模块
+- [[dev/extending/protocol|新协议集成]]
+- [[dev/extending/stealth|新伪装方案]]
 
-- [[recognition/recognition]] — 协议识别入口
-- [[recognition/layered_pipeline]] — 分层检测管道
-- [[recognition/scheme_route_table]] — 方案路由表
-- [[recognition/confidence]] — 置信度枚举
-- [[recognition/result]] — 识别结果结构
-- [[recognition/probe/probe]] — 协议探测
-- [[recognition/probe/analyzer]] — 特征分析器
+### Bug 记录
 
-## Resolve 模块
+- [[dev/bugs/template|Bug 报告模板]]
 
-- [[resolve/router]] — DNS 路由器
-- [[resolve/dns/dns]] — DNS 解析入口
-- [[resolve/dns/upstream]] — 上游 DNS 查询
-- [[resolve/dns/config]] — DNS 配置
-- [[resolve/dns/detail/cache]] — DNS 缓存
-- [[resolve/dns/detail/coalescer]] — 请求合并
-- [[resolve/dns/detail/rules]] — 域名规则匹配
-- [[resolve/dns/detail/format]] — DNS 报文格式
-- [[resolve/dns/detail/utility]] — DNS 工具函数
+### 开发路线图
 
-## Multiplex 模块
+- [[dev/roadmap|开发路线图]]
 
-- [[multiplex/core]] — 多路复用核心
-- [[multiplex/bootstrap]] — 协商启动
-- [[multiplex/duct]] — TCP 流管道
-- [[multiplex/parcel]] — UDP 数据报管道
-- [[multiplex/config]] — 多路复用配置
-- [[multiplex/smux/craft]] — smux 帧编解码
-- [[multiplex/smux/frame]] — smux 帧格式
-- [[multiplex/smux/config]] — smux 配置
-- [[multiplex/yamux/craft]] — yamux 帧编解码
-- [[multiplex/yamux/frame]] — yamux 帧格式
-- [[multiplex/yamux/config]] — yamux 配置
+---
 
-## Stealth 模块
+## Docs 层 — 使用指南
 
-- [[stealth/scheme]] — 伪装方案基类（分层检测架构）
-- [[stealth/executor]] — 方案执行器
-- [[stealth/registry]] — 方案注册表
-- [[stealth/native]] — 原生 TLS（无伪装 fallback）
+> 详见 [[docs/overview|Docs 层总览]]
 
-### Reality
+### 快速开始
 
-- [[stealth/reality/scheme]] — Reality 方案
-- [[stealth/reality/handshake]] — Reality 握手
-- [[stealth/reality/auth]] — Reality 认证
-- [[stealth/reality/keygen]] — Reality 密钥派生
-- [[stealth/reality/request]] — Reality 请求解析
-- [[stealth/reality/response]] — Reality 响应生成
-- [[stealth/reality/seal]] — Reality 加密封装
-- [[stealth/reality/config]] — Reality 配置
-- [[stealth/reality/constants]] — Reality 常量
+- [[docs/getting-started|快速开始]]
+- [[docs/deployment|部署指南]]
+- [[docs/configuration|配置说明]]
+- [[docs/client-setup|客户端配置]]
 
-### ShadowTLS
+### 故障排查
 
-- [[stealth/shadowtls/scheme]] — ShadowTLS 方案
-- [[stealth/shadowtls/handshake]] — ShadowTLS 握手
-- [[stealth/shadowtls/auth]] — ShadowTLS HMAC 认证
-- [[stealth/shadowtls/config]] — ShadowTLS 配置
-- [[stealth/shadowtls/constants]] — ShadowTLS 常量
+- [[docs/troubleshooting|故障排查]]
+- [[docs/faq|常见问题]]
 
-### 其他伪装方案
+### 其他
 
-- [[stealth/restls/scheme]] — Restls 方案
-- [[stealth/restls/config]] — Restls 配置
-- [[stealth/anytls/scheme]] — AnyTLS 方案
-- [[stealth/anytls/config]] — AnyTLS 配置
-- [[stealth/trusttunnel/scheme]] — TrustTunnel 方案
-- [[stealth/trusttunnel/config]] — TrustTunnel 配置
-- [[stealth/ech/decrypt]] — ECH 解密
-- [[stealth/ech/config]] — ECH 配置
+- [[docs/upgrade|升级指南]]
+- [[docs/security|安全注意事项]]
+- [[docs/performance-tips|性能建议]]
 
-## 客户端对接
+---
 
-- [[client/mihomo-meta]] — mihomo 客户端概述
-- [[client/mihomo-clash-config]] — mihomo 配置详解
-- [[client/mihomo-proxy-groups]] — 代理组配置
-- [[client/mihomo-rules]] — 规则系统
-- [[client/mihomo-dns]] — DNS 处理机制
-- [[client/tun]] — TUN 模式
+## Ref 层 — 参考知识
 
-## 开发笔记
+> 详见 [[ref/overview|Ref 层总览]]
 
-- [[dev/modules]] — Prism 全局模块结构
-- [[dev/cpp23-coroutines]] — C++23 协程
-- [[dev/pmr-memory-pool]] — PMR 内存池
-- [[dev/tcp]] — TCP 协议基础
-- [[dev/tls]] — TLS 协议基础
-- [[dev/udp]] — UDP 协议基础
-- [[dev/gfw]] — GFW 封锁原理
-- [[dev/configuration]] — 完整配置文件参考
-- [[dev/testing]] — 测试体系
-- [[dev/stress]] — 压力测试
+### Mihomo 完整参考
 
-## 性能报告
+> 详见 [[ref/mihomo/index|Mihomo 总索引]]
 
-- [[performance/report]] — 基准测试报告
-- [[performance/benchmark]] — 基准测试详解（12 个 bench）
+#### 出站协议（22个）
 
-## bugs/ — Bug 记录
+- [[ref/mihomo/protocols/socks5|SOCKS5]]
+- [[ref/mihomo/protocols/socks4|SOCKS4]]
+- [[ref/mihomo/protocols/http|HTTP Proxy]]
+- [[ref/mihomo/protocols/trojan|Trojan]]
+- [[ref/mihomo/protocols/vless|VLESS]]
+- [[ref/mihomo/protocols/vmess|VMess]]
+- [[ref/mihomo/protocols/shadowsocks|Shadowsocks]]
+- [[ref/mihomo/protocols/shadowsocksr|ShadowsocksR]]
+- [[ref/mihomo/protocols/snell|Snell]]
+- [[ref/mihomo/protocols/ssh|SSH Tunnel]]
+- [[ref/mihomo/protocols/hysteria|Hysteria]]
+- [[ref/mihomo/protocols/hysteria2|Hysteria2]]
+- [[ref/mihomo/protocols/tuic|TUIC]]
+- [[ref/mihomo/protocols/wireguard|WireGuard]]
+- [[ref/mihomo/protocols/anytls|AnyTLS]]
+- [[ref/mihomo/protocols/reality|Reality]]
+- [[ref/mihomo/protocols/ech|ECH]]
+- [[ref/mihomo/protocols/trusttunnel|TrustTunnel]]
+- [[ref/mihomo/protocols/mieru|Mieru]]
+- [[ref/mihomo/protocols/masque|MASQUE]]
+- [[ref/mihomo/protocols/sudoku|Sudoku]]
 
-> 暂无记录。
+#### 传输层插件
+
+- [[ref/mihomo/transport/shadowtls|ShadowTLS]]
+- [[ref/mihomo/transport/restls|Restls]]
+- [[ref/mihomo/transport/v2ray-plugin|V2Ray Plugin]]
+- [[ref/mihomo/transport/gun|gRPC (gun)]]
+
+#### 配置系统
+
+- [[ref/mihomo/proxy-groups/overview|代理组]]
+- [[ref/mihomo/rules/overview|规则系统]]
+- [[ref/mihomo/dns/overview|DNS 配置]]
+- [[ref/mihomo/tun/overview|TUN 模式]]
+- [[ref/mihomo/config/overview|配置模板]]
+
+#### 兼容性
+
+- [[ref/mihomo/compatibility/prism|Prism 兼容性对照]]
+
+### 加密知识
+
+- [[ref/crypto/aead-basics|AEAD 原理]]
+- [[ref/crypto/key-exchange|密钥交换原理]]
+- [[ref/crypto/hkdf-theory|HKDF 理论]]
+
+### 协议知识
+
+- [[ref/protocol/tls-handshake|TLS 握手流程]]
+- [[ref/protocol/socks5-spec|SOCKS5 RFC]]
+- [[ref/protocol/tcp-basics|TCP 基础]]
+- [[ref/protocol/quic-basics|QUIC 基础]]
+
+### 网络知识
+
+- [[ref/network/happy-eyeballs|Happy Eyeballs]]
+- [[ref/network/dns-resolution|DNS 解析原理]]
+- [[ref/network/gfw|GFW 原理]]
+
+### 编程知识
+
+- [[ref/programming/boost-asio|Boost.Asio 协程]]
+- [[ref/programming/cpp23-coroutine|C++23 协程]]
+- [[ref/programming/pmr-concepts|PMR 概念]]
+
+### 术语表
+
+- [[ref/glossary|术语表]]
+
+---
+
+## Skills
+
+- [[skills/prism-wiki-sync/SKILL|wiki-sync skill]] — 知识库同步检查
+
+---
+
+## 规范
+
+- [[SCHEMA|知识库规范]]

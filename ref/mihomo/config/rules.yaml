@@ -1,0 +1,217 @@
+---
+title: "规则配置模板"
+layer: ref
+category: "mihomo"
+type: config
+module: ref/mihomo/config
+format: yaml
+tags: [mihomo, config, rules, geoip, geosite, routing]
+created: 2026-05-17
+updated: 2026-05-17
+related:
+  - "[[ref/mihomo/config/overview]]"
+  - "[[ref/mihomo/rules/overview]]"
+---
+
+# 规则配置模板
+
+**类别**: Mihomo 配置模板 | **文件**: rules.yaml
+
+## 配置内容
+
+```yaml
+# mihomo 规则配置模板
+# 规则决定流量如何分流
+
+# ========== 基础规则配置 ==========
+rules:
+  # GeoIP 直连国内
+  - GEOIP,CN,DIRECT
+
+  # 最终匹配
+  - MATCH,Proxy
+
+# ========== 完整规则配置 ==========
+rules:
+  # ========== 广告拦截 ==========
+  - GEOSITE,category-ads-all,REJECT
+  - GEOSITE,category-ads,REJECT
+  - DOMAIN-SUFFIX,ad.com,REJECT
+  - DOMAIN-KEYWORD,adservice,REJECT
+
+  # ========== 隐私保护 ==========
+  - DOMAIN-SUFFIX,tracking.com,REJECT
+  - DOMAIN-KEYWORD,analytics,REJECT
+
+  # ========== 流媒体 ==========
+  - GEOSITE,netflix,Netflix
+  - GEOSITE,youtube,YouTube
+  - GEOSITE,disney,Disney
+  - GEOSITE,spotify,Spotify
+  - GEOSITE,twitch,Twitch
+
+  # ========== 社交媒体 ==========
+  - GEOSITE,twitter,Twitter
+  - GEOSITE,facebook,Facebook
+  - GEOSITE,instagram,Instagram
+  - GEOSITE,telegram,Telegram
+
+  # ========== 开发者 ==========
+  - GEOSITE,github,GitHub
+  - GEOSITE,google,Google
+  - DOMAIN-SUFFIX,stackoverflow.com,Proxy
+
+  # ========== 国内直连 ==========
+  - GEOSITE,cn,DIRECT
+  - GEOIP,CN,DIRECT
+
+  # ========== 局域网 ==========
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+
+  # ========== 最终规则 ==========
+  - MATCH,Proxy
+
+# ========== 进程规则配置 ==========
+rules:
+  # 特定进程直连
+  - PROCESS-NAME,steam.exe,DIRECT
+  - PROCESS-NAME,LeagueofLegends.exe,DIRECT
+  - PROCESS-NAME,battle.net.exe,DIRECT
+
+  # 特定进程代理
+  - PROCESS-NAME,chrome.exe,Proxy
+  - PROCESS-NAME,firefox.exe,Proxy
+
+  # 其他规则
+  - GEOIP,CN,DIRECT
+  - MATCH,Proxy
+
+# ========== 端口规则配置 ==========
+rules:
+  # 特定端口直连
+  - DST-PORT,22,DIRECT        # SSH
+  - DST-PORT,3389,DIRECT      # RDP
+
+  # 特定端口代理
+  - SRC-PORT,7777,Proxy
+
+  # 其他规则
+  - GEOIP,CN,DIRECT
+  - MATCH,Proxy
+
+# ========== 域名规则配置 ==========
+rules:
+  # 精确域名匹配
+  - DOMAIN,www.google.com,Proxy
+
+  # 域名后缀匹配
+  - DOMAIN-SUFFIX,google.com,Proxy
+  - DOMAIN-SUFFIX,github.com,Proxy
+
+  # 域名关键词匹配
+  - DOMAIN-KEYWORD,google,Proxy
+
+  # 正则匹配
+  - DOMAIN-REGEX,^.*\.google\.com$,Proxy
+
+# ========== IP 规则配置 ==========
+rules:
+  # CIDR 匹配
+  - IP-CIDR,8.8.8.8/32,Proxy
+  - IP-CIDR,1.1.1.1/32,Proxy
+
+  # CIDR 范围
+  - IP-CIDR,10.0.0.0/8,DIRECT
+
+  # GeoIP 匹配
+  - GEOIP,US,Proxy
+  - GEOIP,CN,DIRECT
+
+  # ASN 匹配
+  - GEOIP-ASN,13335,Proxy     # Cloudflare
+
+# ========== 规则集配置 ==========
+rule-providers:
+  # 外部规则集
+  reject:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
+    path: ./ruleset/reject.yaml
+    interval: 86400
+
+  proxy:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt"
+    path: ./ruleset/proxy.yaml
+    interval: 86400
+
+  direct:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+    path: ./ruleset/direct.yaml
+    interval: 86400
+
+rules:
+  # 使用规则集
+  - RULE-SET,reject,REJECT
+  - RULE-SET,proxy,Proxy
+  - RULE-SET,direct,DIRECT
+
+  # GeoIP
+  - GEOIP,CN,DIRECT
+
+  # 最终
+  - MATCH,Proxy
+
+# ========== Script 规则配置 ==========
+script:
+  shortcuts:
+    quic: network == "udp" and dst_port == 443
+
+rules:
+  - SCRIPT,quic,REJECT
+  - GEOIP,CN,DIRECT
+  - MATCH,Proxy
+```
+
+## 规则类型
+
+| 规则类型 | 格式 | 说明 |
+|----------|------|------|
+| DOMAIN | DOMAIN,xxx.com,Policy | 精确域名 |
+| DOMAIN-SUFFIX | DOMAIN-SUFFIX,xxx.com,Policy | 域名后缀 |
+| DOMAIN-KEYWORD | DOMAIN-KEYWORD,xxx,Policy | 域名关键词 |
+| DOMAIN-REGEX | DOMAIN-REGEX,regex,Policy | 正则匹配 |
+| IP-CIDR | IP-CIDR,x.x.x.x/y,Policy | CIDR 匹配 |
+| GEOIP | GEOIP,CN,Policy | GeoIP 匹配 |
+| GEOSITE | GEOSITE,google,Policy | GeoSite 匹配 |
+| DST-PORT | DST-PORT,80,Policy | 目标端口 |
+| SRC-PORT | SRC-PORT,80,Policy | 源端口 |
+| PROCESS-NAME | PROCESS-NAME,xxx.exe,Policy | 进程名 |
+| RULE-SET | RULE-SET,name,Policy | 规则集 |
+| MATCH | MATCH,Policy | 最终匹配 |
+
+## 规则优先级
+
+规则从上到下匹配，匹配成功即停止:
+
+```
+1. 广告拦截规则
+2. 流媒体规则
+3. 特定服务规则
+4. 国内直连规则
+5. 最终 MATCH 规则
+```
+
+## 相关链接
+
+- [[overview]] — 配置总览
+- [[ref/mihomo/rules/overview]] — 规则参考总览
+- [[client/mihomo-rules]] — 规则系统详解
+- [[proxy-groups.yaml]] — 代理组配置

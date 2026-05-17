@@ -600,3 +600,255 @@ channel, crypto, fault, memory, multiplex, pipeline, protocol, recognition, reso
 - 所有文件有 `related` frontmatter 字段
 - 所有页面至少 3 个出站 wikilink
 - 无自引用链接、无 mojibake 乱码
+
+## [2026-05-17] plan | PrismWiki 知识库重构规划
+
+### 背景
+用户要求根据 `H:\PrismWiki\skills\prism-wiki-standard` skill 标准，结合 Prism 项目源码，对知识库进行完整重构。
+
+### 用户决策
+- **重构范围**: 全量重构（补充缺失文档 + 标准合规化 + 目录重组）
+- **详细度档位**: 全部 S档（完整段落、所有函数展开、完整调用链）
+- **执行方式**: 自动化执行（Claude Code 扫描生成，人工审核）
+- **技术方案**: 模块代理分析（Explore 代理深度分析每个模块）
+
+### 探索完成
+- Phase 1 源码扫描完成：16 个模块全部深度分析
+- Batch 1: agent, channel, crypto, multiplex (4 代理)
+- Batch 2: pipeline, protocol, recognition, resolve (4 代理)
+- Batch 3: stealth, memory, exception, fault (4 代理)
+- Batch 4: trace, transformer, loader, outbound (4 代理)
+
+### 关键发现
+- **知识库现状**: 196 个 md 文件，26 个顶层目录
+- **问题**: 7 个模块目录为空、docs/ 归档未迁移、bugs/ 未启用
+- **Skill 标准**: 7 种文档类型、S档 7 必填段落、frontmatter 7 字段
+
+### Phase 3: 目录结构清理
+- 创建 `bugs/template.md` — Bug 报告模板
+- 更新 `index.md` 添加 bugs 入口
+- docs/ 目录 36 个旧文档待处理（需逐一检查是否重复）
+
+### 后续任务
+- Phase 2: S档文档生成与修复
+- Phase 3: docs/ 归档清理、空目录处理
+- Phase 4: 验证审计（frontmatter 合规性、链接完整性）
+
+## [2026-05-17] audit | Phase 4 验证审计完成
+
+### 审计统计
+
+| 审计项 | 合规率 | 问题数 |
+|--------|--------|--------|
+| Frontmatter合规性 | 74.86% | 46文件 |
+| 链接完整性 | 62.7%覆盖率 | 69缺失目标 |
+| S档段落完整性 | 95% | 1文件 |
+
+### 详细发现
+
+**Frontmatter合规性**：
+- 扫描183文件，137完全合规
+- 问题文件集中在 docs/（36个）和 ref/（15个）
+- 所有API文档source路径正确
+- 2文件tags超标：channel/connection/pool.md, multiplex/yamux/craft.md
+
+**链接完整性**：
+- 总wikilink 4,139，唯一目标309
+- 275处转义问题（`\|`应为`|`）分布在15文件
+- 69个缺失目标（38模块索引+13参考文档+18其他）
+- 孤儿页86个（docs/25 + ref/30 + skills/5 + 其他26）
+
+**段落完整性**：
+- 抽样20个API文档，19个完全合规
+- 仅 protocol/vless/format.md 缺少函数签名表段落
+- 所有函数详解包含7字段（功能、签名、参数、返回值、调用、被调用、知识域）
+
+### 修复建议
+
+**高优先级**：
+1. 修复15文件的转义语法错误（`\|`→`|`）
+2. 处理 docs/ 目录36个旧文档（补frontmatter或删除重复）
+3. 补充 ref/ 目录15个参考文档的frontmatter
+
+**中优先级**：
+4. 创建38个缺失的模块索引文档
+5. 提升index.md覆盖率从62.7%到80%+
+
+**低优先级**：
+6. 修复2个文件的tags数量超标
+7. 补充 protocol/vless/format.md 的函数签名表
+
+### 最终状态
+
+- 知识库整体质量良好
+- 核心API文档符合S档标准
+- docs/和ref/目录需要处理
+- 重构基本完成，进入维护阶段
+
+## [2026-05-17] delete | docs/ 归档目录清理
+
+### 操作
+- 删除 docs/ 目录及其下所有文件
+
+### 删除文件清单（36 个）
+docs\protocol\tls\serverrandom.md
+docs\protocol\tls\sessionid.md
+docs\agent\agent.md
+docs\agent\architecture.md
+docs\agent\configuration.md
+docs\agent\deployment.md
+docs\agent\testing.md
+docs\agent\troubleshooting.md
+docs\channel\channel.md
+docs\channel\transport.md
+docs\crypto\crypto.md
+docs\multiplex\multiplex.md
+docs\multiplex\smux.md
+docs\multiplex\yamux.md
+docs\pipeline\pipeline.md
+docs\pipeline\processors.md
+docs\protocol\common.md
+docs\protocol\http.md
+docs\protocol\protocol.md
+docs\protocol\proxy-protocols.md
+docs\protocol\shadowsocks.md
+docs\protocol\socks5.md
+docs\protocol\tls.md
+docs\protocol\trojan.md
+docs\protocol\trojan-gfw.md
+docs\protocol\vless.md
+docs\resolve\dns.md
+docs\resolve\resolve.md
+docs\stealth\anytls.md
+docs\stealth\ech.md
+docs\stealth\pki-certificates.md
+docs\stealth\proxy-detection.md
+docs\stealth\reality.md
+docs\stealth\restls.md
+docs\stealth\shadowtls.md
+docs\stealth\stealth.md
+docs\stealth\trusttunnel.md
+
+### 原因
+- docs/ 为归档目录，包含旧版文档（无 frontmatter）
+- 所有文档已被新文档覆盖（按 S档标准生成）
+- 用户确认可删除
+
+### 验证
+- docs/ 目录已不存在
+- index.md 无需更新（无指向 docs/ 的链接）
+- 总页面数减少 36 个
+
+## [2026-05-17] refactor | PrismWiki 知识库四层分离架构重构
+
+### 背景
+- 知识库结构混乱，架构不清晰
+- 文档不够详细，缺少调用链标注
+- mihomo 参考资料不完整
+- 需要 wiki-sync skill 检查同步状态
+
+### 架构设计
+- 四层分离：core/（详细）、dev/（开发）、docs/（用户）、ref/（参考）
+- 知识不重复原则：同一知识点只在一处详细写，其他用 wikilink 引用
+- core/ 层复杂函数逐行解释，标注源码位置和调用链
+
+### 执行过程（19 Phases, 44 Tasks）
+
+#### Phase 1-3: 目录结构 + 基础文件
+- 创建 core/、dev/、docs/、ref/、skills/ 目录结构
+- 重写 SCHEMA.md 定义四层架构
+- 重写 index.md 四层索引
+- 创建 core/overview.md、architecture.md、startup.md、flow.md、infrastructure.md
+
+#### Phase 4-5: dev/ + docs/ 层
+- dev/overview.md + coding/（naming、coroutine、pmr、doxygen、lifecycle、error）
+- dev/building/（cmake、dependencies、commands、options）
+- docs/ 所有用户指南页面（getting-started、deployment 等）
+
+#### Phase 6-12: core/ 模块
+- agent/（overview、config、context、front、session、worker、account、dispatch）
+- channel/（overview、health、transport、connection、eyeball、adapter）
+- pipeline/ + protocol/（overview、primitives、protocols、common、http、socks5、trojan、vless、shadowsocks、tls）
+- stealth/（overview、scheme、executor、registry、native、reality、shadowtls、restls、anytls、trusttunnel、ech）
+- recognition/ + resolve/（overview、recognition、result、confidence、probe、dns）
+- multiplex/（overview、bootstrap、duct、parcel、smux、yamux）
+- crypto/ + outbound/（aead、hkdf、x25519、blake3、block、base64、proxy、direct）
+- 基础设施（memory、fault、exception、trace、transformer、loader）
+
+#### Phase 13-15: dev/ 其他 + ref/mihomo/
+- dev/testing/、debugging/、performance/、extending/、bugs/、roadmap
+- ref/overview + crypto/protocol/network
+- mihomo/protocols/（22 个协议）
+- mihomo/transport/、mux/、proxy-groups/、rules/、dns/、tun/
+- mihomo/config/、compatibility/、implementation/
+- mihomo/sniffing/、listeners/、provider/、ntp/、experimental/、script/
+
+#### Phase 16-17: ref/programming/ + wiki-sync skill
+- ref/programming/（overview、boost-asio、cpp23-coroutine、constexpr、pmr-concepts、error-handling、go-concurrency）
+- ref/glossary.md（术语表）
+- skills/prism-wiki-sync/（SKILL.md、checks.md、report-template.md、source-mapping.md）
+
+#### Phase 18: 清理旧目录
+删除：incoming/、agent/、channel/、crypto/、multiplex/、pipeline/、protocol/、stealth/、resolve/、memory/、fault/、exception/、trace/、transformer/、loader/、outbound/、client/、dispatch/、infrastructure/、performance/、recognition/、bugs/、.plan/
+删除：exception.md、fault.md、loader.md、memory.md、outbound.md、trace.md、transformer.md
+
+### 最终目录结构
+```
+wiki/
+├── core/              # 模块实现细节（详细）
+├── dev/               # 开发规范、排障方法（详细）
+├── docs/              # 使用指南（简单）
+├── ref/               # 参考知识 + mihomo（中等）
+├── skills/            # prism-wiki-sync skill
+├── SCHEMA.md
+├── index.md
+├── log.md
+└── README.md
+```
+
+### 页面统计
+- core/: ~120 页面
+- dev/: ~45 页面
+- docs/: ~12 页面
+- ref/: ~180 页面（含 mihomo/ ~100 页面）
+- skills/: 4 页面
+## [2026-05-17] verify | 深度验证与修复
+
+### 验证结果
+- 三个 Explore agents 完成全面检查
+- 发现问题：32 个文件缺 frontmatter、144 个缺 title、source 路径不一致、5 个协议缺字段
+
+### 修复内容
+
+#### Phase 1: Frontmatter 补充
+- ref/mihomo/protocols/*.md：24 个协议文件添加 frontmatter
+- docs/*.md：10 个文件补充完整 frontmatter
+- index.md、SCHEMA.md：添加 frontmatter
+- core/infrastructure.md、core/overview.md：补充 source 字段
+
+#### Phase 2: Source 路径统一
+- 10 个文件：相对路径 `include/prism/...` → 绝对路径 `I:/code/Prism/include/prism/...`
+
+#### Phase 3: Mihomo 协议字段补充
+- VLESS：5 个新字段（packet-addr、packet-encoding、encryption、ws-headers、servername）
+- VMess：6 个新字段（servername、packet-addr、packet-encoding、global-padding、authenticated-length、client-fingerprint）
+- Trojan：3 个新字段（ech-opts、reality-opts、client-fingerprint）
+- Hysteria2：5 个新字段（udp-mtu、4 个 QUIC 窗口参数）
+- TUIC：6 个新字段（ip、disable-sni、recv-window-conn、recv-window、disable-mtu-discovery、max-datagram-frame-size）
+
+#### Phase 4: 空文件填充
+- ref/logging/spdlog.md：添加 spdlog 文档
+- ref/programming/cpp-23.md：添加 C++23 新特性文档
+- ref/protocol/http-1-1.md：添加 HTTP/1.1 文档
+- ref/mihomo/protocols/overview.md：添加 frontmatter
+
+### 最终统计
+- 总页面：389
+- 有 frontmatter：385（99%）
+- source 路径统一：46 个绝对路径，0 个相对路径
+- Mihomo 协议：25 个，字段完整
+- 四层分离架构完整实现
+- 所有 Prism 模块详细文档
+- mihomo 22+ 协议完整参考
+- wiki-sync skill 用于同步检查
+- 知识库规范（SCHEMA.md）确立

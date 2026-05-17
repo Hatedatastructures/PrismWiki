@@ -1,0 +1,168 @@
+---
+title: "基础配置模板"
+layer: ref
+category: "mihomo"
+type: config
+module: ref/mihomo/config
+format: yaml
+tags: [mihomo, config, basic, template, yaml]
+created: 2026-05-17
+updated: 2026-05-17
+related:
+  - "[[ref/mihomo/config/overview]]"
+  - "[[ref/mihomo/config/advanced.yaml]]"
+---
+
+# 基础配置模板
+
+**类别**: Mihomo 配置模板 | **文件**: basic.yaml
+
+## 配置内容
+
+```yaml
+# mihomo 基础配置模板
+# 最小配置，适合快速开始
+
+# ========== 基础设置 ==========
+# HTTP/SOCKS5 混合端口
+mixed-port: 7890
+
+# 允许局域网访问
+allow-lan: true
+
+# 绑定地址
+bind-address: "*"
+
+# 运行模式: rule/global/direct
+mode: rule
+
+# 日志级别: silent/error/warning/info/debug
+log-level: info
+
+# IPv6 支持
+ipv6: false
+
+# ========== 外部控制器 ==========
+# RESTful API 端口
+external-controller: 127.0.0.1:9090
+
+# 外部控制器 TLS 配置（可选）
+# external-controller-tls: ""
+
+# ========== GEO 数据 ==========
+# GeoIP 数据库 URL
+geodata-mode: true
+geo-auto-update: true
+geox-url:
+  geoip: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+
+# ========== DNS 配置 ==========
+dns:
+  enable: true
+  listen: 0.0.0.0:1053
+
+  # DNS 模式: fake-ip/redir-host
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+
+  # fake-ip 过滤列表
+  fake-ip-filter:
+    - "*.lan"
+    - "*.local"
+    - "*.localhost"
+
+  # 默认 DNS 服务器
+  nameserver:
+    - https://dns.alidns.com/dns-query
+
+  # 备用 DNS（海外）
+  fallback:
+    - https://dns.google/dns-query
+
+  # fallback 过滤条件
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+
+# ========== 代理节点 ==========
+proxies:
+  # Trojan 示例
+  - name: "trojan-node"
+    type: trojan
+    server: server.example.com
+    port: 443
+    password: "password123"
+    sni: server.example.com
+    skip-cert-verify: false
+
+  # VLESS 示例
+  - name: "vless-node"
+    type: vless
+    server: server.example.com
+    port: 443
+    uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    flow: ""
+    tls: true
+    servername: server.example.com
+
+# ========== 代理组 ==========
+proxy-groups:
+  - name: "Proxy"
+    type: select
+    proxies:
+      - trojan-node
+      - vless-node
+      - DIRECT
+
+  - name: "Auto"
+    type: url-test
+    proxies:
+      - trojan-node
+      - vless-node
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+
+# ========== 规则 ==========
+rules:
+  # 直连国内 IP
+  - GEOIP,CN,DIRECT
+
+  # 最终规则
+  - MATCH,Proxy
+
+# ========== 其他设置 ==========
+# 自动更新 Geo 数据间隔（小时）
+auto-update-geoip: 24
+
+# 找不到节点时直连
+find-process-mode: strict
+global-client-fingerprint: chrome
+```
+
+## 配置说明
+
+| 配置项 | 说明 |
+|--------|------|
+| mixed-port | HTTP/SOCKS5 混合监听端口 |
+| allow-lan | 是否允许局域网设备连接 |
+| mode | rule=规则分流, global=全局代理, direct=直连 |
+| dns.enhanced-mode | fake-ip 返回虚拟 IP，防 DNS 泄露 |
+| proxies | 代理节点列表 |
+| proxy-groups | 代理组，组织节点 |
+| rules | 分流规则 |
+
+## 使用方式
+
+1. 将配置保存为 `config.yaml`
+2. 运行 `mihomo -f config.yaml`
+3. 设置系统代理为 `127.0.0.1:7890`
+4. 访问 API: `http://127.0.0.1:9090`
+
+## 相关链接
+
+- [[overview]] — 配置总览
+- [[advanced.yaml]] — 高级配置模板
+- [[full-example.yaml]] — 完整配置示例
+- [[client/mihomo-meta]] — mihomo 概述

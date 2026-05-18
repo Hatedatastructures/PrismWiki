@@ -14,11 +14,11 @@ tags: [configuration, json, agent, pool, protocol, multiplex, stealth, dns, trac
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - "[[modules/agent]]"
-  - "[[modules/channel]]"
-  - "[[modules/multiplex]]"
-  - "[[modules/stealth]]"
-  - "[[modules/resolve]]"
+  - "[[core/agent/overview|agent]]"
+  - "[[core/channel/overview|channel]]"
+  - "[[core/multiplex/overview|multiplex]]"
+  - "[[core/stealth/overview|stealth]]"
+  - "[[core/resolve/overview|resolve]]"
 ---
 
 # 配置文件完整参考
@@ -1058,8 +1058,8 @@ kill -HUP <pid>  # 不支持热加载，需要完全重启
 
 ## 相关链接
 
-- [[modules/agent]] — Agent 模块
-- [[modules/channel]] — Channel 连接池
-- [[modules/multiplex]] — Multiplex 多路复用
-- [[modules/stealth]] — Stealth TLS伪装
-- [[modules/resolve]] — DNS 解析模块
+- [[core/agent/overview|agent]] — Agent 模块
+- [[core/channel/overview|channel]] — Channel 连接池
+- [[core/multiplex/overview|multiplex]] — Multiplex 多路复用
+- [[core/stealth/overview|stealth]] — Stealth TLS伪装
+- [[core/resolve/overview|resolve]] — DNS 解析模块

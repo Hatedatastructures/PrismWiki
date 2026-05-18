@@ -10,10 +10,10 @@ tags: [testing, ctest, unit, e2e, regression, integration, protocol, crypto]
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - "[[dev/stress]]"
-  - "[[modules]]"
-  - "[[configuration]]"
-  - "[[architecture]]"
+  - "[[dev/testing/stress|stress]]"
+  - "[[core/overview|overview]]"
+  - "[[dev/building/configuration|configuration]]"
+  - "[[core/architecture|architecture]]"
 ---
 
 # 测试体系完整指南
@@ -1098,7 +1098,7 @@ void TestE2E() {
 
 ## 相关链接
 
-- [[dev/stress]] — 压力测试体系
-- [[modules]] — 模块概览
-- [[configuration]] — 配置参考
-- [[architecture]] — 架构设计
+- [[dev/testing/stress|stress]] — 压力测试体系
+- [[core/overview|overview]] — 模块概览
+- [[dev/building/configuration|configuration]] — 配置参考
+- [[core/architecture|architecture]] — 架构设计

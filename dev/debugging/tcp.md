@@ -7,13 +7,13 @@ tags: [tcp, transport, network, connection, boost-asio, socket]
 created: 2026-05-13
 updated: 2026-05-17
 related:
-  - "[[channel/transport/reliable]]"
-  - "[[channel/connection/pool]]"
-  - "[[channel/eyeball/racer]]"
-  - "[[dev/tls]]"
-  - "[[dev/udp]]"
-  - "[[multiplex/smux]]"
-  - "[[multiplex/yamux]]"
+  - "[[core/channel/transport/reliable|reliable]]"
+  - "[[core/channel/connection/pool|pool]]"
+  - "[[core/channel/eyeball/racer|racer]]"
+  - "[[dev/debugging/tls|tls]]"
+  - "[[dev/debugging/udp|udp]]"
+  - "[[core/multiplex/smux/craft|smux]]"
+  - "[[core/multiplex/yamux/craft|yamux]]"
   - "[[core/agent/overview|agent]]"
 ---
 
@@ -89,14 +89,14 @@ TCP 头部最小 20 字节，包含关键字段：
    - Proxy → Target：1-RTT 握手
    - 总计 2-RTT，相比直连增加 1-RTT
 
-2. **连接复用**：多路复用协议（[[multiplex/smux]]、[[multiplex/yamux]]）可以在一条 TCP 上承载多个逻辑连接，消除部分握手开销。
+2. **连接复用**：多路复用协议（[[core/multiplex/smux/craft|smux]]、[[core/multiplex/yamux/craft|yamux]]）可以在一条 TCP 上承载多个逻辑连接，消除部分握手开销。
 
 3. **拥塞控制独立性**：代理两端分别进行拥塞控制：
    - Client-Proxy 段有自己的拥塞状态
    - Proxy-Target 段有独立的拥塞状态
    - 可能导致性能下降（队头阻塞）
 
-4. **连接池复用**：[[channel/connection/pool]] 可以复用空闲 TCP 连接，避免重复握手开销。
+4. **连接池复用**：[[core/channel/connection/pool|pool]] 可以复用空闲 TCP 连接，避免重复握手开销。
 
 ### TCP 数据流特性
 
@@ -466,7 +466,7 @@ $ cat /proc/sys/net/ipv4/ip_local_port_range
 
 3. **连接池复用**：
 
-   Prism 使用 [[channel/connection/pool]] 复用空闲连接，避免频繁关闭。
+   Prism 使用 [[core/channel/connection/pool|pool]] 复用空闲连接，避免频繁关闭。
 
 4. **被动关闭策略**：
 
@@ -556,7 +556,7 @@ shutdown(fd, SHUT_RD);
 shutdown(fd, SHUT_RDWR);
 ```
 
-Prism 中 [[channel/transport/reliable]] 实现了 `shutdown_write()` 方法。
+Prism 中 [[core/channel/transport/reliable|reliable]] 实现了 `shutdown_write()` 方法。
 
 ### TCP 保活（Keep-Alive）
 
@@ -713,7 +713,7 @@ auto connect_and_read() -> net::awaitable<std::string> {
 
 ### reliable 传输层
 
-[[channel/transport/reliable]] 是 Prism 的 TCP 传输层实现，继承 `transmission` 接口：
+[[core/channel/transport/reliable|reliable]] 是 Prism 的 TCP 传输层实现，继承 `transmission` 接口：
 
 ```cpp
 class reliable : public transmission {
@@ -804,7 +804,7 @@ transport->async_write_scatter(buffers, 2, ec);
 
 ### 连接池复用
 
-[[channel/connection/pool]] 提供 TCP 连接池，避免重复握手：
+[[core/channel/connection/pool|pool]] 提供 TCP 连接池，避免重复握手：
 
 **核心流程**：
 
@@ -868,7 +868,7 @@ auto acquire_and_use(connection_pool &pool, tcp::endpoint ep)
 
 ### Happy Eyeballs（RFC 8305）
 
-[[channel/eyeball/racer]] 实现 Happy Eyeballs 算法，解决双栈连接选择问题：
+[[core/channel/eyeball/racer|racer]] 实现 Happy Eyeballs 算法，解决双栈连接选择问题：
 
 **问题背景**：
 
@@ -1476,8 +1476,8 @@ if (bytes == 0 && !ec) {
 - [[core/channel/transport/reliable|reliable]] — TCP 可靠传输层实现
 - [[core/channel/connection/pool|pool]] — TCP 连接池实现
 - [[core/channel/eyeball/racer|racer]] — Happy Eyeballs 竞速器
-- [[dev/tls]] — TLS 协议基础
-- [[dev/udp]] — UDP 协议基础
+- [[dev/debugging/tls|tls]] — TLS 协议基础
+- [[dev/debugging/udp|udp]] — UDP 协议基础
 - [[core/multiplex/smux/craft|smux]] — SMux 多路复用
 - [[core/multiplex/yamux/craft|yamux]] — Yamux 多路复用
 - [[core/agent/overview|agent]] — Prism Agent 概览

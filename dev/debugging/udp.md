@@ -11,11 +11,11 @@ tags: [udp, transport, network, socks5, parcel, datagram, dns]
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - "[[modules/channel]]"
-  - "[[modules/protocol]]"
-  - "[[modules/multiplex]]"
-  - "[[dev/tcp]]"
-  - "[[configuration]]"
+  - "[[core/channel/overview|channel]]"
+  - "[[core/protocol/overview|protocol]]"
+  - "[[core/multiplex/overview|multiplex]]"
+  - "[[dev/debugging/tcp|tcp]]"
+  - "[[dev/building/configuration|configuration]]"
 ---
 
 # UDP 协议实践指南
@@ -897,8 +897,8 @@ void validate_udp_header(udp_header header) {
 
 ## 相关链接
 
-- [[modules/channel]] — 通道模块与连接管理
-- [[modules/protocol]] — 协议模块概览
-- [[modules/multiplex]] — 多路复用模块
-- [[dev/tcp]] — TCP 协议实践
-- [[configuration]] — UDP 配置参数
+- [[core/channel/overview|channel]] — 通道模块与连接管理
+- [[core/protocol/overview|protocol]] — 协议模块概览
+- [[core/multiplex/overview|multiplex]] — 多路复用模块
+- [[dev/debugging/tcp|tcp]] — TCP 协议实践
+- [[dev/building/configuration|configuration]] — UDP 配置参数

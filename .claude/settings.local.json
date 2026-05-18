@@ -12,7 +12,8 @@
       "Bash(sed -i 's/\\\\[\\\\[channel\\\\/eyeball\\\\/racer\\\\]\\\\]/[[core/channel/eyeball/racer|racer]]/g' dev/tcp.md)",
       "Bash(sed -i 's/\\\\[\\\\[multiplex\\\\/smux\\\\]\\\\]/[[core/multiplex/smux/craft|smux]]/g' dev/tcp.md)",
       "Bash(sed -i 's/\\\\[\\\\[multiplex\\\\/yamux\\\\]\\\\]/[[core/multiplex/yamux/craft|yamux]]/g' dev/tcp.md)",
-      "Bash(sed 's/|.*//')"
+      "Bash(sed 's/|.*//')",
+      "Bash(git push *)"
     ]
   }
 }

@@ -9,7 +9,7 @@ tags: [gfw, censorship, detection, dpi, tls-fingerprint, active-probing, bypass]
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - "[[modules/stealth]]"
+  - "[[core/stealth/overview|stealth]]"
   - "[[dev/tls]]"
   - "[[configuration]]"
 ---
@@ -764,6 +764,6 @@ openssl s_client -connect YOUR_SERVER:443
 
 ## 相关链接
 
-- [[modules/stealth]] — Stealth 模块详解
+- [[core/stealth/overview|stealth]] — Stealth 模块详解
 - [[dev/tls]] — TLS 协议实践
 - [[configuration]] — 伪装配置参数

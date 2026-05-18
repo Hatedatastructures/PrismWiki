@@ -113,4 +113,4 @@ mihomo 配置格式与 Prism 不同:
 - [[ref/mihomo/protocols/overview]] — 协议总览
 - [[ref/mihomo/transport/overview]] — 传输层总览
 - [[ref/mihomo/config/overview]] — 配置总览
-- [[client/mihomo-meta]] — mihomo 概述
+- [[ref/mihomo/index|mihomo]] — mihomo 概述

@@ -16,7 +16,7 @@ related:
 # transparent — 透明哈希与相等比较器
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/transparent.hpp`
-> 模块: [[resolve|resolve]] / [[resolve/dns|dns]] / detail
+> 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 
 ## 组件定位
 

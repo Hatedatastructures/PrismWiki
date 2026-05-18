@@ -225,12 +225,12 @@ SNI 绕过方法：
 - SNI 使用真实网站域名
 - 连接真实网站作为掩护
 - Reality 秘密验证客户端
-- 详见 [[stealth/reality]]
+- 详见 [[core/stealth/reality/handshake|reality]]
 
 方法 4: ShadowTLS
 - 使用真实 TLS 握手作为掩护
 - 秘密传递代理认证
-- 详见 [[stealth/shadowtls]]
+- 详见 [[core/stealth/shadowtls|shadowtls]]
 ```
 
 ## DPI 检测
@@ -340,7 +340,7 @@ MD5(ClientHello Version + CipherSuites + Extensions + SupportedGroups + Signatur
 方法 1: 验证真实客户端
 - Reality: 验证客户端是真实用户
 - 不响应探测请求
-- 详见 [[stealth/reality]]
+- 详见 [[core/stealth/reality/handshake|reality]]
 
 方法 2: 伪装为正常服务
 - 返回标准 HTTP/HTTPS 响应
@@ -412,7 +412,7 @@ Reality 核心思想：
 - 通过加密隧道传输代理数据
 ```
 
-详见 [[stealth/reality|Reality]]。
+详见 [[core/stealth/reality/handshake|Reality]]。
 
 ### 检测规避策略
 
@@ -440,8 +440,8 @@ DPI 规避：
 
 ## 参见
 
-- [[stealth/reality|Reality]] — Reality TLS 伪装
-- [[stealth/shadowtls|ShadowTLS]] — ShadowTLS 伪装
+- [[core/stealth/reality/handshake|Reality]] — Reality TLS 伪装
+- [[core/stealth/shadowtls|ShadowTLS]] — ShadowTLS 伪装
 - [[ref/anti-censorship/dpi|DPI]] — 深度包检测
 - [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] — TLS 指纹检测
 - [[ref/anti-censorship/traffic-analysis|流量分析]] — 流量分析

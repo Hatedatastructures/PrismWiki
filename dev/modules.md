@@ -5,13 +5,13 @@ updated: 2026-05-17
 type: concept
 tags: [architecture, modules, overview, design-pattern]
 related: 
-  - "[[agent/overview]]"
-  - "[[agent/architecture]]"
-  - "[[protocol/overview]]"
-  - "[[pipeline/overview]]"
-  - "[[recognition/overview]]"
-  - "[[dev/cpp23-coroutines]]"
-  - "[[dev/pmr-memory-pool]]"
+  - "[[core/agent/overview|agent-overview]]"
+  - "[[core/architecture|agent-architecture]]"
+  - "[[core/protocol/overview|protocol]]"
+  - "[[core/pipeline/overview|pipeline]]"
+  - "[[core/recognition/overview|recognition]]"
+  - "[[dev/coding/coroutine|coroutines]]"
+  - "[[dev/coding/pmr|pmr]]"
 sources:
   - I:/code/Prism/CLAUDE.md
   - I:/code/Prism/include/prism/
@@ -894,11 +894,11 @@ PMR 内存池需要初始化全局资源：
 
 ## 相关页面
 
-- [[agent/overview]] — Agent 模块概述
-- [[agent/architecture]] — 架构设计
-- [[protocol/overview]] — Protocol 模块
-- [[pipeline/overview]] — Pipeline 模块
-- [[recognition/overview]] — Recognition 模块
+- [[core/agent/overview|overview]] — Agent 模块概述
+- [[core/agent/architecture|architecture]] — 架构设计
+- [[core/protocol/overview]] — Protocol 模块
+- [[core/pipeline/overview]] — Pipeline 模块
+- [[core/recognition/overview]] — Recognition 模块
 - [[dev/cpp23-coroutines]] — 协程技术
 - [[dev/pmr-memory-pool]] — PMR 内存池
 - [[dev/testing]] — 测试体系

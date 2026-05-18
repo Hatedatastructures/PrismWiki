@@ -973,5 +973,5 @@ Prism 等异步架构更适合 io_uring。
 
 - [[ref/memory/pmr|PMR 内存资源]] — 多态内存资源基础
 - [[ref/memory/arena|Arena 分配器]] — 帧级线性分配
-- [[channel/transport/transmission|传输层]] — Prism 隧道实现
-- [[memory/container|PMR 容器别名]] — 容器类型定义
+- [[core/channel/transport/transmission|传输层]] — Prism 隧道实现
+- [[core/memory/container|PMR 容器别名]] — 容器类型定义

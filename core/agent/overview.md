@@ -224,15 +224,15 @@ tunnel 双向转发
 
 | 依赖方向 | 模块 | 说明 |
 |----------|------|------|
-| 依赖 | [[memory/overview|Memory]] | PMR 容器、内存池 |
-| 依赖 | [[resolve/router|Resolve]] | DNS 路由器 |
-| 依赖 | [[channel/overview|Channel]] | 连接池、传输层 |
-| 依赖 | [[protocol/overview|Protocol]] | 协议配置 |
-| 依赖 | [[stealth/overview|Stealth]] | 伪装配置 |
-| 依赖 | [[pipeline/overview|Pipeline]] | 协议处理器 |
-| 依赖 | [[recognition/recognition|Recognition]] | 协议识别 |
+| 依赖 | [[core/memory/overview|Memory]] | PMR 容器、内存池 |
+| 依赖 | [[core/resolve/router|Resolve]] | DNS 路由器 |
+| 依赖 | [[core/channel/overview|Channel]] | 连接池、传输层 |
+| 依赖 | [[core/protocol/overview|Protocol]] | 协议配置 |
+| 依赖 | [[core/stealth/overview|Stealth]] | 伪装配置 |
+| 依赖 | [[core/pipeline/overview|Pipeline]] | 协议处理器 |
+| 依赖 | [[core/recognition/recognition|Recognition]] | 协议识别 |
 | 依赖 | [[outbound/proxy|Outbound]] | 出站代理 |
-| 被依赖 | [[loader/load|Loader]] | 配置加载后构建 Agent |
+| 被依赖 | [[core/loader/load|Loader]] | 配置加载后构建 Agent |
 | 被依赖 | [[core/startup|启动流程]] | Agent 是启动核心 |
 
 ## 配置映射

@@ -16,7 +16,7 @@ related:
 # upstream — DNS 查询客户端
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/upstream.hpp`
-> 模块: [[resolve|resolve]] / [[resolve/dns|dns]]
+> 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]]
 
 ## 组件定位
 

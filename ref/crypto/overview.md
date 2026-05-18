@@ -35,10 +35,10 @@ Prism 项目中密码学原理的应用场景：
 
 | 场景 | 使用算法 | 应用模块 |
 |------|----------|----------|
-| Reality TLS 伪装 | X25519 + HKDF + AES-GCM | [[stealth/reality]] |
-| SS2022 加密 | BLAKE3 + AES-GCM/ChaCha20 | [[protocol/shadowsocks]] |
-| Trojan 认证 | SHA-224 | [[protocol/trojan]] |
-| TLS 记录层加密 | AES-GCM | [[channel/transport/encrypted]] |
+| Reality TLS 伪装 | X25519 + HKDF + AES-GCM | [[core/stealth/reality/handshake|reality]] |
+| SS2022 加密 | BLAKE3 + AES-GCM/ChaCha20 | [[core/protocol/shadowsocks|shadowsocks]] |
+| Trojan 认证 | SHA-224 | [[core/protocol/trojan|trojan]] |
+| TLS 记录层加密 | AES-GCM | [[core/channel/transport/encrypted|encrypted]] |
 
 ## 核心概念
 
@@ -185,7 +185,7 @@ Nonce 重用风险：
 
 ## 参见
 
-- [[crypto/overview|Crypto 模块]] — 加密算法实现层
+- [[core/crypto/overview|Crypto 模块]] — 加密算法实现层
 - [[ref/protocol/tls-handshake|TLS 握手流程]] — TLS 协议
-- [[stealth/reality|Reality]] — TLS 伪装方案
+- [[core/stealth/reality/handshake|Reality]] — TLS 伪装方案
 - [[ref/overview|参考资料概览]] — 参考资料层索引

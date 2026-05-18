@@ -216,5 +216,5 @@ proxy-groups:
 
 - [[overview]] — 配置总览
 - [[ref/mihomo/proxy-groups/overview]] — 代理组参考
-- [[client/mihomo-proxy-groups]] — 代理组详解
+- [[ref/mihomo/proxy-groups/overview|proxy-groups]] — 代理组详解
 - [[rules.yaml]] — 规则配置

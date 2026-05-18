@@ -84,9 +84,9 @@ PrismWiki 采用三层知识架构：
 | 文件 | 内容 | 参见 |
 |------|------|------|
 | [[ref/crypto/overview|overview]] | 密码学概览 | 本目录索引 |
-| [[ref/crypto/aead-basics|aead-basics]] | AEAD 认证加密原理 | [[crypto/aead]] |
-| [[ref/crypto/key-exchange|key-exchange]] | 密钥交换原理 (X25519) | [[crypto/x25519]] |
-| [[ref/crypto/hkdf-theory|hkdf-theory]] | HKDF 密钥派生理论 | [[crypto/hkdf]] |
+| [[ref/crypto/aead-basics|aead-basics]] | AEAD 认证加密原理 | [[core/crypto/aead|aead]] |
+| [[ref/crypto/key-exchange|key-exchange]] | 密钥交换原理 (X25519) | [[core/crypto/x25519|x25519]] |
+| [[ref/crypto/hkdf-theory|hkdf-theory]] | HKDF 密钥派生理论 | [[core/crypto/hkdf|hkdf]] |
 | [[ref/crypto/tls-crypto|tls-crypto]] | TLS 加密原理 | [[ref/protocol/tls-handshake]] |
 
 ### [[ref/protocol|协议规范]]
@@ -97,8 +97,8 @@ PrismWiki 采用三层知识架构：
 |------|------|------|
 | [[ref/protocol/overview|overview]] | 协议规范概览 | 本目录索引 |
 | [[ref/protocol/tls-handshake|tls-handshake]] | TLS 握手流程 | [[ref/crypto/tls-crypto]] |
-| [[ref/protocol/socks5-spec|socks5-spec]] | SOCKS5 RFC 1928 | [[protocol/socks5]] |
-| [[ref/protocol/http-proxy-spec|http-proxy-spec]] | HTTP 代理规范 | [[protocol/http]] |
+| [[ref/protocol/socks5-spec|socks5-spec]] | SOCKS5 RFC 1928 | [[core/protocol/socks5|socks5]] |
+| [[ref/protocol/http-proxy-spec|http-proxy-spec]] | HTTP 代理规范 | [[core/protocol/http|http]] |
 | [[ref/protocol/tcp-basics|tcp-basics]] | TCP 基础 | [[ref/network/tcp]] |
 | [[ref/protocol/udp-basics|udp-basics]] | UDP 基础 | [[ref/network/udp]] |
 | [[ref/protocol/quic-basics|quic-basics]] | QUIC 基础 | [[core/multiplex/overview|multiplex]] |
@@ -110,9 +110,9 @@ PrismWiki 采用三层知识架构：
 | 文件 | 内容 | 参见 |
 |------|------|------|
 | [[ref/network/overview|overview]] | 网络基础概览 | 本目录索引 |
-| [[ref/network/happy-eyeballs|happy-eyeballs]] | RFC 6555 Happy Eyeballs | [[channel/eyeball]] |
-| [[ref/network/connection-pool|connection-pool]] | 连接池原理 | [[channel/connection/pool]] |
-| [[ref/network/dns-resolution|dns-resolution]] | DNS 解析原理 | [[resolve/dns]] |
+| [[ref/network/happy-eyeballs|happy-eyeballs]] | RFC 6555 Happy Eyeballs | [[core/channel/eyeball|eyeball]] |
+| [[ref/network/connection-pool|connection-pool]] | 连接池原理 | [[core/channel/connection/pool|connection-pool]] |
+| [[ref/network/dns-resolution|dns-resolution]] | DNS 解析原理 | [[core/resolve/dns|dns]] |
 | [[ref/network/gfw|gfw]] | GFW 原理 | [[core/stealth/overview|stealth]] |
 | [[ref/network/proxy-detection|proxy-detection]] | 代理检测原理 | [[core/recognition/overview|recognition]] |
 

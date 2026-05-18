@@ -20,7 +20,7 @@ memory::system::enable_global_pooling()
 
 初始化 PMR 全局内存池，所有热路径容器使用此池分配。
 
-详见 [[memory/pool|内存池]]
+详见 [[core/memory/pool|内存池]]
 
 ### Step 2: 注册 TLS 伪装方案
 
@@ -36,7 +36,7 @@ stealth::register_all_schemes()
 - TrustTunnel
 - Native TLS
 
-详见 [[stealth/registry|方案注册表]]
+详见 [[core/stealth/registry|方案注册表]]
 
 ### Step 3: 加载配置文件
 
@@ -48,7 +48,7 @@ loader::load(config_path)
 1. 命令行参数指定的路径
 2. 可执行文件同目录下的 `configuration.json`
 
-详见 [[loader/load|配置加载]]
+详见 [[core/loader/load|配置加载]]
 
 ### Step 4: 初始化日志系统
 
@@ -61,7 +61,7 @@ trace::init(trace_config)
 - 控制台日志
 - 日志级别
 
-详见 [[trace/config|日志配置]]
+详见 [[core/trace/config|日志配置]]
 
 ### Step 5: 构建账户目录
 
@@ -71,7 +71,7 @@ loader::build_account_directory(config)
 
 从配置的 `authentication.users` 构建账户目录，用于后续认证。
 
-详见 [[agent/account/directory|账户目录]]
+详见 [[core/agent/account/directory|账户目录]]
 
 ### Step 6: 创建 Worker 线程池
 
@@ -82,7 +82,7 @@ workers.resize(std::thread::hardware_concurrency() - 1)
 
 每个 worker 持有独立的 `io_context`，处理连接。
 
-详见 [[agent/worker/worker|Worker]]
+详见 [[core/agent/worker/worker|Worker]]
 
 ### Step 7: 构建负载均衡器
 
@@ -92,7 +92,7 @@ balancer{workers}
 
 负载均衡器持有 worker 引用，根据亲和性哈希分发连接。
 
-详见 [[agent/front/balancer|负载均衡器]]
+详见 [[core/agent/front/balancer|负载均衡器]]
 
 ### Step 8: 启动监听器
 
@@ -102,7 +102,7 @@ listener{balancer, endpoint, tls_context}
 
 监听配置的端点，接受连接后分发给 balancer。
 
-详见 [[agent/front/listener|监听器]]
+详见 [[core/agent/front/listener|监听器]]
 
 ### Step 9: 启动所有线程
 

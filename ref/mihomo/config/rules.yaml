@@ -213,5 +213,5 @@ rules:
 
 - [[overview]] — 配置总览
 - [[ref/mihomo/rules/overview]] — 规则参考总览
-- [[client/mihomo-rules]] — 规则系统详解
+- [[ref/mihomo/rules/overview|rules]] — 规则系统详解
 - [[proxy-groups.yaml]] — 代理组配置

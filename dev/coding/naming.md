@@ -135,4 +135,4 @@ namespace psm::module_name {
 
 - [[overview]] - 编码规范概览
 - [[doxygen]] - Doxygen 注释规范
-- [[/dev/modules]] - 模块命名空间说明
+- [[dev/modules|modules]] - 模块命名空间说明

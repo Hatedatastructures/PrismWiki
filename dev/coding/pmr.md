@@ -1162,4 +1162,4 @@ public:
 ## 相关页面
 
 - [[overview]] - 编码规范概览
-- [[/dev/performance/benchmark]] - 性能基准测试
+- [[dev/testing/benchmark|benchmark]] - 性能基准测试

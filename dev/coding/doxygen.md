@@ -200,4 +200,4 @@ void register_handler(std::shared_ptr<handler> handler);
 
 - [[overview]] - 编码规范概览
 - [[naming]] - 命名规范
-- [[/dev/modules]] - 模块结构
+- [[dev/modules|modules]] - 模块结构

@@ -513,10 +513,10 @@ auto race_connections(std::vector<endpoint> endpoints)
 
 | 模块 | 功能 | 文档 |
 |------|------|------|
-| racer | 连接竞争 | [[channel/eyeball/racer]] |
-| connection_pool | 连接池 | [[channel/connection/pool]] |
-| upstream | DNS 上游 | [[resolve/dns/upstream]] |
-| router | 路由器 | [[resolve/router]] |
+| racer | 连接竞争 | [[core/channel/eyeball/racer|racer]] |
+| connection_pool | 连接池 | [[core/channel/connection/pool|connection-pool]] |
+| upstream | DNS 上游 | [[core/resolve/dns/upstream|upstream]] |
+| router | 路由器 | [[core/resolve/router|router]] |
 
 ## 最佳实践
 
@@ -704,5 +704,5 @@ spdlog::info("Connection established in {}ms via {}", elapsed.count(),
 - [[ref/network/tcp|TCP]] — 传输控制协议
 - [[ref/network/connection-pool|连接池]] — 连接复用技术
 - [[ref/network/nat-traversal|NAT 穿透]] — NAT 穿透技术
-- [[channel/eyeball/racer|Racer]] — Prism 连接竞争实现
-- [[resolve/dns/upstream|DNS 上游]] — DNS 解析模块
+- [[core/channel/eyeball/racer|Racer]] — Prism 连接竞争实现
+- [[core/resolve/dns/upstream|DNS 上游]] — DNS 解析模块

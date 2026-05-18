@@ -372,7 +372,7 @@ auto sha256(data1, data2) → hash;  // 避免临时拼接
 auto sha256(data1, data2, data3) → hash;
 ```
 
-详见 [[crypto/hkdf|hkdf]]。
+详见 [[core/crypto/hkdf|hkdf]]。
 
 ## 安全考量
 
@@ -429,5 +429,5 @@ PRK 安全：
 - [[ref/crypto/tls-crypto|TLS 加密]] — TLS 1.3 密钥调度
 - [[ref/crypto/blake3|BLAKE3]] — BLAKE3 密钥派生
 - [[ref/crypto/hmac-sha256|HMAC-SHA256]] — HMAC 原理
-- [[crypto/hkdf|hkdf]] — HKDF 实现接口
+- [[core/crypto/hkdf|hkdf]] — HKDF 实现接口
 - [[ref/protocol/tls-handshake|TLS 握手流程]] — TLS 协议

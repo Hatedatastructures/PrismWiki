@@ -30,11 +30,11 @@ tags: [agent, front, listener, accept, affinity]
                                   │
                                   ├─► make_affinity()
                                   │
-                                  └─► [[agent/front/balancer|balancer]].select()
+                                  └─► [[core/agent/front/balancer|balancer]].select()
                                           │
-                                          └─► [[agent/front/balancer|balancer]].dispatch()
+                                          └─► [[core/agent/front/balancer|balancer]].dispatch()
                                                   │
-                                                  └─► [[agent/worker/worker|worker]].dispatch_socket()
+                                                  └─► [[core/agent/worker/worker|worker]].dispatch_socket()
 ```
 
 ---
@@ -295,8 +295,8 @@ while (true):  // 无限循环
 
 | 依赖模块 | 调用方式 |
 |----------|----------|
-| [[agent/front/balancer|balancer]] | `dispatcher_.select(affinity)` |
-| [[agent/front/balancer|balancer]] | `dispatcher_.dispatch(index, socket)` |
+| [[core/agent/front/balancer|balancer]] | `dispatcher_.select(affinity)` |
+| [[core/agent/front/balancer|balancer]] | `dispatcher_.dispatch(index, socket)` |
 
 ### 完整调用链
 
@@ -319,7 +319,7 @@ listener.cpp:125  dispatcher_.select(affinity)
 listener.cpp:135  dispatcher_.dispatch(worker_index, socket)
     │               → balancer::dispatch()
     │               → worker_binding.dispatch(socket)
-    │               → [[agent/worker/worker|worker]].dispatch_socket()
+    │               → [[core/agent/worker/worker|worker]].dispatch_socket()
 ```
 
 ---
@@ -377,7 +377,7 @@ listener.cpp:135  dispatcher_.dispatch(worker_index, socket)
 
 ## 相关文档
 
-- [[agent/front/balancer]] — 负载均衡器
-- [[agent/worker/worker]] — 工作线程
-- [[agent/config]] — 配置详解
+- [[core/agent/front/balancer|balancer]] — 负载均衡器
+- [[core/agent/worker/worker|worker]] — 工作线程
+- [[core/agent/config|config]] — 配置详解
 - [[startup]] — 启动流程

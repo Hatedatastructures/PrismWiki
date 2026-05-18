@@ -100,4 +100,4 @@ A: 使用 [[performance/benchmark|性能基准]] 工具测试。
 - [[performance/benchmark|性能基准]]
 - [[dev/stress|压力测试]]
 - [[docs/configuration|配置说明]]
-- [[multiplex/smux/craft|Smux 实现]]
+- [[core/multiplex/smux/craft|Smux 实现]]

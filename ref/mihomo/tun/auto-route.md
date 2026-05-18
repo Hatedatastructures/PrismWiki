@@ -205,4 +205,4 @@ tun:
 
 - [[overview]] — TUN 模式总览
 - [[auto-detect-interface]] — 自动接口检测
-- [[client/tun]] — 完整 TUN 说明
+- [[ref/mihomo/tun/overview|tun]] — 完整 TUN 说明

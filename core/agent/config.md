@@ -68,7 +68,7 @@ config.hpp
 - [[account/directory|account::directory]] — 使用 authentication.users
 - [[front/listener|listener]] — 使用 addressable 端点
 - [[worker/tls|tls]] — 使用 certificate 配置
-- [[resolve/router|router]] — 使用 positive/reverse_map 路由
+- [[core/resolve/router|router]] — 使用 positive/reverse_map 路由
 
 ---
 
@@ -529,4 +529,4 @@ psm::config (顶层)
 - [[account/directory|账户目录]] — 从 authentication 构建
 - [[worker/tls|TLS 配置]] — 从 certificate 构建 SSL 上下文
 - [[front/listener|监听器]] — 使用 addressable 端点
-- [[resolve/router|DNS 路由器]] — 使用 positive/reverse_map
+- [[core/resolve/router|DNS 路由器]] — 使用 positive/reverse_map

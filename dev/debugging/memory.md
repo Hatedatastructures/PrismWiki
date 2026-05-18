@@ -483,4 +483,4 @@ top -p $(pidof prism)
 - [[dev/debugging/overview]] — 排障体系概述
 - [[memory]] — Memory 内存模块
 - [[dev/pmr-memory-pool]] — PMR 内存池详解
-- [[agent/session/session]] — Session 会话管理
+- [[core/agent/session/session|session]] — Session 会话管理

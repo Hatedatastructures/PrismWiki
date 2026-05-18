@@ -222,4 +222,4 @@ auto safe_reference() -> net::awaitable<void> {
 
 - [[overview]] - 编码规范概览
 - [[coroutine]] - 协程约定
-- [[/dev/cpp23-coroutines]] - C++23 协程详解
+- [[dev/coding/coroutine|coroutines]] - C++23 协程详解

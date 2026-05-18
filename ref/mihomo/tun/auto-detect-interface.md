@@ -208,4 +208,4 @@ tun:
 
 - [[overview]] — TUN 模式总览
 - [[auto-route]] — 自动路由配置
-- [[client/tun]] — 完整 TUN 说明
+- [[ref/mihomo/tun/overview|tun]] — 完整 TUN 说明

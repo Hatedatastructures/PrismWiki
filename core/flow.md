@@ -64,7 +64,7 @@ hash = affinity_hash(socket.remote_endpoint());
 
 计算客户端地址的哈希值，用于分发到固定 worker。
 
-详见 [[agent/front/listener|监听器]]
+详见 [[core/agent/front/listener|监听器]]
 
 ### Step 2: balancer 分发连接
 
@@ -77,7 +77,7 @@ worker.post(socket);
 
 分发 socket 到选中的 worker 的 io_context。
 
-详见 [[agent/front/balancer|负载均衡器]]
+详见 [[core/agent/front/balancer|负载均衡器]]
 
 ### Step 3: launch 创建会话
 
@@ -89,7 +89,7 @@ launch(socket, config, tls_context, account_directory)
 
 创建 session 对象，开始会话生命周期。
 
-详见 [[agent/worker/launch|会话启动]]
+详见 [[core/agent/worker/launch|会话启动]]
 
 ### Step 4: Recognition 协议识别
 
@@ -104,7 +104,7 @@ session 调用 recognition::recognize()，三阶段流水线：
 - TLS: 首字节 0x16（Handshake）
 - SS2022: 排除法 fallback
 
-详见 [[recognition/probe/probe|协议探测]]
+详见 [[core/recognition/probe/probe|协议探测]]
 
 #### Identify（识别，仅 TLS）
 
@@ -118,7 +118,7 @@ result = analyzer_registry::analyze(features);
 
 返回候选方案列表和置信度。
 
-详见 [[recognition/layered_pipeline|分层检测管道]]
+详见 [[core/recognition/layered_pipeline|分层检测管道]]
 
 #### Execute（执行）
 
@@ -130,7 +130,7 @@ execution = scheme_executor::execute(transport, candidate);
 
 返回处理后的 transport 和检测到的协议类型。
 
-详见 [[stealth/executor|方案执行器]]
+详见 [[core/stealth/executor|方案执行器]]
 
 ### Step 5: Dispatch 获取处理器
 
@@ -148,7 +148,7 @@ Handler 类型：
 - ShadowsocksHandler
 - UnknownHandler
 
-详见 [[agent/dispatch/table|处理器分发表]]
+详见 [[core/agent/dispatch/table|处理器分发表]]
 
 ### Step 6: Pipeline 处理
 
@@ -160,7 +160,7 @@ handler.handle(transport, config, router)
 
 解析请求，建立上游连接。
 
-详见 [[pipeline/overview|管道层总览]]
+详见 [[core/pipeline/overview|管道层总览]]
 
 ### Step 7: Router 建立上游
 
@@ -172,7 +172,7 @@ upstream = router.connect(target_address);
 
 支持直连和代理转发。
 
-详见 [[resolve/router|DNS 路由器]]
+详见 [[core/resolve/router|DNS 路由器]]
 
 ### Step 8: Tunnel 双向转发
 
@@ -184,7 +184,7 @@ co_await tunnel(client_transport, upstream_transport);
 
 双向读写，直到连接关闭。
 
-详见 [[pipeline/primitives|管道原语]]
+详见 [[core/pipeline/primitives|管道原语]]
 
 ## 协议类型判断
 

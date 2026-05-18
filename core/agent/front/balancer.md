@@ -26,7 +26,7 @@ tags: [agent, front, balancer, load-balancing, affinity]
 ### 调用关系
 
 ```
-[[agent/front/listener|listener]]
+[[core/agent/front/listener|listener]]
     │
     ├─► select(affinity) ──► {worker_index, overflowed, backpressure}
     │       │
@@ -34,7 +34,7 @@ tags: [agent, front, balancer, load-balancing, affinity]
     │       ├─► score()         // 负载评分
     │       └─► refresh_state() // 过载状态更新
     │
-    └─► dispatch(index, socket) ──► [[agent/worker/worker|worker]].dispatch_socket()
+    └─► dispatch(index, socket) ──► [[core/agent/worker/worker|worker]].dispatch_socket()
 ```
 
 ---
@@ -371,15 +371,15 @@ bindings_[worker_index].dispatch(std::move(socket))
 
 | 调用者 | 调用时机 |
 |--------|----------|
-| [[agent/front/listener|listener]] | `accept_loop()` 中调用 `select()` |
-| [[agent/front/listener|listener]] | 获取选择结果后调用 `dispatch()` |
+| [[core/agent/front/listener|listener]] | `accept_loop()` 中调用 `select()` |
+| [[core/agent/front/listener|listener]] | 获取选择结果后调用 `dispatch()` |
 
 ### 下游依赖
 
 | 依赖模块 | 调用方式 |
 |----------|----------|
-| [[agent/worker/worker|worker]] | `bindings_[i].dispatch(socket)` |
-| [[agent/worker/worker|worker]] | `bindings_[i].snapshot()` |
+| [[core/agent/worker/worker|worker]] | `bindings_[i].dispatch(socket)` |
+| [[core/agent/worker/worker|worker]] | `bindings_[i].snapshot()` |
 
 ### 完整调用链
 
@@ -389,7 +389,7 @@ listener.cpp:125  dispatcher_.select(affinity)
     ├─► balancer::select()
     │       ├─► mix_hash(affinity)              // 双候选计算
     │       ├─► bindings_[i].snapshot()         // 获取快照
-    │       │       └─► [[agent/worker/stats|stats]].load_snapshot()
+    │       │       └─► [[core/agent/worker/stats|stats]].load_snapshot()
     │       ├─► score(snapshot)                 // 评分计算
     │       └─► refresh_state(i, score)         // 过载状态更新
     │
@@ -398,7 +398,7 @@ listener.cpp:135  dispatcher_.dispatch(index, socket)
     │
     └─► balancer::dispatch()
             └─► bindings_[i].dispatch(socket)
-                    └─► [[agent/worker/worker|worker]].dispatch_socket()
+                    └─► [[core/agent/worker/worker|worker]].dispatch_socket()
 ```
 
 ---
@@ -457,7 +457,7 @@ listener.cpp:135  dispatcher_.dispatch(index, socket)
 
 ## 相关文档
 
-- [[agent/front/listener]] — 监听器
-- [[agent/worker/worker]] — 工作线程
-- [[agent/worker/stats]] — 负载统计
+- [[core/agent/front/listener|listener]] — 监听器
+- [[core/agent/worker/worker|worker]] — 工作线程
+- [[core/agent/worker/stats|stats]] — 负载统计
 - [[startup]] — 启动流程

@@ -350,4 +350,4 @@ script:
 
 - [[ref/mihomo/script/overview|Script 概览]] — 脚本功能总览
 - [[ref/mihomo/script/shortcuts|Shortcuts]] — 节点快捷配置
-- [[client/mihomo-rules|Mihomo 规则]] — 规则配置参考
+- [[ref/mihomo/rules/overview|rules]] — 规则配置参考

@@ -907,5 +907,5 @@ net::awaitable<std::string> fetch_with_timeout(int seconds) {
 
 - [[ref/programming/boost-asio|Boost.Asio]] — 异步 I/O 框架
 - [[ref/programming/constexpr|constexpr 编译期计算]] — 编译期优化
-- [[agent/session/session|会话管理]] — 协程在会话中的应用
-- [[stealth/executor|方案执行器]] — 协程握手实现
+- [[core/agent/session/session|会话管理]] — 协程在会话中的应用
+- [[core/stealth/executor|方案执行器]] — 协程握手实现

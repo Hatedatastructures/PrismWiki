@@ -18,7 +18,7 @@ related:
 # resolver — DNS 解析器抽象接口
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/dns.hpp`
-> 模块: [[resolve|resolve]] / [[resolve/dns|dns]]
+> 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]]
 > 类型: 抽象接口 + 聚合头文件
 
 ## 组件定位

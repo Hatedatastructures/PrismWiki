@@ -16,7 +16,7 @@ related:
 # cache — DNS 结果缓存
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/cache.hpp`
-> 模块: [[resolve|resolve]] / [[resolve/dns|dns]] / detail
+> 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 
 ## 组件定位
 

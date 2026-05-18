@@ -112,7 +112,7 @@ graph TD
     D --> E[connection_pool.async_acquire]
 ```
 
-被 [[channel/connection/pool]] 使用，在 `async_acquire` 中处理多地址竞速连接。
+被 [[core/channel/connection/pool]] 使用，在 `async_acquire` 中处理多地址竞速连接。
 
 ## 使用示例
 

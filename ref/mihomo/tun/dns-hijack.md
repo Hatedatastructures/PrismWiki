@@ -212,4 +212,4 @@ DNS 劫持的核心目的是防止 DNS 泄露:
 - [[ref/mihomo/dns/overview]] — DNS 配置参考
 - [[ref/protocol/dns-over-udp]] — DNS over UDP
 - [[ref/protocol/dns-over-tcp]] — DNS over TCP
-- [[client/mihomo-dns]] — DNS 处理机制
+- [[ref/mihomo/tun/overview|tun]] — DNS 处理机制

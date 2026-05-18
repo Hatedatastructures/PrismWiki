@@ -52,4 +52,4 @@ namespace net = boost::asio;  // Boost.Asio 别名
 - [[lifecycle]] - 生命周期安全指南
 - [[error]] - 错误处理策略
 - [[doxygen]] - Doxygen 注释规范
-- [[/dev/modules]] - 模块结构概览
+- [[dev/modules|modules]] - 模块结构概览

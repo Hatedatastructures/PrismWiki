@@ -588,10 +588,10 @@ auto router::connect(endpoint_id const& ep)
 
 | 模块 | 功能 | 文档 |
 |------|------|------|
-| pool | 连接池 | [[channel/connection/pool]] |
-| router | 路由器 | [[resolve/router]] |
-| eyeball | Happy Eyeballs | [[channel/eyeball]] |
-| tunnel | 双向转发 | [[pipeline/tunnel]] |
+| pool | 连接池 | [[core/channel/connection/pool|pool]] |
+| router | 路由器 | [[core/resolve/router|router]] |
+| eyeball | Happy Eyeballs | [[core/channel/eyeball|eyeball]] |
+| tunnel | 双向转发 | [[core/pipeline/tunnel|tunnel]] |
 
 ## 最佳实践
 
@@ -879,6 +879,6 @@ for (auto& [ep, pool] : pool_registry) {
 
 - [[ref/network/tcp|TCP]] — 传输控制协议
 - [[ref/network/happy-eyeballs|Happy Eyeballs]] — 连接竞速算法
-- [[channel/connection/pool|Pool]] — Prism 连接池实现
-- [[resolve/router|Router]] — Prism 路由器模块
-- [[multiplex/duct|Duct]] — TCP 流多路复用
+- [[core/channel/connection/pool|Pool]] — Prism 连接池实现
+- [[core/resolve/router|Router]] — Prism 路由器模块
+- [[core/multiplex/duct|Duct]] — TCP 流多路复用

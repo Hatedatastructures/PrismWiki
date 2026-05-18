@@ -227,7 +227,7 @@ SeparateHeader 结构：
 - 随机 nonce，无需状态管理
 - AAD = SeparateHeader（加密后）
 
-详见 [[protocol/shadowsocks|SS2022]]。
+详见 [[core/protocol/shadowsocks|SS2022]]。
 ```
 
 ## QUIC 协议
@@ -325,7 +325,7 @@ Prism UDP 转发：
 6. 封装返回客户端
 ```
 
-详见 [[channel/transport|传输层]]。
+详见 [[core/channel/transport|传输层]]。
 
 ### NAT 处理
 
@@ -357,5 +357,5 @@ Symmetric NAT 问题：
 - [[ref/protocol/tcp-basics|TCP 基础]] — TCP 协议对比
 - [[ref/protocol/quic-basics|QUIC 基础]] — QUIC 协议
 - [[ref/protocol/socks5-spec|SOCKS5 规范]] — SOCKS5 UDP
-- [[protocol/shadowsocks|SS2022]] — SS2022 UDP
-- [[channel/transport|传输层]] — Prism 实现
+- [[core/protocol/shadowsocks|SS2022]] — SS2022 UDP
+- [[core/channel/transport|传输层]] — Prism 实现

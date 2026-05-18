@@ -375,4 +375,4 @@ global-client-fingerprint: chrome
 - [[overview]] — 配置总览
 - [[basic.yaml]] — 基础配置
 - [[advanced.yaml]] — 高级配置
-- [[client/mihomo-meta]] — mihomo 概述
+- [[ref/mihomo/index|mihomo]] — mihomo 概述

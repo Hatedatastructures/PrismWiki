@@ -8,7 +8,7 @@ related:
   - "[[dev/building/overview]]"
   - "[[dev/building/cmake]]"
   - "[[dev/building/commands]]"
-  - "[[crypto/overview]]"
+  - "[[core/crypto/overview]]"
 sources:
   - I:/code/Prism/CLAUDE.md
   - I:/code/Prism/CMakeLists.txt
@@ -233,4 +233,4 @@ cmake --build build_release --config Release
 - [[dev/building/overview|构建系统概述]] — 构建流程概览
 - [[dev/building/cmake|CMake 构建结构]] — CMake 配置详解
 - [[dev/building/commands|构建命令]] — 常用构建命令
-- [[crypto/overview|加密模块]] — 加密相关依赖用途
+- [[core/crypto/overview|加密模块]] — 加密相关依赖用途

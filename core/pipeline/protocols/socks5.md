@@ -103,7 +103,7 @@ CONNECT  UDP_ASSOCIATE
 
 ### 被调用（向上）
 
-- [[agent/dispatch/table|dispatch]] — 协议分发表注册为 SOCKS5 处理器
+- [[core/agent/dispatch/table|dispatch]] — 协议分发表注册为 SOCKS5 处理器
 
 ---
 
@@ -200,5 +200,5 @@ co_await relay->async_associate(router_cb, ctx);
 
 - [[core/pipeline/overview|Pipeline 层总览]]
 - [[core/pipeline/primitives|管道原语]]
-- [[protocol/socks5/stream|SOCKS5 协议流]]
-- [[protocol/analysis|目标地址解析]]
+- [[core/protocol/socks5/stream|SOCKS5 协议流]]
+- [[core/protocol/analysis|目标地址解析]]

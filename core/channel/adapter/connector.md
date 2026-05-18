@@ -245,5 +245,5 @@ co_await handler->handshake(conn);
 
 ## 相关类型
 
-- [[channel/transport/transmission]] - 底层传输抽象
-- [[channel/channel]] - 通道层
+- [[core/channel/transport/transmission]] - 底层传输抽象
+- [[core/channel/channel]] - 通道层

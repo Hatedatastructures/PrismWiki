@@ -649,10 +649,10 @@ NAT 映射超时影响连接池：
 
 | 模块 | 功能 | 文档 |
 |------|------|------|
-| parcel | UDP 数据包多路复用 | [[multiplex/parcel]] |
-| udp_relay | UDP 中继 | [[protocol/common/udp_relay]] |
-| upstream | DNS 上游查询 | [[resolve/dns/upstream]] |
-| eyeball | Happy Eyeballs | [[channel/eyeball]] |
+| parcel | UDP 数据包多路复用 | [[core/multiplex/parcel|parcel]] |
+| udp_relay | UDP 中继 | [[core/protocol/common/udp_relay|udp_relay]] |
+| upstream | DNS 上游查询 | [[core/resolve/dns/upstream|upstream]] |
+| eyeball | Happy Eyeballs | [[core/channel/eyeball|eyeball]] |
 
 ## 最佳实践
 
@@ -869,5 +869,5 @@ spdlog::debug("UDP forward: src={}, dst={}, size={}",
 - [[ref/network/udp|UDP]] — 用户数据报协议
 - [[ref/network/happy-eyeballs|Happy Eyeballs]] — 连接竞速算法
 - [[ref/network/connection-pool|连接池]] — 连接复用技术
-- [[multiplex/parcel|Parcel]] — UDP 数据包多路复用
-- [[protocol/common/udp_relay|UDP Relay]] — UDP 中继实现
+- [[core/multiplex/parcel|Parcel]] — UDP 数据包多路复用
+- [[core/protocol/common/udp_relay|UDP Relay]] — UDP 中继实现

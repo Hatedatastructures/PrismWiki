@@ -115,4 +115,4 @@ curl http://127.0.0.1:9090/configs
 - [[ref/mihomo/tun/overview]] — TUN 配置参考
 - [[ref/mihomo/dns/overview]] — DNS 配置参考
 - [[ref/mihomo/rules/overview]] — 规则参考
-- [[client/mihomo-meta]] — mihomo 概述
+- [[ref/mihomo/index|mihomo]] — mihomo 概述

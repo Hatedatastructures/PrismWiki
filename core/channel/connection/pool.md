@@ -182,7 +182,7 @@ graph TD
     B --> E[cleanup]
 ```
 
-被 [[resolve/router]] 使用，用于管理到上游服务器的 TCP 连接复用。
+被 [[core/resolve/router]] 使用，用于管理到上游服务器的 TCP 连接复用。
 
 ## 注意事项
 

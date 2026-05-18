@@ -142,5 +142,5 @@ struct client_hello_features
 
 - [[core/protocol/tls/signal|Signal]] - ClientHello 解析器使用这些类型
 - [[core/protocol/tls/feature_bitmap|Feature Bitmap]] - 特征位图构建
-- [[stealth/reality|Reality]] - Reality 协议使用 key_share 等特征
-- [[stealth/ech|ECH]] - ECH 协议使用加密特征
+- [[core/stealth/reality/handshake|Reality]] - Reality 协议使用 key_share 等特征
+- [[core/stealth/ech|ECH]] - ECH 协议使用加密特征

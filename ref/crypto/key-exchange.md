@@ -259,7 +259,7 @@ Reality 密钥交换流程：
    - 服务端长期密钥泄露不影响历史会话
 ```
 
-详见 [[stealth/reality|Reality]]。
+详见 [[core/stealth/reality/handshake|Reality]]。
 
 ### SS2022 密钥交换
 
@@ -361,5 +361,5 @@ X25519 防护：
 - [[ref/crypto/ecdhe|ECDHE]] — ECDHE 详细原理
 - [[ref/crypto/tls-crypto|TLS 加密]] — TLS 1.3 密钥调度
 - [[ref/protocol/tls-handshake|TLS 握手流程]] — TLS 协议
-- [[crypto/x25519|x25519]] — X25519 实现接口
-- [[stealth/reality|Reality]] — Reality TLS 伪装
+- [[core/crypto/x25519|x25519]] — X25519 实现接口
+- [[core/stealth/reality/handshake|Reality]] — Reality TLS 伪装

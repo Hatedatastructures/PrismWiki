@@ -73,8 +73,8 @@ A: 添加 `smux` 配置块并设置 `enabled: true`。
 
 ## 相关页面
 
-- [[client/mihomo-meta|Mihomo 配置]]
-- [[client/mihomo-proxy-groups|策略组]]
-- [[protocol/trojan|Trojan 协议]]
-- [[stealth/reality|Reality 伪装]]
-- [[stealth/shadowtls|ShadowTLS 伪装]]
+- [[ref/mihomo/index|mihomo]]
+- [[ref/mihomo/proxy-groups/overview|proxy-groups]]
+- [[core/protocol/trojan|Trojan 协议]]
+- [[core/stealth/reality/handshake|Reality 伪装]]
+- [[core/stealth/shadowtls|ShadowTLS 伪装]]

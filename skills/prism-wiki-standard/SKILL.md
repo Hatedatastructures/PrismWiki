@@ -62,7 +62,7 @@ tags: [stealth, shadowtls, auth, hmac, 认证]  # 3-6 个，模块+功能+关键
 created: 2026-05-15
 updated: 2026-05-15                           # 每次修改必须更新
 related:
-  - "[[stealth/shadowtls/handshake]]"         # 2-5 个最相关的页面
+  - "[[core/stealth/shadowtls/handshake]]"         # 2-5 个最相关的页面
   - "[[ref/crypto/hmac-sha1]]"
 ---
 ```
@@ -81,7 +81,7 @@ related:
 
 > 源码: `include/prism/stealth/shadowtls/auth.hpp`
 > 实现: `src/prism/stealth/shadowtls/auth.cpp`        # 有才写
-> 模块: [[stealth|stealth]] > [[stealth/shadowtls|shadowtls]]
+> 模块: [[core/stealth|stealth]] > [[core/stealth/shadowtls|shadowtls]]
 ```
 
 #### 2. 概述
@@ -103,9 +103,9 @@ related:
 
 | 依赖方向 | 模块 | 说明 |
 |----------|------|------|
-| 依赖 | [[crypto/hkdf]] | 密钥派生 |
-| 继承 | [[channel/transport/transmission]] | 传输层接口 |
-| 被依赖 | [[agent/session/session]] | session 启动时调用 |
+| 依赖 | [[core/crypto/hkdf]] | 密钥派生 |
+| 继承 | [[core/channel/transport/transmission]] | 传输层接口 |
+| 被依赖 | [[core/agent/session/session|session]] | session 启动时调用 |
 ```
 
 依赖方向填写：`依赖` / `继承` / `组合` / `被依赖` / `被调用`
@@ -204,7 +204,7 @@ Trojan 协议中继器。装饰器模式，包装底层传输层。
 - **调用**（向下）:
   - [[#函数: compute_hmac]] — 计算期望的 HMAC 值
 - **被调用**（向上）:
-  - [[stealth/shadowtls/handshake#函数: on_client_hello]] — 握手阶段调用
+  - [[core/stealth/shadowtls/handshake#函数: on_client_hello]] — 握手阶段调用
 ```
 
 格式 B（独立 `###` 小标题，项目中已有文件更常见）：
@@ -213,7 +213,7 @@ Trojan 协议中继器。装饰器模式，包装底层传输层。
 - [[#函数: compute_hmac]] — 计算期望的 HMAC 值
 
 ### 被调用（向上）
-- [[stealth/shadowtls/handshake#函数: on_client_hello]] — 握手阶段调用
+- [[core/stealth/shadowtls/handshake#函数: on_client_hello]] — 握手阶段调用
 ```
 
 ---
@@ -615,8 +615,8 @@ index.md 是全库入口页，按模块分组列出所有内容页面。
 
 ## Agent 模块
 
-- [[agent/config]] — Agent 运行时配置
-- [[agent/session/session]] — 会话管理
+- [[core/agent/config|config]] — Agent 运行时配置
+- [[core/agent/session/session|session]] — 会话管理
 ...
 ```
 
@@ -730,7 +730,7 @@ done
 11. **死链**：写 wikilink 前先确认目标文件存在。
 12. **孤儿页**：每个页面至少被 index.md 链接一次。
 13. **C++ 属性误判为 wikilink**：`[[nodiscard]]` 不是链接，grep 时要过滤。
-14. **related 字段用 C++ 命名空间**：`related: ["stealth::shadowtls"]` → 错。应为 `related: ["[[stealth/shadowtls]]"]`。
+14. **related 字段用 C++ 命名空间**：`related: ["stealth::shadowtls"]` → 错。应为 `related: ["[[core/stealth/shadowtls]]"]`。
 
 ### 格式错误
 

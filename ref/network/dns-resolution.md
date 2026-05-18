@@ -431,7 +431,7 @@ Prism DNS 模块：
 - IPv4/IPv6 双栈查询
 ```
 
-详见 [[resolve/dns|DNS 模块]]。
+详见 [[core/resolve/dns|DNS 模块]]。
 
 ### 解析流程
 
@@ -468,6 +468,6 @@ Prism DNS 解析流程：
 - [[ref/protocol/dns-over-udp|DNS-over-UDP]] — UDP DNS
 - [[ref/protocol/dns-over-tls|DNS-over-TLS]] — DoT
 - [[ref/protocol/dns-over-https|DNS-over-HTTPS]] — DoH
-- [[resolve/dns|DNS 模块]] — Prism 实现
+- [[core/resolve/dns|DNS 模块]] — Prism 实现
 - [[ref/network/happy-eyeballs|Happy Eyeballs]] — 双栈解析
 - [[ref/network/overview|网络基础概览]] — 网络索引

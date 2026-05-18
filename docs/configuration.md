@@ -41,5 +41,5 @@ A: 设置 `trace.log_level = "debug"`。
 ## 相关页面
 
 - [[dev/configuration|配置详解]]
-- [[agent/worker/worker|Worker 配置]]
+- [[core/agent/worker/worker|Worker 配置]]
 - [[dev/testing|测试配置]]

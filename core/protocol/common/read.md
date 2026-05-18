@@ -71,5 +71,5 @@ protocol/common::read_remaining -> transport.async_read_some
 
 ## 依赖
 
-- [[channel/transport/transmission]] - 传输层接口
+- [[core/channel/transport/transmission]] - 传输层接口
 - [[log/fault/code]] - 错误码系统

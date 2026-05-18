@@ -140,8 +140,8 @@ auto dial(resolve::router &router, std::string_view label,
 
 ### 调用链
 
-- 调用: [[resolve/router|router::async_forward]] — 正向路由
-- 调用: [[resolve/router|router::async_reverse]] — 反向路由
+- 调用: [[core/resolve/router|router::async_forward]] — 正向路由
+- 调用: [[core/resolve/router|router::async_reverse]] — 反向路由
 - 被调用: `forward()` → [[core/pipeline/primitives#forward|forward]]
 
 ---
@@ -195,7 +195,7 @@ auto ssl_handshake(shared_transmission inbound, ssl::context &ssl_ctx)
 
 ### 调用链
 
-- 调用: [[channel/adapter/connector|connector]] — 适配 Boost.Asio 流接口
+- 调用: [[core/channel/adapter/connector|connector]] — 适配 Boost.Asio 流接口
 - 调用: `ssl::stream::async_handshake()` — TLS 服务端握手
 - 被调用: `stealth::native` — TLS 伪装方案
 
@@ -460,6 +460,6 @@ inline auto find_reliable(shared_transmission &trans) noexcept
 ## 相关文档
 
 - [[core/pipeline/overview|Pipeline 层总览]]
-- [[channel/transport/transmission|传输层抽象]]
-- [[resolve/router|路由器]]
+- [[core/channel/transport/transmission|传输层抽象]]
+- [[core/resolve/router|路由器]]
 - [[outbound/proxy|出站代理]]

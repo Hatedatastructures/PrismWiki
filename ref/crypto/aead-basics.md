@@ -346,6 +346,6 @@ if (ec != fault::code::success) {
 
 - [[ref/crypto/aes-gcm|AES-GCM]] — AES-GCM 详细原理
 - [[ref/crypto/chacha20-poly1305|ChaCha20-Poly1305]] — ChaCha 详细原理
-- [[crypto/aead|aead]] — AEAD 实现接口
+- [[core/crypto/aead|aead]] — AEAD 实现接口
 - [[ref/crypto/tls-crypto|TLS 加密]] — TLS 1.3 加密
 - [[ref/crypto/overview|密码学原理概览]] — 密码学索引

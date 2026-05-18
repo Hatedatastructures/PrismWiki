@@ -276,4 +276,4 @@ proxy-groups:
 
 - [[ref/mihomo/provider/overview|Provider 概览]] — 提供者总览
 - [[ref/mihomo/provider/proxy-provider|Proxy Provider]] — 代理提供者
-- [[client/mihomo-proxy-groups|代理组配置]] — 代理组配置参考
+- [[ref/mihomo/proxy-groups/overview|proxy-groups]] — 代理组配置参考

@@ -236,5 +236,5 @@ auto compute_handshake_hash(
 
 - [[ref/mihomo/transport/overview|Transport 概览]] — Transport 模块总览
 - [[ref/mihomo/transport/restls|RestLS]] — TLS 指纹伪装
-- [[stealth/shadowtls|ShadowTLS 协议]] — ShadowTLS 设计原理
-- [[crypto/hmac-sha1|HMAC-SHA1]] — HMAC 认证算法
+- [[core/stealth/shadowtls|ShadowTLS 协议]] — ShadowTLS 设计原理
+- [[core/crypto/hmac-sha1|HMAC-SHA1]] — HMAC 认证算法

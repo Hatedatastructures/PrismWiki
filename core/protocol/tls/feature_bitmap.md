@@ -128,6 +128,6 @@ if (features.session_id.size() >= 3 &&
 
 - [[core/protocol/tls/types|Types]] - client_hello_features 结构定义
 - [[core/protocol/tls/signal|Signal]] - 解析器提供特征数据
-- [[stealth/reality|Reality]] - Reality 协议检测使用位图
-- [[stealth/shadowtls|ShadowTLS]] - ShadowTLS 协议检测
-- [[stealth/ech|ECH]] - ECH 协议检测
+- [[core/stealth/reality/handshake|Reality]] - Reality 协议检测使用位图
+- [[core/stealth/shadowtls|ShadowTLS]] - ShadowTLS 协议检测
+- [[core/stealth/ech|ECH]] - ECH 协议检测

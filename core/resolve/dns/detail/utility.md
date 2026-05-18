@@ -14,7 +14,7 @@ related:
 # utility — DNS 解析器工具函数
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/utility.hpp`
-> 模块: [[resolve|resolve]] / [[resolve/dns|dns]] / detail
+> 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 > 类型: header-only 工具函数
 
 ## 组件定位

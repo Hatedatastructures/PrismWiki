@@ -11,8 +11,8 @@ related:
   - "[[dev/testing/overview]]"
   - "[[dev/testing/benchmark]]"
   - "[[dev/pmr-memory-pool]]"
-  - "[[multiplex/bootstrap]]"
-  - "[[crypto/hkdf]]"
+  - "[[core/multiplex/bootstrap]]"
+  - "[[core/crypto/hkdf]]"
 ---
 
 # 压力测试体系
@@ -665,5 +665,5 @@ fi
 - [[dev/testing/overview]] — 测试体系概述
 - [[dev/testing/benchmark]] — 基准测试体系
 - [[dev/pmr-memory-pool]] — PMR 内存池
-- [[multiplex/bootstrap]] — 多路复用引导
-- [[multiplex/duct]] — 多路复用管道
+- [[core/multiplex/bootstrap]] — 多路复用引导
+- [[core/multiplex/duct]] — 多路复用管道

@@ -895,5 +895,5 @@ Arena 的优势在于大量小对象的极速分配，大对象的分配在 Aren
 
 - [[ref/memory/pmr|PMR 内存资源]] — 多态内存资源基础
 - [[ref/memory/zero-copy|零拷贝]] — 避免数据复制
-- [[memory/pool|内存池系统]] — Prism 池实现
-- [[memory/container|PMR 容器别名]] — 容器类型定义
+- [[core/memory/pool|内存池系统]] — Prism 池实现
+- [[core/memory/container|PMR 容器别名]] — 容器类型定义

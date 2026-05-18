@@ -441,7 +441,7 @@ Reality 握手流程：
    - 标准 TLS 1.3 AEAD 加密
 ```
 
-详见 [[stealth/reality|Reality]]。
+详见 [[core/stealth/reality/handshake|Reality]]。
 
 ## 参见
 
@@ -451,4 +451,4 @@ Reality 握手流程：
 - [[ref/protocol/tls-extensions|TLS 扩展]] — 扩展详解
 - [[ref/crypto/tls-crypto|TLS 加密]] — TLS 1.3 加密
 - [[ref/crypto/key-exchange|密钥交换原理]] — X25519 原理
-- [[stealth/reality|Reality]] — Reality TLS 伪装
+- [[core/stealth/reality/handshake|Reality]] — Reality TLS 伪装

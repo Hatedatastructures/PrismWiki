@@ -14,7 +14,7 @@ related:
   - "[[ref/mihomo/tun/dns-hijack]]"
   - "[[ref/mihomo/tun/auto-route]]"
   - "[[ref/mihomo/tun/auto-detect-interface]]"
-  - "[[client/tun]]"
+  - "[[ref/mihomo/tun/overview|tun]]"
   - "[[ref/network/tcp]]"
   - "[[ref/network/udp]]"
 ---
@@ -93,7 +93,7 @@ tun:
 
 ## 相关链接
 
-- [[client/tun]] — TUN 模式完整说明
+- [[ref/mihomo/tun/overview|tun]] — TUN 模式完整说明
 - [[ref/mihomo/config/overview]] — 配置总览
 - [[ref/network/tcp]] — TCP 协议基础
 - [[ref/network/udp]] — UDP 协议基础

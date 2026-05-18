@@ -112,7 +112,7 @@ tcp/mux    udp
 
 ### 被调用（向上）
 
-- [[agent/dispatch/table|dispatch]] — 协议分发表注册为 VLESS 处理器
+- [[core/agent/dispatch/table|dispatch]] — 协议分发表注册为 VLESS 处理器
 
 ---
 
@@ -217,6 +217,6 @@ co_await relay->async_associate(router_cb, ctx);
 
 - [[core/pipeline/overview|Pipeline 层总览]]
 - [[core/pipeline/primitives|管道原语]]
-- [[protocol/vless|VLESS 协议格式]]
-- [[multiplex/bootstrap|多路复用引导]]
-- [[agent/account/directory|账户目录]]
+- [[core/protocol/vless|VLESS 协议格式]]
+- [[core/multiplex/bootstrap|多路复用引导]]
+- [[core/agent/account/directory|账户目录]]

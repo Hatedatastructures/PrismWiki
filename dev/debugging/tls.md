@@ -16,8 +16,8 @@ related:
   - "[[dev/tcp]]"
   - "[[dev/gfw]]"
   - "[[configuration]]"
-  - "[[crypto/aead]]"
-  - "[[crypto/x25519]]"
+  - "[[core/crypto/aead]]"
+  - "[[core/crypto/x25519]]"
 ---
 
 # TLS 协议参考与问题排查指南
@@ -1206,5 +1206,5 @@ python jarm.py www.example.com
 - [[dev/tcp]] -- TCP 协议基础
 - [[dev/gfw]] -- GFW 封锁原理
 - [[configuration]] -- TLS 配置参数
-- [[crypto/aead]] -- AEAD 加密实现
-- [[crypto/x25519]] -- X25519 密钥交换
+- [[core/crypto/aead]] -- AEAD 加密实现
+- [[core/crypto/x25519]] -- X25519 密钥交换

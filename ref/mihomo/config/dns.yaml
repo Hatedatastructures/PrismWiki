@@ -217,5 +217,5 @@ dns:
 
 - [[overview]] — 配置总览
 - [[ref/mihomo/dns/overview]] — DNS 参考总览
-- [[client/mihomo-dns]] — DNS 处理机制
+- [[ref/mihomo/dns/overview|dns]] — DNS 处理机制
 - [[advanced.yaml]] — 高级配置模板

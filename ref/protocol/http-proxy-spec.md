@@ -357,7 +357,7 @@ Prism HTTP 入站配置：
 5. 双向转发数据
 ```
 
-详见 [[protocol/http|http]]。
+详见 [[core/protocol/http|http]]。
 
 ### HTTP 流处理器
 
@@ -418,6 +418,6 @@ SOCKS5：
 
 - [[ref/protocol/socks5-spec|SOCKS5 规范]] — SOCKS5 协议
 - [[ref/protocol/http-1-1|HTTP/1.1]] — HTTP 协议详解
-- [[protocol/http|http]] — HTTP 实现接口
+- [[core/protocol/http|http]] — HTTP 实现接口
 - [[dispatch/handlers/http|HTTP 处理器]] — Prism 实现
 - [[ref/protocol/tcp-basics|TCP 基础]] — TCP 协议原理

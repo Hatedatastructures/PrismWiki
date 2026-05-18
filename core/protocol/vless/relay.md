@@ -123,4 +123,4 @@ inline shared_relay make_relay(shared_transmission next_layer, const config &cfg
 - [[core/protocol/vless/config|Config]] - 配置结构
 - [[core/channel/transport/transmission|Transmission]] - 底层传输层接口
 - [[core/fault/code|Fault Code]] - 错误码处理
-- [[agent/account/directory|Account Directory]] - UUID 认证对接
+- [[core/agent/account/directory|Account Directory]] - UUID 认证对接

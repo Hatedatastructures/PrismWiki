@@ -15,7 +15,7 @@ related:
 # message — DNS 报文编解码
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/format.hpp`
-> 模块: [[resolve|resolve]] / [[resolve/dns|dns]] / detail
+> 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 
 ## 组件定位
 

@@ -17,7 +17,7 @@ related:
 # config — DNS 解析器配置
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/config.hpp`
-> 模块: [[resolve|resolve]] / [[resolve/dns|dns]]
+> 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]]
 > 类型: header-only 配置定义
 
 ## 组件定位

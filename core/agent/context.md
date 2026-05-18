@@ -476,7 +476,7 @@ session_context 禁止拷贝：
 - [[worker/worker|Worker]] — 持有 server_context + worker_context
 - [[session/session|会话]] — 持有 session_context
 - [[account/directory|账户目录]] — server_context.account_store 类型
-- [[resolve/router|DNS 路由器]] — worker_context.router 类型
-- [[channel/transport/transmission|传输层]] — session_context.inbound/outbound 类型
-- [[memory/pool|PMR 内存池]] — frame_arena 类型
+- [[core/resolve/router|DNS 路由器]] — worker_context.router 类型
+- [[core/channel/transport/transmission|传输层]] — session_context.inbound/outbound 类型
+- [[core/memory/pool|PMR 内存池]] — frame_arena 类型
 - [[outbound/proxy|出站代理]] — outbound_proxy 类型

@@ -37,10 +37,10 @@ Prism 项目中协议的应用：
 | 协议 | 应用场景 | 实现模块 |
 |------|----------|----------|
 | TLS 1.3 | 安全传输、伪装 | [[core/channel/transport/encrypted]], [[core/stealth/overview|stealth]] |
-| SOCKS5 | 入站代理协议 | [[protocol/socks5]] |
-| HTTP CONNECT | 入站代理协议 | [[protocol/http]] |
-| TCP | 底层传输 | [[channel/transport]] |
-| UDP | 底层传输 | [[channel/transport]] |
+| SOCKS5 | 入站代理协议 | [[core/protocol/socks5|socks5]] |
+| HTTP CONNECT | 入站代理协议 | [[core/protocol/http|http]] |
+| TCP | 底层传输 | [[core/channel/transport|transport]] |
+| UDP | 底层传输 | [[core/channel/transport|transport]] |
 
 ## 核心协议
 
@@ -242,5 +242,5 @@ DNS 的多种传输方式：
 
 - [[ref/crypto/overview|密码学原理概览]] — 加密原理
 - [[ref/network/overview|网络基础概览]] — 网络原理
-- [[protocol/analysis|协议分析]] — 协议实现层
+- [[core/protocol/analysis|协议分析]] — 协议实现层
 - [[ref/overview|参考资料概览]] — 参考资料层索引

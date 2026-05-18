@@ -85,6 +85,6 @@ auto read_tls_record(channel::transport::transmission &transport,
 - [[core/protocol/tls/types|Types]] - client_hello_features 结构定义
 - [[core/protocol/tls/feature_bitmap|Feature Bitmap]] - 使用特征构建位图
 - [[core/channel/transport/transmission|Transmission]] - 底层传输接口
-- [[stealth/reality|Reality]] - Reality 协议检测
-- [[stealth/ech|ECH]] - ECH 协议检测
-- [[stealth/shadowtls|ShadowTLS]] - ShadowTLS 协议检测
+- [[core/stealth/reality/handshake|Reality]] - Reality 协议检测
+- [[core/stealth/ech|ECH]] - ECH 协议检测
+- [[core/stealth/shadowtls|ShadowTLS]] - ShadowTLS 协议检测

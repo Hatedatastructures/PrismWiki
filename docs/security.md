@@ -77,6 +77,6 @@ A: 使用非标准端口、配置防火墙限速、启用 fail2ban。
 ## 相关页面
 
 - [[docs/deployment|部署指南]]
-- [[stealth/reality|Reality 伪装]]
-- [[stealth/shadowtls|ShadowTLS 伪装]]
+- [[core/stealth/reality/handshake|Reality 伪装]]
+- [[core/stealth/shadowtls|ShadowTLS 伪装]]
 - [[log|日志系统]]

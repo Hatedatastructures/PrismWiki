@@ -405,7 +405,7 @@ Reality TLS 1.3 加密：
 - 可扩展连接时长
 ```
 
-详见 [[stealth/reality|Reality]]。
+详见 [[core/stealth/reality/handshake|Reality]]。
 
 ## 参见
 
@@ -414,5 +414,5 @@ Reality TLS 1.3 加密：
 - [[ref/crypto/hkdf-theory|HKDF 理论]] — 密钥派生
 - [[ref/crypto/aes-gcm|AES-GCM]] — AES-GCM 原理
 - [[ref/protocol/tls-1.3|TLS 1.3 协议]] — TLS 1.3 完整规范
-- [[crypto/hkdf|hkdf]] — HKDF 实现
-- [[crypto/aead|aead]] — AEAD 实现
+- [[core/crypto/hkdf|hkdf]] — HKDF 实现
+- [[core/crypto/aead|aead]] — AEAD 实现

@@ -105,7 +105,7 @@ auto shadowsocks(session_context &ctx, std::span<const std::byte> data)
 
 ### 被调用（向上）
 
-- [[agent/dispatch/table|dispatch]] — 协议分发表注册为 SS2022 处理器
+- [[core/agent/dispatch/table|dispatch]] — 协议分发表注册为 SS2022 处理器
 
 ---
 
@@ -228,6 +228,6 @@ class relay : public channel::transport::transmission
 
 - [[core/pipeline/overview|Pipeline 层总览]]
 - [[core/pipeline/primitives|管道原语]]
-- [[protocol/shadowsocks/config|SS2022 配置]]
-- [[crypto/blake3|BLAKE3 密钥派生]]
-- [[crypto/aead|AEAD 加密]]
+- [[core/protocol/shadowsocks/config|SS2022 配置]]
+- [[core/crypto/blake3|BLAKE3 密钥派生]]
+- [[core/crypto/aead|AEAD 加密]]

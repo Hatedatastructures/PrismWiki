@@ -418,7 +418,7 @@ Reality 优势：
 - 最隐蔽的方案
 ```
 
-详见 [[stealth/reality|Reality]]。
+详见 [[core/stealth/reality/handshake|Reality]]。
 
 ## 在 Prism 中的应用
 
@@ -474,11 +474,11 @@ Reality 核心特性：
 - 探测得到真实网站响应
 ```
 
-详见 [[stealth/reality|Reality]]。
+详见 [[core/stealth/reality/handshake|Reality]]。
 
 ## 参见
 
-- [[stealth/reality|Reality]] — Reality TLS 伪装
+- [[core/stealth/reality/handshake|Reality]] — Reality TLS 伪装
 - [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] — TLS 指纹检测
 - [[ref/anti-censorship/dpi|DPI]] — 深度包检测
 - [[ref/anti-censorship/traffic-analysis|流量分析]] — 流量分析

@@ -798,5 +798,5 @@ class my_resource : public std::pmr::memory_resource {
 
 - [[ref/memory/arena|Arena 分配器]] — 帧级线性分配
 - [[ref/memory/zero-copy|零拷贝]] — 避免数据复制
-- [[memory/pool|内存池系统]] — Prism 池实现
-- [[memory/container|PMR 容器别名]] — 容器类型定义
+- [[core/memory/pool|内存池系统]] — Prism 池实现
+- [[core/memory/container|PMR 容器别名]] — 容器类型定义

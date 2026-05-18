@@ -1,5 +1,7 @@
 ---
 title: 知识库规范
+created: 2026-05-17
+updated: 2026-05-18
 layer: root
 ---
 

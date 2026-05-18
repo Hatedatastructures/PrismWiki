@@ -363,7 +363,7 @@ Prism SOCKS5 入站配置：
 6. 双向转发数据
 ```
 
-详见 [[protocol/socks5|socks5]]。
+详见 [[core/protocol/socks5|socks5]]。
 
 ### SOCKS5 流处理器
 
@@ -444,7 +444,7 @@ SOCKS5 本身不加密：
 ## 参见
 
 - [[ref/protocol/http-proxy-spec|HTTP 代理规范]] — HTTP CONNECT 协议
-- [[protocol/socks5|socks5]] — SOCKS5 实现接口
+- [[core/protocol/socks5|socks5]] — SOCKS5 实现接口
 - [[ref/protocol/tcp-basics|TCP 基础]] — TCP 协议原理
 - [[ref/protocol/udp-basics|UDP 基础]] — UDP 协议原理
 - [[dispatch/handlers/socks5|SOCKS5 处理器]] — Prism 实现

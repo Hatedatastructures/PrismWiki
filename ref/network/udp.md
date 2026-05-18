@@ -316,10 +316,10 @@ struct parcel_frame {
 
 | 模块 | 功能 | 文档 |
 |------|------|------|
-| parcel | UDP 数据包多路复用 | [[multiplex/parcel]] |
-| udp_relay | UDP 中继 | [[protocol/common/udp_relay]] |
-| upstream | DNS 上游查询 | [[resolve/dns/upstream]] |
-| duct | TCP 流多路复用 | [[multiplex/duct]] |
+| parcel | UDP 数据包多路复用 | [[core/multiplex/parcel|parcel]] |
+| udp_relay | UDP 中继 | [[core/protocol/common/udp_relay|udp_relay]] |
+| upstream | DNS 上游查询 | [[core/resolve/dns/upstream|upstream]] |
+| duct | TCP 流多路复用 | [[core/multiplex/duct|duct]] |
 
 ## 最佳实践
 
@@ -582,5 +582,5 @@ stun stun.l.google.com
 - [[ref/network/tcp|TCP]] — 传输控制协议
 - [[ref/network/nat-traversal|NAT 穿透]] — NAT 穿透技术
 - [[ref/network/happy-eyeballs|Happy Eyeballs]] — 连接竞争算法
-- [[resolve/dns/upstream|DNS 上游]] — DNS 解析实现
-- [[multiplex/parcel|Parcel]] — UDP 数据包多路复用
+- [[core/resolve/dns/upstream|DNS 上游]] — DNS 解析实现
+- [[core/multiplex/parcel|Parcel]] — UDP 数据包多路复用

@@ -113,7 +113,7 @@ CONNECT   普通 HTTP
 
 ### 被调用（向上）
 
-- [[agent/dispatch/table|dispatch]] — 协议分发表注册为 HTTP 处理器
+- [[core/agent/dispatch/table|dispatch]] — 协议分发表注册为 HTTP 处理器
 
 ### 实现细节
 
@@ -208,5 +208,5 @@ Proxy-Authorization: Basic base64(username:password)
 
 - [[core/pipeline/overview|Pipeline 层总览]]
 - [[core/pipeline/primitives|管道原语]]
-- [[protocol/http/relay|HTTP 中继器]]
-- [[protocol/analysis|目标地址解析]]
+- [[core/protocol/http/relay|HTTP 中继器]]
+- [[core/protocol/analysis|目标地址解析]]

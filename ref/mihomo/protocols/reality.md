@@ -104,5 +104,5 @@ proxies:
 ## 相关文档
 
 - [[ech]] - ECH 加密 Client Hello
-- [[../../stealth/reality]] - Reality 隐蔽技术详解
-- [[../../crypto/x25519]] - X25519 密钥交换
+- [[core/stealth/reality|reality]] - Reality 隐蔽技术详解
+- [[core/crypto/x25519|x25519]] - X25519 密钥交换

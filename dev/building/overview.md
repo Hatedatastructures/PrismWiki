@@ -9,10 +9,11 @@ related:
   - "[[dev/building/dependencies]]"
   - "[[dev/building/commands]]"
   - "[[dev/building/options]]"
-  - "[[dev/configuration]]"
+  - "[[dev/building/configuration|configuration]]"
 sources:
   - I:/code/Prism/CLAUDE.md
 confidence: high
+layer: dev
 ---
 
 # Prism 构建系统概述

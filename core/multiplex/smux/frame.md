@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/smux/frame.hpp
+title: smux::frame - smux 帧协议定义
 ---
 
 # smux::frame - smux 帧协议定义

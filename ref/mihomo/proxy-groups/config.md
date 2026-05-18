@@ -201,6 +201,6 @@ if len(groupOption.Proxies) == 0 && len(groupOption.Use) == 0 {
 - [[overview]] - 代理组概述
 - [[selector]] - select 代理组
 - [[url-test]] - url-test 代理组
-- [[fallback]] - fallback 代理组
+- [[ref/mihomo/proxy-groups/fallback|fallback]] - fallback 代理组
 - [[load-balance]] - load-balance 代理组
 - [[../provider/overview|Provider 概述]]

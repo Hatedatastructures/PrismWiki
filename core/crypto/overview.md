@@ -7,6 +7,7 @@ source:
   - I:/code/Prism/include/prism/crypto/blake3.hpp
   - I:/code/Prism/include/prism/crypto/block.hpp
   - I:/code/Prism/include/prism/crypto/base64.hpp
+title: Crypto 加密模块
 ---
 
 # Crypto 加密模块
@@ -17,12 +18,12 @@ Prism 加密模块提供类型安全的密码学原语封装，基于 BoringSSL 
 
 | 模块 | 功能 | 应用场景 |
 |------|------|----------|
-| [[aead]] | AEAD 认证加密 | TLS 1.3、SS2022 数据加密 |
-| [[hkdf]] | HKDF 密钥派生 | TLS 1.3 密钥调度 |
-| [[x25519]] | X25519 密钥交换 | Reality 协议 ECDHE |
-| [[blake3]] | BLAKE3 密钥派生 | SS2022 会话密钥派生 |
-| [[block]] | AES-ECB 单块加密 | SS2022 UDP SeparateHeader |
-| [[base64]] | Base64 编解码 | HTTP Basic 认证 |
+| [[core/crypto/aead|aead]] | AEAD 认证加密 | TLS 1.3、SS2022 数据加密 |
+| [[core/crypto/hkdf|hkdf]] | HKDF 密钥派生 | TLS 1.3 密钥调度 |
+| [[core/crypto/x25519|x25519]] | X25519 密钥交换 | Reality 协议 ECDHE |
+| [[core/crypto/blake3|blake3]] | BLAKE3 密钥派生 | SS2022 会话密钥派生 |
+| [[core/crypto/block|block]] | AES-ECB 单块加密 | SS2022 UDP SeparateHeader |
+| [[core/crypto/base64|base64]] | Base64 编解码 | HTTP Basic 认证 |
 
 ## 设计原则
 
@@ -112,9 +113,9 @@ aead_context ctx2 = std::move(ctx1);  // 移动构造
 
 ## 相关文档
 
-- [[aead]] - AEAD 认证加密详解
-- [[hkdf]] - HKDF 密钥派生详解
-- [[x25519]] - X25519 密钥交换详解
-- [[blake3]] - BLAKE3 密钥派生详解
-- [[block]] - AES-ECB 单块加密详解
-- [[base64]] - Base64 编解码详解
+- [[core/crypto/aead|aead]] - AEAD 认证加密详解
+- [[core/crypto/hkdf|hkdf]] - HKDF 密钥派生详解
+- [[core/crypto/x25519|x25519]] - X25519 密钥交换详解
+- [[core/crypto/blake3|blake3]] - BLAKE3 密钥派生详解
+- [[core/crypto/block|block]] - AES-ECB 单块加密详解
+- [[core/crypto/base64|base64]] - Base64 编解码详解

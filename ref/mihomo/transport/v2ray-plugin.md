@@ -8,6 +8,7 @@ tags: [mihomo, v2ray-plugin, websocket, http-upgrade, shadowsocks]
 created: 2026-05-17
 updated: 2026-05-17
 related: [shadowsocks, vmess, websocket]
+layer: ref
 ---
 
 # V2ray-Plugin Transport

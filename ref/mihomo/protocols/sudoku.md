@@ -130,5 +130,5 @@ proxies:
 
 ## 相关文档
 
-- [[../../crypto/aead]] - AEAD 加密
-- [[../../protocol/proxy-protocols]] - 代理协议概述
+- [[core/crypto/aead|aead]] - AEAD 加密
+- [[ref/mihomo/protocols/overview|protocols]] - 代理协议概述

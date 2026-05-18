@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/memory/pool.hpp
+title: Memory Pool
 ---
 
 # Memory Pool

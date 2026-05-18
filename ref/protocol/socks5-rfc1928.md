@@ -8,6 +8,7 @@ tags: [协议, socks5, 代理, 认证, tcp, udp, 隧道]
 created: 2026-05-15
 updated: 2026-05-17
 related: [http-connect, trojan, vless, proxy-basics]
+layer: ref
 ---
 
 # SOCKS5 协议 RFC 1928

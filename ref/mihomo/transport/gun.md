@@ -8,6 +8,7 @@ tags: [mihomo, gun, grpc, http2, vless, trojan]
 created: 2026-05-17
 updated: 2026-05-17
 related: [vless, trojan, http2]
+layer: ref
 ---
 
 # Gun (gRPC) Transport

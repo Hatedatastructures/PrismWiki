@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/reality/scheme.hpp
+title: Reality Scheme
 ---
 
 # Reality Scheme

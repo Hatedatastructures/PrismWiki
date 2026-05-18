@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/src/prism/stealth/reality/handshake.cpp
+title: Reality Handshake
 ---
 
 # Reality Handshake

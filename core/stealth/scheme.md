@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/scheme.hpp
+title: scheme 模块
 ---
 
 # scheme 模块

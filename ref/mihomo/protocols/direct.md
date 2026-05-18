@@ -58,5 +58,5 @@ Direct 内置回环检测机制，防止流量循环：
 ## 相关文档
 
 - [[reject]] - Reject 协议
-- [[dns]] - DNS 代理
-- [[../../client/mihomo-proxy-groups]] - 代理组配置
+- [[ref/mihomo/protocols/dns|dns]] - DNS 代理
+- [[ref/mihomo/proxy-groups|proxy-groups]] - 代理组配置

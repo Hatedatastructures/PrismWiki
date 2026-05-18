@@ -109,4 +109,4 @@ proxies:
 ## 相关文档
 
 - [[wireguard]] - WireGuard 协议
-- [[../../dev/tls]] - TLS/QUIC
+- [[dev/debugging/tls|tls]] - TLS/QUIC

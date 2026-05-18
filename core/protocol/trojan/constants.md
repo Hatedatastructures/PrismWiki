@@ -1,6 +1,7 @@
 ---
 layer: core
 source: "I:/code/Prism/include/prism/protocol/trojan/constants.hpp"
+title: Trojan 协议常量
 ---
 
 # Trojan 协议常量

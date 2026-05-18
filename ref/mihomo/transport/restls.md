@@ -8,6 +8,7 @@ tags: [mihomo, restls, tls, fingerprint, 指纹伪装]
 created: 2026-05-17
 updated: 2026-05-17
 related: [shadowsocks, tls-fingerprint, stealth]
+layer: ref
 ---
 
 # RestLS Transport

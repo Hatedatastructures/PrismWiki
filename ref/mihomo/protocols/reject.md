@@ -63,4 +63,4 @@ proxies:
 ## 相关文档
 
 - [[direct]] - Direct 协议
-- [[../../client/mihomo-rules]] - 规则配置
+- [[ref/mihomo/rules|rules]] - 规则配置

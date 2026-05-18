@@ -7,6 +7,7 @@ source: "RFC 8305, RFC 6555"
 tags: [网络, happy-eyeballs, 连接, ipv6, ipv4, 双栈, 优化]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # Happy Eyeballs 算法

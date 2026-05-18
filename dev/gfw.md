@@ -10,8 +10,9 @@ created: 2026-05-17
 updated: 2026-05-17
 related:
   - "[[core/stealth/overview|stealth]]"
-  - "[[dev/tls]]"
+  - "[[dev/debugging/tls|tls]]"
   - "[[configuration]]"
+layer: dev
 ---
 
 # GFW 封锁原理深度解析
@@ -765,5 +766,5 @@ openssl s_client -connect YOUR_SERVER:443
 ## 相关链接
 
 - [[core/stealth/overview|stealth]] — Stealth 模块详解
-- [[dev/tls]] — TLS 协议实践
+- [[dev/debugging/tls|tls]] — TLS 协议实践
 - [[configuration]] — 伪装配置参数

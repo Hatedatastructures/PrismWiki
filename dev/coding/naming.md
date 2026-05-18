@@ -1,6 +1,7 @@
 ---
 title: 命名规范
 description: Prism 项目的命名约定，包括命名空间、文件、类型、函数等命名规则
+layer: dev
 ---
 
 # 命名规范

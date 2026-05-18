@@ -1,6 +1,7 @@
 ---
 layer: core
 source: include/prism/stealth/
+title: Stealth 模块总览
 ---
 
 # Stealth 模块总览

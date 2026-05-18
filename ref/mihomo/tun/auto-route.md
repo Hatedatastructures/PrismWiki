@@ -204,5 +204,5 @@ tun:
 ## 相关链接
 
 - [[overview]] — TUN 模式总览
-- [[auto-detect-interface]] — 自动接口检测
+- [[ref/mihomo/tun/auto-detect-interface|auto-detect-interface]] — 自动接口检测
 - [[ref/mihomo/tun/overview|tun]] — 完整 TUN 说明

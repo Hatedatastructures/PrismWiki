@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/shadowtls/auth.hpp
+title: ShadowTLS v3 认证逻辑
 ---
 
 # ShadowTLS v3 认证逻辑

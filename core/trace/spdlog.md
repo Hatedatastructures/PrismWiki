@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/trace/spdlog.cpp
+title: Trace Spdlog
 ---
 
 # Trace Spdlog

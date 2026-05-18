@@ -9,6 +9,7 @@ metadata:
   hermes:
     tags: [wiki, prism, knowledge-base, obsidian, documentation, cpp]
     related_skills: [wiki-knowledge-base, obsidian, project-knowledge-base]
+layer: skills
 ---
 
 # PrismWiki 知识库规范

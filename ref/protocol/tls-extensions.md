@@ -8,6 +8,7 @@ tags: [协议, tls, extensions, 扩展, sni, alpn, key-share, ech]
 created: 2026-05-15
 updated: 2026-05-17
 related: [tls-clienthello, tls-serverhello, tls-1-3, reality, ech]
+layer: ref
 ---
 
 # TLS 扩展机制

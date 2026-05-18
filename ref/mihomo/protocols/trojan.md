@@ -127,7 +127,6 @@ proxies:
 
 ## 相关文档
 
-- [[../../protocol/trojan]] - Trojan 协议规范
-- [[../../protocol/trojan-gfw]] - Trojan-GFW 版本
+- [[ref/protocol/trojan-spec|trojan-spec]] - Trojan 协议规范
 - [[reality]] - Reality TLS 隐蔽
 - [[../transport/gun]] - gRPC 传输

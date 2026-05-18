@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/channel/eyeball/racer.hpp
+title: address_racer
 ---
 
 # address_racer

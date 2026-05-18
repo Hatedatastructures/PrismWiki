@@ -7,6 +7,7 @@ source: "RFC 8439"
 tags: [密码学, chacha20, poly1305, aead, 认证加密]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # ChaCha20-Poly1305

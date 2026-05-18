@@ -149,4 +149,4 @@ proxies:
 ## 相关文档
 
 - [[masque]] - MASQUE 协议
-- [[../../crypto/chacha20]] - ChaCha20 加密
+- [[ref/crypto/chacha20-poly1305|chacha20-poly1305]] - ChaCha20 加密

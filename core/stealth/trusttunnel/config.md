@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/trusttunnel/config.hpp
+title: TrustTunnel 伪装方案配置
 ---
 
 # TrustTunnel 伪装方案配置

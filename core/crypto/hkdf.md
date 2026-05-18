@@ -2,6 +2,7 @@
 layer: core
 source:
   - I:/code/Prism/include/prism/crypto/hkdf.hpp
+title: HKDF 密钥派生
 ---
 
 # HKDF 密钥派生
@@ -273,6 +274,6 @@ graph TD
 
 ## 相关文档
 
-- [[aead]] - AEAD 认证加密（使用派生的密钥）
-- [[x25519]] - X25519 密钥交换（生成共享密钥）
-- [[blake3]] - BLAKE3 密钥派生（SS2022 替代方案）
+- [[core/crypto/aead|aead]] - AEAD 认证加密（使用派生的密钥）
+- [[core/crypto/x25519|x25519]] - X25519 密钥交换（生成共享密钥）
+- [[core/crypto/blake3|blake3]] - BLAKE3 密钥派生（SS2022 替代方案）

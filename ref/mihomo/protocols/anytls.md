@@ -102,4 +102,4 @@ proxies:
 
 - [[reality]] - Reality TLS 隐蔽
 - [[ech]] - ECH 加密 Client Hello
-- [[../../stealth/anytls]] - AnyTLS 隐蔽技术
+- [[core/stealth/anytls|anytls]] - AnyTLS 隐蔽技术

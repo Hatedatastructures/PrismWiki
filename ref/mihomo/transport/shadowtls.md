@@ -8,6 +8,7 @@ tags: [mihomo, shadowtls, tls, 伪装, shadowsocks]
 created: 2026-05-17
 updated: 2026-05-17
 related: [shadowsocks, tls, stealth]
+layer: ref
 ---
 
 # ShadowTLS Transport

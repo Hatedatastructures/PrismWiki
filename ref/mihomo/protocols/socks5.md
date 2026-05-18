@@ -104,5 +104,5 @@ proxies:
 
 - [[socks4]] - SOCKS4 协议
 - [[../transport/socks5]] - SOCKS5 传输层
-- [[../../crypto/aead]] - AEAD 加密
-- [[../../protocol/socks5]] - SOCKS5 协议规范
+- [[core/crypto/aead|aead]] - AEAD 加密
+- [[ref/protocol/socks5-spec|socks5-spec]] - SOCKS5 协议规范

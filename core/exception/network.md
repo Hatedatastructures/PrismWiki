@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/exception/network.hpp
+title: Exception Network
 ---
 
 # Exception Network

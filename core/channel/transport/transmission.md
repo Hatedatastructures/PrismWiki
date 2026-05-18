@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/channel/transport/transmission.hpp
+title: transmission
 ---
 
 # transmission

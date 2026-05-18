@@ -69,11 +69,11 @@ tun:
 
 | 页面 | 描述 |
 |------|------|
-| [[enable]] | TUN 启用与平台配置 |
-| [[stack]] | 网络栈实现选择 (gVisor/System/Mixed) |
-| [[dns-hijack]] | DNS 劫持配置详解 |
-| [[auto-route]] | 自动路由机制 |
-| [[auto-detect-interface]] | 自动接口检测 |
+| [[ref/mihomo/tun/enable|enable]] | TUN 启用与平台配置 |
+| [[ref/mihomo/tun/stack|stack]] | 网络栈实现选择 (gVisor/System/Mixed) |
+| [[ref/mihomo/tun/dns-hijack|dns-hijack]] | DNS 劫持配置详解 |
+| [[ref/mihomo/tun/auto-route|auto-route]] | 自动路由机制 |
+| [[ref/mihomo/tun/auto-detect-interface|auto-detect-interface]] | 自动接口检测 |
 
 ## 平台差异
 

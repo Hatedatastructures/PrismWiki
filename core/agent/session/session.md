@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/agent/session/session.hpp
+title: session 模块
 ---
 
 # session 模块

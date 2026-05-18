@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/recognition/scheme_route_table.hpp
+title: scheme_route_table.hpp
 ---
 
 # scheme_route_table.hpp

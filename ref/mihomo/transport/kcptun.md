@@ -8,6 +8,7 @@ tags: [mihomo, kcptun, kcp, udp, smux, shadowsocks]
 created: 2026-05-17
 updated: 2026-05-17
 related: [shadowsocks, udp, smux]
+layer: ref
 ---
 
 # Kcptun Transport

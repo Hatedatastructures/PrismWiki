@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/reality/keygen.hpp
+title: Reality Keygen
 ---
 
 # Reality Keygen

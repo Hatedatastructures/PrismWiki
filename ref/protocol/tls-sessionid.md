@@ -8,6 +8,7 @@ tags: [协议, tls, sessionid, 伪装, 会话恢复, reality, shadowtls]
 created: 2026-05-15
 updated: 2026-05-17
 related: [tls-clienthello, tls-serverhello, reality, shadowtls, hmac-sha1]
+layer: ref
 ---
 
 # TLS SessionID 字段

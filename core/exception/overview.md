@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/exception/deviant.hpp, prism/exception/network.hpp, prism/exception/protocol.hpp, prism/exception/security.hpp
+title: Exception 模块
 ---
 
 # Exception 模块

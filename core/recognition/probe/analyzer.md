@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/recognition/probe/analyzer.hpp
+title: analyzer.hpp
 ---
 
 # analyzer.hpp

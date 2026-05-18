@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/exception/deviant.hpp
+title: Exception Deviant
 ---
 
 # Exception Deviant

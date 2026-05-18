@@ -8,6 +8,7 @@ tags: [协议, dns, tls, dot, 加密, 隐私]
 created: 2026-05-15
 updated: 2026-05-17
 related: [dns-over-udp, dns-over-tcp, dns-over-https, tls-1-3]
+layer: ref
 ---
 
 # DNS over TLS (DoT) 协议

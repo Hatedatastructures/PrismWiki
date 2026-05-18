@@ -7,6 +7,7 @@ source: "RFC 5869"
 tags: [密码学, hkdf, 密钥派生]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # HKDF

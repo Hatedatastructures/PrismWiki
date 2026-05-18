@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/recognition/layered_pipeline.hpp
+title: layered_pipeline.hpp
 ---
 
 # layered_pipeline.hpp

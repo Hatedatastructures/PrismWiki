@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/core.hpp
+title: multiplex::core - 多路复用核心抽象基类
 ---
 
 # multiplex::core - 多路复用核心抽象基类

@@ -7,6 +7,7 @@ source: "RFC 4492, RFC 8422"
 tags: [密码学, ecdhe, 密钥交换, 前向保密]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # ECDHE

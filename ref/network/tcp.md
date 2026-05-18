@@ -7,6 +7,7 @@ source: "RFC 793, RFC 1122, RFC 2581, RFC 6298, RFC 7323"
 tags: [网络, tcp, 传输, 可靠传输, 连接, 流量控制, 拥塞控制]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # TCP 协议

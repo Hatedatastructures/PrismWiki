@@ -8,6 +8,7 @@ tags: [协议, smux, yamux, 多路复用, 流, tcp, mux]
 created: 2026-05-15
 updated: 2026-05-17
 related: [tcp, trojan, vless, shadowsocks]
+layer: ref
 ---
 
 # Smux 与 Yamux 多路复用协议

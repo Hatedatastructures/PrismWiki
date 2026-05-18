@@ -3,6 +3,7 @@ layer: core
 source:
   - I:/code/Prism/include/prism/crypto/aead.hpp
   - I:/code/Prism/src/prism/crypto/aead.cpp
+title: AEAD 认证加密
 ---
 
 # AEAD 认证加密
@@ -272,6 +273,6 @@ graph TD
 
 ## 相关文档
 
-- [[hkdf]] - HKDF 密钥派生（生成 AEAD 密钥）
-- [[blake3]] - BLAKE3 密钥派生（SS2022 子密钥）
-- [[block]] - AES-ECB 单块加密（SS2022 UDP）
+- [[core/crypto/hkdf|hkdf]] - HKDF 密钥派生（生成 AEAD 密钥）
+- [[core/crypto/blake3|blake3]] - BLAKE3 密钥派生（SS2022 子密钥）
+- [[core/crypto/block|block]] - AES-ECB 单块加密（SS2022 UDP）

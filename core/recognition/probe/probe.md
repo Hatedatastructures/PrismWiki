@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/recognition/probe/probe.hpp
+title: probe.hpp
 ---
 
 # probe.hpp

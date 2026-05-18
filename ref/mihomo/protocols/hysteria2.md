@@ -133,4 +133,4 @@ proxies:
 
 - [[hysteria]] - Hysteria v1 协议
 - [[tuic]] - TUIC 协议
-- [[../../dev/udp]] - UDP 传输
+- [[dev/debugging/udp|udp]] - UDP 传输

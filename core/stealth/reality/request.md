@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/reality/request.hpp
+title: Reality Request
 ---
 
 # Reality Request

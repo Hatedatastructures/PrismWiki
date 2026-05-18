@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/agent/worker/worker.hpp
+title: worker 模块
 ---
 
 # worker 模块

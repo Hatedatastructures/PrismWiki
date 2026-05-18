@@ -7,6 +7,7 @@ source: "https://blake3.io/"
 tags: [密码学, blake3, 哈希, 密钥派生]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # BLAKE3

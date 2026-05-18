@@ -141,4 +141,4 @@ proxies:
 
 - [[hysteria]] - Hysteria 协议
 - [[hysteria2]] - Hysteria2 协议
-- [[../../dev/udp]] - UDP 传输
+- [[dev/debugging/udp|udp]] - UDP 传输

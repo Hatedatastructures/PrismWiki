@@ -175,6 +175,6 @@ proxies:
 ## 相关文档
 
 - [[shadowsocksr]] - ShadowsocksR 协议
-- [[../../protocol/shadowsocks]] - Shadowsocks 协议规范
-- [[../../crypto/aead]] - AEAD 加密
+- [[ref/protocol/shadowsocks-spec|shadowsocks-spec]] - Shadowsocks 协议规范
+- [[core/crypto/aead|aead]] - AEAD 加密
 - [[../transport/shadowsocks]] - Shadowsocks 传输层

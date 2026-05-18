@@ -7,6 +7,7 @@ source: "RFC 2104, RFC 6234"
 tags: [密码学, hmac, sha256, 消息认证码]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # HMAC-SHA256

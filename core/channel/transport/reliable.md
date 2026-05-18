@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/channel/transport/reliable.hpp
+title: reliable
 ---
 
 # reliable

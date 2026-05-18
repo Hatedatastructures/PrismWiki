@@ -69,7 +69,7 @@ mihomo（原 Clash Meta）是一个功能强大的代理核心，支持多种代
 |------|------|------|
 | [[direct]] | TCP/UDP | 直接连接 |
 | [[reject]] | - | 拒绝连接 |
-| [[dns]] | TCP/UDP | DNS 代理 |
+| [[ref/mihomo/protocols/dns|dns]] | TCP/UDP | DNS 代理 |
 
 ## 源码位置
 
@@ -80,4 +80,4 @@ mihomo（原 Clash Meta）是一个功能强大的代理核心，支持多种代
 
 - [[../transport/overview|传输层概述]]
 - [[../config|配置参考]]
-- [[../../crypto/overview|加密算法]]
+- [[core/crypto/overview|overview]]

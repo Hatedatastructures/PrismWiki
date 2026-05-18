@@ -87,4 +87,4 @@ ECH 可用于以下协议：
 ## 相关文档
 
 - [[reality]] - Reality TLS 隐蔽
-- [[../../stealth/ech]] - ECH 技术详解
+- [[core/stealth/ech|ech]] - ECH 技术详解

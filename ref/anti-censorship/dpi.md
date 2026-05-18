@@ -7,6 +7,7 @@ source: "概念文档"
 tags: [流量对抗, dpi, 检测, 审查, 包检测, 协议识别]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # 深度包检测 (DPI)

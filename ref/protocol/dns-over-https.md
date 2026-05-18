@@ -8,6 +8,7 @@ tags: [协议, dns, https, doh, 加密, 隐私, http2]
 created: 2026-05-15
 updated: 2026-05-17
 related: [dns-over-udp, dns-over-tcp, dns-over-tls, http-2]
+layer: ref
 ---
 
 # DNS over HTTPS (DoH) 协议

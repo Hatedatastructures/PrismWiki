@@ -8,6 +8,7 @@ tags: [mihomo, smux, mux, 多路复用, xtaci]
 created: 2026-05-17
 updated: 2026-05-17
 related: [trojan, kcptun, gost-plugin]
+layer: ref
 ---
 
 # Smux 多路复用

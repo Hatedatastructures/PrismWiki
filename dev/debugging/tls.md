@@ -13,11 +13,12 @@ related:
   - "[[dev/debugging/overview]]"
   - "[[core/stealth/overview|stealth]]"
   - "[[core/crypto/overview|crypto]]"
-  - "[[dev/tcp]]"
+  - "[[dev/debugging/tcp|tcp]]"
   - "[[dev/gfw]]"
   - "[[configuration]]"
   - "[[core/crypto/aead]]"
   - "[[core/crypto/x25519]]"
+layer: dev
 ---
 
 # TLS 协议参考与问题排查指南
@@ -1203,7 +1204,7 @@ python jarm.py www.example.com
 - [[core/crypto/overview|crypto]] -- 加密模块
 - [[core/stealth/reality|stealth/reality]] -- Reality TLS 详解
 - [[core/stealth/shadowtls|stealth/shadowtls]] -- ShadowTLS 详解
-- [[dev/tcp]] -- TCP 协议基础
+- [[dev/debugging/tcp|tcp]] -- TCP 协议基础
 - [[dev/gfw]] -- GFW 封锁原理
 - [[configuration]] -- TLS 配置参数
 - [[core/crypto/aead]] -- AEAD 加密实现

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: "I:/code/Prism/include/prism/protocol/trojan/relay.hpp"
+title: Trojan 协议中继器
 ---
 
 # Trojan 协议中继器

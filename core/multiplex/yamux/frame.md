@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/yamux/frame.hpp
+title: yamux::frame - yamux 协议帧格式定义
 ---
 
 # yamux::frame - yamux 协议帧格式定义

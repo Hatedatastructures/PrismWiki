@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/loader/load.hpp
+title: Loader 模块
 ---
 
 # Loader 模块

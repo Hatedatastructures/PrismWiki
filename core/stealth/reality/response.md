@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/reality/response.hpp
+title: Reality Response
 ---
 
 # Reality Response

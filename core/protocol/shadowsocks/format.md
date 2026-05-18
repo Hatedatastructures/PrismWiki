@@ -1,6 +1,7 @@
 ---
 layer: core
 source: "I:/code/Prism/include/prism/protocol/shadowsocks/format.hpp"
+title: SS2022 协议格式编解码
 ---
 
 # SS2022 协议格式编解码

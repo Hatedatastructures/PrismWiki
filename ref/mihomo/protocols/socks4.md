@@ -52,4 +52,4 @@ SOCKS4a 允许传递域名而非 IP：
 
 - [[socks5]] - SOCKS5 协议
 - [[../transport/socks4]] - SOCKS4 传输层
-- [[../../protocol/socks5]] - SOCKS 协议家族
+- [[ref/protocol/socks5-spec|socks5-spec]] - SOCKS 协议家族

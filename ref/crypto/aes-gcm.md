@@ -7,6 +7,7 @@ source: "NIST SP 800-38D"
 tags: [密码学, aes, gcm, aead, 认证加密]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # AES-GCM

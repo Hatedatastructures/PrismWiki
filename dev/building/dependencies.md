@@ -13,6 +13,7 @@ sources:
   - I:/code/Prism/CLAUDE.md
   - I:/code/Prism/CMakeLists.txt
 confidence: high
+layer: dev
 ---
 
 # 构建依赖项

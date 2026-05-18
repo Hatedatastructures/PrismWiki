@@ -31,14 +31,14 @@ mihomo DNS 模块处理域名解析，防止 DNS 泄露并优化解析速度。
 
 | 类型 | 说明 | 源码 |
 |------|------|------|
-| [[servers]] | DNS 服务器配置 | `resolver.go` |
-| [[enable]] | 启用 DNS | 配置项 |
-| [[listen]] | 监听地址 | `server.go` |
+| [[ref/mihomo/dns/servers|servers]] | DNS 服务器配置 | `resolver.go` |
+| [[ref/mihomo/dns/enable|enable]] | 启用 DNS | 配置项 |
+| [[ref/mihomo/dns/listen|listen]] | 监听地址 | `server.go` |
 | [[enhanced-mode]] | 增强模式 | `enhancer.go` |
-| [[fake-ip-filter]] | fake-ip 过滤 | `enhancer.go` |
-| [[nameserver-policy]] | DNS 策略 | `policy.go` |
-| [[fallback]] | fallback DNS | `resolver.go` |
-| [[fallback-filter]] | fallback 过滤 | `resolver.go` |
+| [[ref/mihomo/dns/fake-ip-filter|fake-ip-filter]] | fake-ip 过滤 | `enhancer.go` |
+| [[ref/mihomo/dns/nameserver-policy|nameserver-policy]] | DNS 策略 | `policy.go` |
+| [[ref/mihomo/dns/fallback|fallback]] | fallback DNS | `resolver.go` |
+| [[ref/mihomo/dns/fallback-filter|fallback-filter]] | fallback 过滤 | `resolver.go` |
 
 ## Resolver 结构
 
@@ -118,11 +118,11 @@ type NameServer struct {
 
 ## 相关文档
 
-- [[servers]] - DNS 服务器配置
-- [[enable]] - 启用 DNS
-- [[listen]] - 监听地址
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/enable|enable]] - 启用 DNS
+- [[ref/mihomo/dns/listen|listen]] - 监听地址
 - [[enhanced-mode]] - 增强模式
-- [[fake-ip-filter]] - fake-ip 过滤
-- [[nameserver-policy]] - DNS 策略
-- [[fallback]] - fallback DNS
-- [[fallback-filter]] - fallback 过滤
+- [[ref/mihomo/dns/fake-ip-filter|fake-ip-filter]] - fake-ip 过滤
+- [[ref/mihomo/dns/nameserver-policy|nameserver-policy]] - DNS 策略
+- [[ref/mihomo/dns/fallback|fallback]] - fallback DNS
+- [[ref/mihomo/dns/fallback-filter|fallback-filter]] - fallback 过滤

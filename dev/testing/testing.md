@@ -14,6 +14,7 @@ related:
   - "[[core/overview|overview]]"
   - "[[dev/building/configuration|configuration]]"
   - "[[core/architecture|architecture]]"
+layer: dev
 ---
 
 # 测试体系完整指南

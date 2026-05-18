@@ -123,5 +123,5 @@ dns:
 ## 相关文档
 
 - [[overview]] - DNS 配置概述
-- [[enable]] - 启用 DNS
-- [[servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/enable|enable]] - 启用 DNS
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置

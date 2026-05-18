@@ -8,11 +8,12 @@ related:
   - "[[dev/building/overview]]"
   - "[[dev/building/cmake]]"
   - "[[dev/building/options]]"
-  - "[[dev/testing]]"
+  - "[[dev/testing/testing|testing]]"
   - "[[performance/benchmark]]"
 sources:
   - I:/code/Prism/CLAUDE.md
 confidence: high
+layer: dev
 ---
 
 # 构建命令
@@ -270,6 +271,6 @@ build_debug/src/Prism.exe
 - [[dev/building/overview|构建系统概述]] — 构建流程概览
 - [[dev/building/cmake|CMake 构建结构]] — CMake 配置详解
 - [[dev/building/options|构建选项]] — 可配置构建选项
-- [[dev/testing|测试指南]] — 测试详情
+- [[dev/testing/testing|测试指南]] — 测试详情
 - [[performance/benchmark|性能基准]] — 基准测试结果
-- [[dev/stress|压力测试]] — 压力测试详情
+- [[dev/testing/stress|压力测试]] — 压力测试详情

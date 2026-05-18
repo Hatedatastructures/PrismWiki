@@ -8,6 +8,7 @@ tags: [mihomo, mux, smux, yamux, singmux, 多路复用]
 created: 2026-05-17
 updated: 2026-05-17
 related: [trojan, vless, vmess, shadowsocks]
+layer: ref
 ---
 
 # Mihomo Mux 概览

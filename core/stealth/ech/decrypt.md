@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/ech/decrypt.hpp
+title: ECH 解密接口
 ---
 
 # ECH 解密接口

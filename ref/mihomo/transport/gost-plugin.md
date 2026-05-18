@@ -8,6 +8,7 @@ tags: [mihomo, gost-plugin, websocket, mux, smux, shadowsocks]
 created: 2026-05-17
 updated: 2026-05-17
 related: [shadowsocks, websocket, smux]
+layer: ref
 ---
 
 # Gost-Plugin Transport

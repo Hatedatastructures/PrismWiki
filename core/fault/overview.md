@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/fault/code.hpp, prism/fault/handling.hpp, prism/fault/compatible.hpp
+title: Fault 模块
 ---
 
 # Fault 模块

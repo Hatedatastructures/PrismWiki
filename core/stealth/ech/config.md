@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/ech/config.hpp
+title: ECH（Encrypted Client Hello）配置
 ---
 
 # ECH（Encrypted Client Hello）配置

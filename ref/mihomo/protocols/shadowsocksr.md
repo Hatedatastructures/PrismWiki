@@ -136,5 +136,5 @@ proxies:
 ## 相关文档
 
 - [[shadowsocks]] - Shadowsocks 协议
-- [[../../protocol/shadowsocks]] - Shadowsocks 协议规范
+- [[ref/protocol/shadowsocks-spec|shadowsocks-spec]] - Shadowsocks 协议规范
 - [[../transport/ssr]] - SSR 传输层

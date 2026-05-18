@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/recognition/
+title: Recognition 模块
 ---
 
 # Recognition 模块

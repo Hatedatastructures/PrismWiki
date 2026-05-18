@@ -8,6 +8,7 @@ tags: [协议, dns, tcp, 解析, 查询, 响应, 大响应]
 created: 2026-05-15
 updated: 2026-05-17
 related: [dns-over-udp, dns-over-tls, dns-over-https, dns-basics]
+layer: ref
 ---
 
 # DNS over TCP 协议

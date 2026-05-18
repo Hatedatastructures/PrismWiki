@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/exception/security.hpp
+title: Exception Security
 ---
 
 # Exception Security

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/agent/worker/stats.hpp
+title: stats 模块
 ---
 
 # stats 模块

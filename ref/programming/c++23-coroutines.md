@@ -7,6 +7,7 @@ source: "C++20/C++23 Coroutines"
 tags: [编程, c++, 协程, 异步, awaitable, promise_type, coroutine_handle, c++23]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # C++23 协程

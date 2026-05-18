@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/reality/config.hpp
+title: Reality Config
 ---
 
 # Reality Config

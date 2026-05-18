@@ -184,5 +184,5 @@ tolerance 参数避免因延迟抖动频繁切换节点：
 
 - [[overview]] - 代理组概述
 - [[selector]] - select 代理组
-- [[fallback]] - fallback 代理组
+- [[ref/mihomo/proxy-groups/fallback|fallback]] - fallback 代理组
 - [[config]] - 代理组配置详解

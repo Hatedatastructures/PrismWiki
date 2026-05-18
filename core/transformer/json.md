@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/transformer/json.hpp
+title: Transformer Json
 ---
 
 # Transformer Json

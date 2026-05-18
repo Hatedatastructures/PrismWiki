@@ -195,6 +195,6 @@ func jumpHash(key uint64, buckets int32) int32 {
 ## 相关文档
 
 - [[overview]] - 代理组概述
-- [[fallback]] - fallback 代理组
+- [[ref/mihomo/proxy-groups/fallback|fallback]] - fallback 代理组
 - [[url-test]] - url-test 代理组
 - [[config]] - 代理组配置详解

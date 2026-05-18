@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/memory/container.hpp, prism/memory/pool.hpp
+title: Memory 模块
 ---
 
 # Memory 模块

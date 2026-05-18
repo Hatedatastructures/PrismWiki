@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/reality/auth.hpp
+title: Reality Auth
 ---
 
 # Reality Auth

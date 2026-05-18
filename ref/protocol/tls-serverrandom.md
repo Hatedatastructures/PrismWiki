@@ -8,6 +8,7 @@ tags: [协议, tls, serverrandom, 密钥派生, 密钥, 降级保护, shadowtls]
 created: 2026-05-15
 updated: 2026-05-17
 related: [tls-serverhello, tls-1-3, hkdf, shadowtls, sha256]
+layer: ref
 ---
 
 # TLS ServerRandom 字段

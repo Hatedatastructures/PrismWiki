@@ -2,6 +2,7 @@
 layer: core
 source:
   - I:/code/Prism/include/prism/crypto/base64.hpp
+title: Base64 编解码
 ---
 
 # Base64 编解码

@@ -16,6 +16,7 @@ related:
   - dev/agent
   - docs/prism/memory.md
 confidence: high
+layer: dev
 ---
 
 # PMR 内存策略

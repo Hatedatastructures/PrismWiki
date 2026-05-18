@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/trace/config.hpp
+title: Trace Config
 ---
 
 # Trace Config

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/memory/container.hpp
+title: Memory Container
 ---
 
 # Memory Container

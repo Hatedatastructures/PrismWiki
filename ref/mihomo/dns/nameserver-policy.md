@@ -150,5 +150,5 @@ dns:
 ## 相关文档
 
 - [[overview]] - DNS 配置概述
-- [[servers]] - DNS 服务器配置
-- [[fallback]] - fallback DNS
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/fallback|fallback]] - fallback DNS

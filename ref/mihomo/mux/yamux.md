@@ -8,6 +8,7 @@ tags: [mihomo, yamux, mux, 多路复用, hashicorp]
 created: 2026-05-17
 updated: 2026-05-17
 related: [trojan, vmess]
+layer: ref
 ---
 
 # Yamux 多路复用

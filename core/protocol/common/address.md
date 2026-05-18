@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/protocol/common/address.hpp
+title: 共享地址类型
 ---
 
 # 共享地址类型

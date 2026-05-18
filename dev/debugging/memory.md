@@ -12,7 +12,7 @@ updated: 2026-05-17
 related:
   - "[[dev/debugging/overview]]"
   - "[[memory]]"
-  - "[[dev/pmr-memory-pool]]"
+  - "[[dev/coding/pmr|pmr]]"
 ---
 
 # 内存问题排查指南
@@ -482,5 +482,5 @@ top -p $(pidof prism)
 
 - [[dev/debugging/overview]] — 排障体系概述
 - [[memory]] — Memory 内存模块
-- [[dev/pmr-memory-pool]] — PMR 内存池详解
+- [[dev/coding/pmr|pmr]] — PMR 内存池详解
 - [[core/agent/session/session|session]] — Session 会话管理

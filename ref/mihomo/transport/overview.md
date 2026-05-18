@@ -8,6 +8,7 @@ tags: [mihomo, transport, 传输层, 插件, 混淆]
 created: 2026-05-17
 updated: 2026-05-17
 related: [shadowsocks, trojan, vmess, vless]
+layer: ref
 ---
 
 # Mihomo Transport 概览

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/fault/handling.hpp
+title: Fault Handling
 ---
 
 # Fault Handling

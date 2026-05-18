@@ -57,5 +57,5 @@ DNS 代理处理流程：
 
 - [[direct]] - Direct 协议
 - [[reject]] - Reject 协议
-- [[../../client/mihomo-dns]] - DNS 配置
-- [[../../resolve/dns]] - DNS 解析
+- [[ref/mihomo/dns|dns]] - DNS 配置
+- [[core/resolve/dns|dns]] - DNS 解析

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/exception/protocol.hpp
+title: Exception Protocol
 ---
 
 # Exception Protocol

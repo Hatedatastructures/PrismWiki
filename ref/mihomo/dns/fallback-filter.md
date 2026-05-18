@@ -185,5 +185,5 @@ DNS 查询到达
 ## 相关文档
 
 - [[overview]] - DNS 配置概述
-- [[fallback]] - fallback DNS
-- [[servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/fallback|fallback]] - fallback DNS
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置

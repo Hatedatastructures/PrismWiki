@@ -2,6 +2,7 @@
 layer: core
 source:
   - I:/code/Prism/include/prism/crypto/blake3.hpp
+title: BLAKE3 密钥派生
 ---
 
 # BLAKE3 密钥派生

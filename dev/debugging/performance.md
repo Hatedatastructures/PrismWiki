@@ -12,7 +12,7 @@ created: 2026-05-17
 updated: 2026-05-17
 related:
   - "[[dev/debugging/overview]]"
-  - "[[dev/stress]]"
+  - "[[dev/testing/stress|stress]]"
   - "[[performance/benchmark]]"
 ---
 
@@ -500,7 +500,7 @@ perf top -p $(pidof prism)
 ## 相关链接
 
 - [[dev/debugging/overview]] — 排障体系概述
-- [[dev/stress]] — 压力测试体系
+- [[dev/testing/stress|stress]] — 压力测试体系
 - [[performance/benchmark]] — 性能基准测试
 - [[dev/debugging/memory]] — 内存问题排查
 - [[dev/debugging/connection]] — 连接问题排查

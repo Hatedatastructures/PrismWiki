@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/channel/connection/pool.hpp
+title: connection_pool
 ---
 
 # connection_pool

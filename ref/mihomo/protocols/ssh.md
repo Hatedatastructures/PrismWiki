@@ -106,4 +106,4 @@ proxies:
 
 ## 相关文档
 
-- [[../../dev/tcp]] - TCP 连接
+- [[dev/debugging/tcp|tcp]] - TCP 连接

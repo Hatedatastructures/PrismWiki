@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/fault/compatible.hpp
+title: Fault Compatible
 ---
 
 # Fault Compatible

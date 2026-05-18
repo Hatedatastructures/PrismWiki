@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/protocol/common/form.hpp
+title: 传输形态枚举
 ---
 
 # 传输形态枚举

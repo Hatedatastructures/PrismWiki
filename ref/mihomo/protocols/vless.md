@@ -158,6 +158,6 @@ proxies:
 ## 相关文档
 
 - [[vmess]] - VMess 协议
-- [[../../protocol/vless]] - VLESS 协议规范
+- [[ref/protocol/vless-spec|vless-spec]] - VLESS 协议规范
 - [[reality]] - Reality TLS 隐蔽
 - [[ech]] - ECH 加密 Client Hello

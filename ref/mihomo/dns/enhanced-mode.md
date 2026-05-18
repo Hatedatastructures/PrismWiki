@@ -106,7 +106,7 @@ dns:
 
 | 局限 | 解决方案 |
 |------|----------|
-| CDN 调度问题 | 使用 [[fake-ip-filter]] |
+| CDN 调度问题 | 使用 [[ref/mihomo/dns/fake-ip-filter|fake-ip-filter]] |
 | NTP 时间同步 | 添加到 filter |
 | 局域网域名 | 添加到 filter |
 
@@ -133,7 +133,7 @@ dns:
     - "+.stun.*"
 ```
 
-参见 [[fake-ip-filter]]。
+参见 [[ref/mihomo/dns/fake-ip-filter|fake-ip-filter]]。
 
 ## redir-host 模式
 
@@ -156,5 +156,5 @@ dns:
 ## 相关文档
 
 - [[overview]] - DNS 配置概述
-- [[fake-ip-filter]] - fake-ip 过滤
-- [[servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/fake-ip-filter|fake-ip-filter]] - fake-ip 过滤
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置

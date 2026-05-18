@@ -1,6 +1,7 @@
 ---
 layer: core
 source: "I:/code/Prism/include/prism/protocol/trojan/format.hpp"
+title: Trojan 协议格式编解码
 ---
 
 # Trojan 协议格式编解码

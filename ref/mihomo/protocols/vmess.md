@@ -179,5 +179,5 @@ proxies:
 ## 相关文档
 
 - [[vless]] - VLESS 协议
-- [[../../protocol/vmess]] - VMess 协议规范
-- [[../../crypto/aead]] - AEAD 加密
+- [[ref/protocol/vmess-spec|vmess-spec]] - VMess 协议规范
+- [[core/crypto/aead|aead]] - AEAD 加密

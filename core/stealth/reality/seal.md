@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/reality/seal.hpp
+title: Reality Seal
 ---
 
 # Reality Seal

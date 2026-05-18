@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/duct.hpp
+title: multiplex::duct - 多路复用 TCP 流管道
 ---
 
 # multiplex::duct - 多路复用 TCP 流管道

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: "I:/code/Prism/include/prism/protocol/vless/config.hpp"
+title: VLESS 协议配置
 ---
 
 # VLESS 协议配置

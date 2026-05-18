@@ -8,6 +8,7 @@ tags: [mihomo, simple-obfs, http, tls, 混淆, shadowsocks]
 created: 2026-05-17
 updated: 2026-05-17
 related: [shadowsocks, obfuscation]
+layer: ref
 ---
 
 # Simple-Obfs Transport

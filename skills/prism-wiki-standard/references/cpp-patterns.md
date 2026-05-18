@@ -1,3 +1,11 @@
+---
+title: cpp-patterns
+created: 2026-05-18
+updated: 2026-05-18
+layer: skills
+tags: [skill, reference]
+---
+
 # C++ 文档模式参考
 
 Prism 项目的 C++23 代码中常见的模式和对应的文档写法。

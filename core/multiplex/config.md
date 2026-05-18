@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/config.hpp
+title: multiplex::config - 多路复用通用配置
 ---
 
 # multiplex::config - 多路复用通用配置

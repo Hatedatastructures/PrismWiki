@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/smux/craft.hpp, I:/code/Prism/include/prism/multiplex/smux/frame.hpp, I:/code/Prism/include/prism/multiplex/smux/config.hpp, I:/code/Prism/include/prism/multiplex/core.hpp, I:/code/Prism/include/prism/multiplex/bootstrap.hpp, I:/code/Prism/include/prism/multiplex/duct.hpp, I:/code/Prism/include/prism/multiplex/parcel.hpp, I:/code/Prism/include/prism/multiplex/yamux/craft.hpp, I:/code/Prism/include/prism/multiplex/yamux/frame.hpp, I:/code/Prism/include/prism/multiplex/yamux/config.hpp
+title: multiplex - 多路复用模块
 ---
 
 # multiplex - 多路复用模块

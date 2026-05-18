@@ -115,4 +115,4 @@ proxies:
 
 - [[anytls]] - AnyTLS 协议
 - [[ech]] - ECH 加密
-- [[../../stealth/trusttunnel]] - TrustTunnel 详细文档
+- [[core/stealth/trusttunnel|trusttunnel]] - TrustTunnel 详细文档

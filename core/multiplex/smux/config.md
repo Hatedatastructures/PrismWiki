@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/smux/config.hpp
+title: smux::config - smux 协议配置
 ---
 
 # smux::config - smux 协议配置

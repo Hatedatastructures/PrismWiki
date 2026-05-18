@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/trace/config.hpp, prism/trace/spdlog.cpp
+title: Trace 模块
 ---
 
 # Trace 模块

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/stealth/registry.hpp
+title: registry 模块
 ---
 
 # registry 模块

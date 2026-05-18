@@ -165,5 +165,5 @@ dns:
 ## 相关文档
 
 - [[overview]] - DNS 配置概述
-- [[fallback]] - fallback DNS
-- [[nameserver-policy]] - DNS 策略
+- [[ref/mihomo/dns/fallback|fallback]] - fallback DNS
+- [[ref/mihomo/dns/nameserver-policy|nameserver-policy]] - DNS 策略

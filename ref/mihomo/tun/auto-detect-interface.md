@@ -207,5 +207,5 @@ tun:
 ## 相关链接
 
 - [[overview]] — TUN 模式总览
-- [[auto-route]] — 自动路由配置
+- [[ref/mihomo/tun/auto-route|auto-route]] — 自动路由配置
 - [[ref/mihomo/tun/overview|tun]] — 完整 TUN 说明

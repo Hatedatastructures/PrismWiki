@@ -156,4 +156,4 @@ dns:
 
 - [[overview]] - DNS 配置概述
 - [[enhanced-mode]] - DNS 增强模式
-- [[servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置

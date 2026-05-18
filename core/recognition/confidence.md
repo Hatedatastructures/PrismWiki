@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/recognition/confidence.hpp
+title: confidence.hpp
 ---
 
 # confidence.hpp

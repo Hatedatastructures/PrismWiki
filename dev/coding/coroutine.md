@@ -1,6 +1,7 @@
 ---
 title: 协程约定与原理
 description: Prism 协程编程规范、C++23 协程原理、使用示例、最佳实践与排障指南
+layer: dev
 ---
 
 # 协程约定
@@ -726,4 +727,4 @@ net::awaitable<void> cancellable_task(std::atomic<bool>& cancelled) {
 - [[lifecycle]] - 生命周期安全指南
 - [[dev/modules]] - 模块结构
 - [[pmr-memory-pool]] - 协程内存管理
-- [[dev/tcp]] - TCP 协议协程实践
+- [[dev/debugging/tcp|tcp]] - TCP 协议协程实践

@@ -31,7 +31,7 @@ mihomo 代理组是流量控制的核心组件，定义节点选择策略。
 |------|------|----------|
 | [[selector]] | 手动选择 | `selector.go` |
 | [[url-test]] | 自动选优 | `urltest.go` |
-| [[fallback]] | 故障转移 | `fallback.go` |
+| [[ref/mihomo/proxy-groups/fallback|fallback]] | 故障转移 | `fallback.go` |
 | [[load-balance]] | 负载均衡 | `loadbalance.go` |
 
 ## YAML 配置示例
@@ -105,8 +105,8 @@ type GroupCommonOption struct {
 
 - [[selector]] - select 代理组
 - [[url-test]] - url-test 代理组
-- [[fallback]] - fallback 代理组
+- [[ref/mihomo/proxy-groups/fallback|fallback]] - fallback 代理组
 - [[load-balance]] - load-balance 代理组
 - [[config]] - 代理组配置详解
 - [[../provider/overview|Provider 概述]]
-- [[../../client/mihomo-proxy-groups|代理组概念]]
+- [[ref/mihomo/proxy-groups|proxy-groups]]

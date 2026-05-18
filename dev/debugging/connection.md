@@ -12,8 +12,8 @@ updated: 2026-05-17
 related:
   - "[[dev/debugging/overview]]"
   - "[[core/channel/overview|channel]]"
-  - "[[dev/tcp]]"
-  - "[[dev/udp]]"
+  - "[[dev/debugging/tcp|tcp]]"
+  - "[[dev/debugging/udp|udp]]"
 ---
 
 # 连接问题排查指南
@@ -473,6 +473,6 @@ sysctl -w net.ipv4.tcp_fin_timeout=30
 
 - [[dev/debugging/overview]] — 排障体系概述
 - [[channel]] — Channel 连接池模块
-- [[dev/tcp]] — TCP 协议基础
-- [[dev/udp]] — UDP 协议基础
+- [[dev/debugging/tcp|tcp]] — TCP 协议基础
+- [[dev/debugging/udp|udp]] — UDP 协议基础
 - [[dev/debugging/log-analysis]] — 日志分析方法

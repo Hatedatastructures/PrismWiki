@@ -13,6 +13,7 @@ sources:
   - I:/code/Prism/CLAUDE.md
   - I:/code/Prism/CMakeLists.txt
 confidence: high
+layer: dev
 ---
 
 # CMake 构建结构

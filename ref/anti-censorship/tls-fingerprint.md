@@ -7,6 +7,7 @@ source: "概念文档"
 tags: [流量对抗, tls, 指纹, ja3, ja4, 客户端识别, 指纹识别]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # TLS 指纹 (JA3/JA4)

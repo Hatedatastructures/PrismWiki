@@ -8,6 +8,7 @@ tags: [协议, http, connect, 代理, 隧道, https]
 created: 2026-05-15
 updated: 2026-05-17
 related: [socks5-rfc1928, trojan, http-1-1, proxy-basics]
+layer: ref
 ---
 
 # HTTP CONNECT 代理方法

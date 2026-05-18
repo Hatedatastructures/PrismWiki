@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/protocol/socks5/config.hpp
+title: SOCKS5 协议配置
 ---
 
 # SOCKS5 协议配置

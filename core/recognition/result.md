@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/recognition/result.hpp
+title: result.hpp
 ---
 
 # result.hpp

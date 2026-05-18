@@ -171,6 +171,6 @@ tun:
 ## 相关链接
 
 - [[overview]] — TUN 模式总览
-- [[enable]] — 启用配置
+- [[ref/mihomo/tun/enable|enable]] — 启用配置
 - [[ref/network/tcp]] — TCP 协议
 - [[ref/network/udp]] — UDP 协议

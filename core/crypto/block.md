@@ -2,6 +2,7 @@
 layer: core
 source:
   - I:/code/Prism/include/prism/crypto/block.hpp
+title: AES-ECB 单块加密
 ---
 
 # AES-ECB 单块加密

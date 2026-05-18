@@ -472,4 +472,4 @@ endif()
 - [[dev/testing/commands]] — 测试命令详解
 - [[dev/testing/stress]] — 压力测试体系
 - [[dev/testing/benchmark]] — 基准测试体系
-- [[dev/cpp23-coroutines]] — C++23 协程
+- [[dev/coding/coroutine|coroutine]] — C++23 协程

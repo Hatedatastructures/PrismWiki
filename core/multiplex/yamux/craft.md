@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/yamux/craft.hpp
+title: yamux::craft - yamux 多路复用会话服务端
 ---
 
 # yamux::craft - yamux 多路复用会话服务端

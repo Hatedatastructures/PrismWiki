@@ -8,6 +8,7 @@ tags: [协议, tls, serverhello, 握手, 密钥交换, 密码套件]
 created: 2026-05-15
 updated: 2026-05-17
 related: [tls-1-3, tls-clienthello, tls-serverrandom, tls-extensions, reality]
+layer: ref
 ---
 
 # TLS ServerHello 消息

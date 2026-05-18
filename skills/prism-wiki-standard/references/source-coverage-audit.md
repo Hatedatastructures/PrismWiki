@@ -1,3 +1,11 @@
+---
+title: source-coverage-audit
+created: 2026-05-18
+updated: 2026-05-18
+layer: skills
+tags: [skill, reference]
+---
+
 # PrismWiki 源码覆盖率审计脚本
 
 对比 wiki 页面与 hpp 文件的覆盖情况，生成优先级报告。

@@ -8,6 +8,7 @@ tags: [mihomo, mux, config, 配置, smux, brutal]
 created: 2026-05-17
 updated: 2026-05-17
 related: [singmux, smux, yamux]
+layer: ref
 ---
 
 # Mux 配置参数

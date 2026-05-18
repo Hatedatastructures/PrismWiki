@@ -12,6 +12,7 @@ related:
   - ref/memory/zero-copy
   - memory/container
   - memory/pool
+layer: ref
 ---
 
 # 多态内存资源 (PMR)

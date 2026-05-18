@@ -12,6 +12,7 @@ related:
   - ref/crypto/sha256
   - ref/crypto/hkdf
   - stealth/shadowtls/auth
+layer: ref
 ---
 
 # HMAC-SHA1

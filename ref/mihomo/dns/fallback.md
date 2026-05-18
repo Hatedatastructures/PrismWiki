@@ -123,7 +123,7 @@ fallback:
 
 ## fallback-filter
 
-参见 [[fallback-filter]]：
+参见 [[ref/mihomo/dns/fallback-filter|fallback-filter]]：
 
 ```yaml
 fallback-filter:
@@ -168,5 +168,5 @@ dns:
 ## 相关文档
 
 - [[overview]] - DNS 配置概述
-- [[servers]] - DNS 服务器配置
-- [[fallback-filter]] - fallback 过滤
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/fallback-filter|fallback-filter]] - fallback 过滤

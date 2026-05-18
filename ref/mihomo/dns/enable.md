@@ -75,15 +75,15 @@ dns:
 
 | 配置项 | 说明 |
 |--------|------|
-| [[listen]] | DNS 监听地址 |
+| [[ref/mihomo/dns/listen|listen]] | DNS 监听地址 |
 | [[enhanced-mode]] | DNS 增强模式 |
-| [[servers]] | DNS 服务器列表 |
-| [[fallback]] | fallback DNS |
-| [[fake-ip-filter]] | fake-ip 过滤列表 |
-| [[nameserver-policy]] | DNS 策略 |
+| [[ref/mihomo/dns/servers|servers]] | DNS 服务器列表 |
+| [[ref/mihomo/dns/fallback|fallback]] | fallback DNS |
+| [[ref/mihomo/dns/fake-ip-filter|fake-ip-filter]] | fake-ip 过滤列表 |
+| [[ref/mihomo/dns/nameserver-policy|nameserver-policy]] | DNS 策略 |
 
 ## 相关文档
 
 - [[overview]] - DNS 配置概述
 - [[enhanced-mode]] - DNS 增强模式
-- [[servers]] - DNS 服务器配置
+- [[ref/mihomo/dns/servers|servers]] - DNS 服务器配置

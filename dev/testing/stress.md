@@ -7,10 +7,10 @@ tags: [testing, stress, memory, pool, arena, multiplex, concurrency, performance
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - "[[dev/testing]]"
+  - "[[dev/testing/testing|testing]]"
   - "[[dev/testing/overview]]"
   - "[[dev/testing/benchmark]]"
-  - "[[dev/pmr-memory-pool]]"
+  - "[[dev/coding/pmr|pmr]]"
   - "[[core/multiplex/bootstrap]]"
   - "[[core/crypto/hkdf]]"
 ---
@@ -661,9 +661,9 @@ fi
 
 ## 相关链接
 
-- [[dev/testing]] — 测试体系概览
+- [[dev/testing/testing|testing]] — 测试体系概览
 - [[dev/testing/overview]] — 测试体系概述
 - [[dev/testing/benchmark]] — 基准测试体系
-- [[dev/pmr-memory-pool]] — PMR 内存池
+- [[dev/coding/pmr|pmr]] — PMR 内存池
 - [[core/multiplex/bootstrap]] — 多路复用引导
 - [[core/multiplex/duct]] — 多路复用管道

@@ -1,6 +1,7 @@
 ---
 layer: core
 source: prism/fault/code.hpp
+title: Fault Code
 ---
 
 # Fault Code

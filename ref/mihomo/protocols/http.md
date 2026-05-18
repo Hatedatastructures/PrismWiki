@@ -98,5 +98,5 @@ proxies:
 
 ## 相关文档
 
-- [[../../protocol/http]] - HTTP 协议规范
-- [[../../dev/tcp]] - TCP 连接
+- [[ref/protocol/http-spec|http-spec]] - HTTP 协议规范
+- [[dev/debugging/tcp|tcp]] - TCP 连接

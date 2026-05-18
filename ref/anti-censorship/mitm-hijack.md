@@ -7,6 +7,7 @@ source: "概念文档"
 tags: [流量对抗, mitm, 劫持, 安全, 证书, tls, 中间人]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # 中间人劫持防御

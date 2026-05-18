@@ -8,6 +8,7 @@ tags: [协议, tls, 握手, 加密, 安全, 传输层安全]
 created: 2026-05-15
 updated: 2026-05-17
 related: [tls-clienthello, tls-serverhello, tls-extensions, hkdf, aes-gcm, x25519]
+layer: ref
 ---
 
 # TLS 1.3 协议

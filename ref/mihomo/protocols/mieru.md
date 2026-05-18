@@ -104,4 +104,4 @@ proxies:
 
 ## 相关文档
 
-- [[../../protocol/proxy-protocols]] - 代理协议概述
+- [[ref/mihomo/protocols/overview|protocols]] - 代理协议概述

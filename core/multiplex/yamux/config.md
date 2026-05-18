@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/yamux/config.hpp
+title: yamux::config - yamux 协议配置
 ---
 
 # yamux::config - yamux 协议配置

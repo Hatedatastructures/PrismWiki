@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/parcel.hpp
+title: multiplex::parcel - 多路复用 UDP 数据报管道
 ---
 
 # multiplex::parcel - 多路复用 UDP 数据报管道

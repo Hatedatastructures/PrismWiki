@@ -7,6 +7,7 @@ source: "RFC 8489, RFC 8656, RFC 8445"
 tags: [网络, nat, 穿透, stun, turn, ice, p2p, udp]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # NAT 穿透

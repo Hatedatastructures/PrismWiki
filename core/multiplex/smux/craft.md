@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/smux/craft.hpp
+title: smux::craft - smux 多路复用会话服务端
 ---
 
 # smux::craft - smux 多路复用会话服务端

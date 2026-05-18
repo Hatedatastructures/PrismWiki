@@ -1,6 +1,7 @@
 ---
 layer: core
 source: "I:/code/Prism/include/prism/protocol/trojan/config.hpp"
+title: Trojan 协议配置
 ---
 
 # Trojan 协议配置

@@ -7,6 +7,7 @@ source: "RFC 768, RFC 8085"
 tags: [网络, udp, 传输, 无连接, 低延迟, 数据报, dns]
 created: 2026-05-15
 updated: 2026-05-17
+layer: ref
 ---
 
 # UDP 协议

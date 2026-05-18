@@ -8,6 +8,7 @@ tags: [协议, tls, clienthello, 握手, 伪装, 指纹]
 created: 2026-05-15
 updated: 2026-05-17
 related: [tls-1-3, tls-serverhello, tls-extensions, tls-sessionid, reality, shadowtls]
+layer: ref
 ---
 
 # TLS ClientHello 消息

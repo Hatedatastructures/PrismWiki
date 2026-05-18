@@ -1,6 +1,7 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/bootstrap.hpp
+title: multiplex::bootstrap - 多路复用会话引导
 ---
 
 # multiplex::bootstrap - 多路复用会话引导

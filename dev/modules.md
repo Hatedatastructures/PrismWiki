@@ -16,6 +16,7 @@ sources:
   - I:/code/Prism/CLAUDE.md
   - I:/code/Prism/include/prism/
 confidence: high
+layer: dev
 ---
 
 # Prism 模块结构
@@ -899,7 +900,7 @@ PMR 内存池需要初始化全局资源：
 - [[core/protocol/overview]] — Protocol 模块
 - [[core/pipeline/overview]] — Pipeline 模块
 - [[core/recognition/overview]] — Recognition 模块
-- [[dev/cpp23-coroutines]] — 协程技术
-- [[dev/pmr-memory-pool]] — PMR 内存池
-- [[dev/testing]] — 测试体系
-- [[dev/configuration]] — 配置参考
+- [[dev/coding/coroutine|coroutine]] — 协程技术
+- [[dev/coding/pmr|pmr]] — PMR 内存池
+- [[dev/testing/testing|testing]] — 测试体系
+- [[dev/building/configuration|configuration]] — 配置参考

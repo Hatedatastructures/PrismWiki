@@ -1,3 +1,10 @@
+---
+title: templates
+created: 2026-05-18
+updated: 2026-05-18
+layer: skills
+---
+
 # PrismWiki 完整模板集
 
 所有模板的 YAML frontmatter 部分用 `---` 包裹，正文紧跟其后。
@@ -493,7 +500,7 @@ ctest --test-dir build_release --output-on-failure
 
 ## 相关页面
 
-- [[dev/configuration]] — 配置详解
+- [[dev/building/configuration|configuration]] — 配置详解
 - [[dev/modules]] — 模块结构
 ```
 

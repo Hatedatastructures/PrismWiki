@@ -8,6 +8,7 @@ tags: [mihomo, singmux, mux, 多路复用, brutal, sing-box]
 created: 2026-05-17
 updated: 2026-05-17
 related: [trojan, vless, vmess, shadowsocks]
+layer: ref
 ---
 
 # Sing-Mux 多路复用

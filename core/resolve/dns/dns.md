@@ -168,3 +168,219 @@ resolver::resolve(host)
 - [[core/resolve/dns/detail/coalescer|coalescer]] — 请求合并器
 - [[core/resolve/dns/detail/rules|rules_engine]] — 域名规则引擎
 - [[core/resolve/dns/detail/format|message]] — DNS 报文编解码
+
+---
+
+## 完整查询链路图
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                        resolver::resolve(host)                       │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────┐ │
+│  │ Stage 1: 域名规范化                                              │ │
+│  │   - host 转小写                                                  │ │
+│  │   - 去除末尾点号 (trailing dot)                                 │ │
+│  │   - 验证字符合法性                                               │ │
+│  └───────────────────────┬─────────────────────────────────────────┘ │
+│                          │ normalized_host                            │
+│  ┌───────────────────────▼─────────────────────────────────────────┐ │
+│  │ Stage 2: IP 字面量检测                                           │ │
+│  │   - 尝试解析为 IPv4/IPv6                                        │ │
+│  │   - 成功 → 直接返回，跳过所有后续阶段                            │ │
+│  │   - 失败 → 继续 Stage 3                                          │ │
+│  └───────────────────────┬─────────────────────────────────────────┘ │
+│                          │                                            │
+│  ┌───────────────────────▼─────────────────────────────────────────┐ │
+│  │ Stage 3: 规则引擎匹配                                            │ │
+│  │   rules_engine::match(normalized_host)                           │ │
+│  │   ├── 地址规则命中 → 返回静态 IPs (跳过缓存和上游查询)            │ │
+│  │   ├── 否定规则命中 → 返回空列表 (跳过后续)                       │ │
+│  │   ├── CNAME 规则命中 → 重定向，递归调用 resolve(target)          │ │
+│  │   └── 无规则命中 → 继续 Stage 4                                  │ │
+│  └───────────────────────┬─────────────────────────────────────────┘ │
+│                          │                                            │
+│  ┌───────────────────────▼─────────────────────────────────────────┐ │
+│  │ Stage 4: 缓存查找                                                │ │
+│  │   cache::get(host, A) + cache::get(host, AAAA)                  │ │
+│  │   ├── 正向命中 → 返回 IPs                                        │ │
+│  │   ├── 负缓存命中 → 返回空列表                                    │ │
+│  │   └── 未命中 → 继续 Stage 5                                      │ │
+│  └───────────────────────┬─────────────────────────────────────────┘ │
+│                          │                                            │
+│  ┌───────────────────────▼─────────────────────────────────────────┐ │
+│  │ Stage 5: 请求合并                                                │ │
+│  │   coalescer::find_or_create(key, executor)                       │ │
+│  │   ├── 新请求 → 继续 Stage 6                                      │ │
+│  │   └── 已有请求 → co_await 等待，复用结果                         │ │
+│  └───────────────────────┬─────────────────────────────────────────┘ │
+│                          │                                            │
+│  ┌───────────────────────▼─────────────────────────────────────────┐ │
+│  │ Stage 6: 上游查询                                                │ │
+│  │   upstream::resolve(domain, A)  ← 并发                           │ │
+│  │   upstream::resolve(domain, AAAA) ← 并发                         │ │
+│  │   ├── 根据 resolve_mode 选择策略                                  │ │
+│  │   │   ├── fastest: 全部并发，选 RTT 最低                         │ │
+│  │   │   ├── first: 全部并发，首个成功即返回                        │ │
+│  │   │   └── fallback: 逐一尝试                                     │ │
+│  │   ├── 报文解包 message::unpack                                   │ │
+│  │   ├── IP 提取 extract_ips                                       │ │
+│  │   └── IP 黑名单过滤                                             │ │
+│  └───────────────────────┬─────────────────────────────────────────┘ │
+│                          │                                            │
+│  ┌───────────────────────▼─────────────────────────────────────────┐ │
+│  │ Stage 7: 缓存写入                                                │ │
+│  │   TTL 钳制 (ttl_min ≤ TTL ≤ ttl_max)                            │ │
+│  │   cache::put(host, qtype, ips, clamped_ttl)                     │ │
+│  │   coalescer: timer.cancel() 通知等待者                           │ │
+│  │   coalescer: cleanup + flush_cleanup                             │ │
+│  └───────────────────────┬─────────────────────────────────────────┘ │
+│                          │                                            │
+│                          ▼                                            │
+│                  返回 IPs 列表                                        │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## 七阶段查询管道详解
+
+### Stage 1: 域名规范化
+
+```cpp
+// 规范化操作
+auto normalize(std::string_view host) -> memory::string {
+    memory::string result(host);
+    // 1. 转小写
+    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+    // 2. 去末尾点号
+    while (!result.empty() && result.back() == '.')
+        result.pop_back();
+    return result;
+}
+```
+
+**为什么需要规范化**:
+- DNS 域名不区分大小写，`EXAMPLE.COM` 和 `example.com` 等价
+- 末尾点号表示根域，但实际查询时可省略
+- 规范化后确保缓存键和规则匹配的一致性
+
+### Stage 2: IP 字面量检测
+
+```cpp
+if (auto addr = net::ip::make_address(host, ec); !ec) {
+    // 是 IP 地址字面量
+    if (addr.is_v6() && cfg.disable_ipv6) {
+        co_return {fault::code::host_unreachable, {}};
+    }
+    co_return {fault::code::success, {addr}};
+}
+```
+
+**短路优化**: IP 字面量无需 DNS 查询，直接返回。
+
+### Stage 3: 规则引擎匹配
+
+详细算法见 [[core/resolve/dns/detail/rules|rules_engine]]。
+
+```
+规则匹配优先级:
+  1. 精确地址规则 (domain_trie 精确匹配)
+  2. 通配符地址规则 (domain_trie 通配符匹配)
+  3. 否定规则 (广告屏蔽)
+  4. CNAME 重定向
+
+地址规则命中 → 立即返回，不查缓存、不查上游
+CNAME 规则命中 → 递归调用 resolve(target_domain)
+```
+
+### Stage 4: 缓存查找
+
+详细机制见 [[core/resolve/dns/detail/cache|cache]]。
+
+```cpp
+// 并发查询 A 和 AAAA 缓存
+auto a_result = cache_.get(host, qtype::a);
+auto aaaa_result = cache_.get(host, qtype::aaaa);
+
+// 合并结果
+if (a_result && aaaa_result) {
+    co_return merge(a_result.value(), aaaa_result.value());
+}
+// 任一未命中 → 需要上游查询
+```
+
+**serve-stale 模式**: 过期数据仍可返回，但标记需后台刷新。
+
+### Stage 5: 请求合并
+
+详细机制见 [[core/resolve/dns/detail/coalescer|coalescer]]。
+
+```
+场景: 10 个协程同时请求 resolve("www.example.com")
+
+无合并: 10 次独立上游查询
+有合并: 1 次上游查询 + 9 个协程等待结果
+
+合并键: "host:qtype" (如 "www.example.com:1")
+```
+
+### Stage 6: 上游查询
+
+详细实现见 [[core/resolve/dns/upstream|upstream]]。
+
+```cpp
+// fastest 模式: 并发查询所有上游
+std::vector<awaitable<query_result>> futures;
+for (const auto& server : servers_) {
+    futures.push_back(query_server(server, query_msg));
+}
+
+// 等待所有结果
+auto results = co_await when_all(futures.begin(), futures.end());
+
+// 选择 RTT 最低的成功响应
+auto best = std::ranges::min_element(results,
+    [](const auto& a, const auto& b) {
+        if (a.error != success) return false;
+        if (b.error != success) return true;
+        return a.rtt_ms < b.rtt_ms;
+    });
+```
+
+**IP 黑名单过滤**:
+```cpp
+auto filter_blacklisted(const vector<ip::address>& ips) {
+    vector<ip::address> result;
+    for (const auto& ip : ips) {
+        if (ip.is_v4() && in_blacklist_v4(ip.to_v4())) continue;
+        if (ip.is_v6() && in_blacklist_v6(ip.to_v6())) continue;
+        result.push_back(ip);
+    }
+    return result;
+}
+```
+
+### Stage 7: 缓存写入
+
+```cpp
+// TTL 钳制
+auto clamped_ttl = std::clamp(ttl, cfg.ttl_min, cfg.ttl_max);
+
+// 写入缓存
+cache_.put(host, qtype::a, a_ips, clamped_ttl);
+cache_.put(host, qtype::aaaa, aaaa_ips, clamped_ttl);
+
+// 通知等待的协程
+coalescer_.notify(key);  // timer.cancel()
+coalescer_.flush_cleanup();
+```
+
+### 管道短路场景总结
+
+| 阶段 | 短路条件 | 跳过阶段 |
+|------|----------|----------|
+| Stage 2 | IP 字面量 | 3-7 |
+| Stage 3 | 地址规则命中 | 4-7 |
+| Stage 3 | 否定规则命中 | 4-7 |
+| Stage 3 | CNAME 重定向 | 4-6 (递归从 Stage 1 开始) |
+| Stage 4 | 缓存命中 | 5-7 |
+| Stage 5 | 请求已存在 | 6 (等待已有请求) |

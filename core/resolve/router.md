@@ -239,3 +239,235 @@ reverse_map_.find(host);  // 直接使用 string_view
 - [[core/channel/connection/pool|connection_pool]] — TCP 连接池
 - [[core/channel/eyeball/racer|address_racer]] — Happy Eyeballs 竞速器
 - [[core/resolve/dns/detail/utility|parse_port]] — 零分配端口解析
+
+---
+
+## 路由决策算法
+
+### 路由模式决策树
+
+```
+路由请求进入
+    │
+    ▼
+选择路由模式:
+    │
+    ├── async_reverse(host)
+    │     │
+    │     ├── 查 reverse_map_ 表
+    │     │     ├── 命中 → 获取端点 → pool.async_acquire(ep)
+    │     │     └── 未命中 → 降级为 async_forward
+    │     │
+    │     └── 返回 pooled_connection 或错误
+    │
+    ├── async_direct(ep)
+    │     │
+    │     └── 直接 pool.async_acquire(ep)
+    │         (无需任何解析或查找)
+    │
+    ├── async_forward(host, port)
+    │     │
+    │     ├── Step 1: IP 字面量检测
+    │     │     ├── 是 → 构造 endpoint → pool.acquire
+    │     │     └── 否 → 进入 Step 2
+    │     │
+    │     ├── Step 2: DNS 解析
+    │     │     dns->resolve_tcp(host, port)
+    │     │     → 规则匹配 → 缓存查找 → 上游查询
+    │     │
+    │     ├── Step 3: 连接池获取
+    │     │     多端点 → Happy Eyeballs 竞速
+    │     │
+    │     └── 返回 pooled_connection
+    │
+    └── async_datagram(host, port)
+          │
+          ├── Step 1: IP 字面量检测
+          │     ├── 是 → 构造 UDP endpoint
+          │     └── 否 → DNS 解析 → resolve_udp
+          │
+          ├── Step 2: 创建 UDP socket
+          │     open_udp_socket(executor, target)
+          │
+          └── 返回 udp::socket
+```
+
+## 路由表构建流程
+
+### 反向路由表 (reverse_map_)
+
+```
+reverse_map_ : hash_map<memory::string, tcp::endpoint>
+               使用透明哈希，支持 string_view 查找
+
+构建流程:
+  ┌────────────────────────────────────────────┐
+  │ 配置加载:                                    │
+  │                                              │
+  │ for each reverse_entry in config:            │
+  │   reverse_map_.emplace(                      │
+  │     entry.domain,                            │
+  │     tcp::endpoint{entry.address, entry.port} │
+  │   );                                         │
+  └────────────────────────────────────────────┘
+```
+
+### 反向路由查找
+
+```cpp
+auto async_reverse(std::string_view host)
+    -> awaitable<pair<fault::code, pooled_connection>>
+{
+    // 透明哈希查找，零分配
+    auto it = reverse_map_.find(host);
+    if (it != reverse_map_.end()) {
+        // 命中 → 直接连接已知端点
+        co_return co_await pool_.async_acquire(it->second);
+    }
+    // 未命中 → 降级为正向代理
+    co_return co_await async_forward(host, default_port);
+}
+```
+
+**使用场景**:
+- 已知目标域名的 IP 地址（如反向代理配置）
+- 跳过 DNS 解析，直接连接
+- 适用于内网服务、固定 IP 的后端服务
+
+### async_forward 完整流程
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                   async_forward(host, port)                  │
+│                                                              │
+│  Step 1: IP 字面量检测 (短路优化)                             │
+│  ┌───────────────────────────────────────────┐              │
+│  │ addr = net::ip::make_address(host, ec)   │              │
+│  │ if !ec:                                  │              │
+│  │   if addr.is_v6() && ipv6_disabled():    │              │
+│  │     → 拒绝 (host_unreachable)            │              │
+│  │   ep = tcp::endpoint(addr, parse_port)   │              │
+│  │   co_return pool_.async_acquire(ep)       │              │
+│  │   (无需 DNS 解析)                         │              │
+│  └───────────────────────────────────────────┘              │
+│                                                              │
+│  Step 2: DNS 解析                                            │
+│  ┌───────────────────────────────────────────┐              │
+│  │ [code, endpoints] = dns_->resolve_tcp()  │              │
+│  │                                            │              │
+│  │ DNS 内部流程:                              │              │
+│  │   1. 规则引擎匹配                          │              │
+│  │   2. 缓存查找                              │              │
+│  │   3. 请求合并                              │              │
+│  │   4. 上游查询 (A + AAAA 并发)              │              │
+│  │   5. 黑名单过滤                            │              │
+│  │   6. 缓存写入                              │              │
+│  └───────────────────────────────────────────┘              │
+│                                                              │
+│  Step 3: Happy Eyeballs 端点竞速                              │
+│  ┌───────────────────────────────────────────┐              │
+│  │ racer.race(endpoints)                     │              │
+│  │                                            │              │
+│  │ RFC 8305 算法:                             │              │
+│  │   - IPv4 立即发起连接                      │              │
+│  │   - IPv6 延迟 250ms 发起 (IPv4 优先)       │              │
+│  │   - 首个成功连接的端点获胜                  │              │
+│  │   - 3s 超时后取消所有未完成的               │              │
+│  └───────────────────────────────────────────┘              │
+│                                                              │
+│  输出: pooled_connection                                     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Happy Eyeballs 竞速详情
+
+```
+端点列表: [ipv4_1, ipv4_2, ipv6_1, ipv6_2]
+
+t=0ms:    发起 ipv4_1 连接
+          发起 ipv4_2 连接
+t=250ms:  发起 ipv6_1 连接
+          发起 ipv6_2 连接
+          (延迟 IPv6 以优先使用 IPv4，更兼容)
+
+t=???ms:  首个连接成功 → 立即返回
+          取消所有其他连接
+```
+
+## 路由表状态管理
+
+### 成员变量
+
+| 成员 | 类型 | 用途 |
+|------|------|------|
+| `pool_` | connection_pool& | 共享 TCP 连接池 |
+| `dns_` | unique_ptr<dns::resolver> | DNS 解析器 |
+| `reverse_map_` | hash_map<endpoint> | 反向路由表 |
+| `executor_` | any_io_executor | 执行器（UDP socket） |
+| `positive_host_` | optional<string> | 正向代理主机名 |
+| `positive_port_` | uint16_t | 正向代理端口 |
+
+### 正向代理配置
+
+```cpp
+// 设置正向代理
+router.set_forward_proxy("proxy.example.com", 1080);
+// positive_host_ = "proxy.example.com"
+// positive_port_ = 1080
+```
+
+当配置了正向代理后，`async_forward` 连接到代理服务器而非目标地址。
+
+### 透明哈希优化
+
+```cpp
+// reverse_map_ 使用透明哈希
+struct string_hash {
+    using is_transparent = void;
+    auto operator()(std::string_view s) const -> size_t;
+    auto operator()(const memory::string& s) const -> size_t;
+};
+
+// 查找时无需构造临时 string
+reverse_map_.find("example.com");  // string_view 直接查找
+
+// 对比传统方式
+reverse_map_.find(memory::string("example.com"));  // 需要堆分配
+```
+
+**性能影响**: 在路由热路径中，每次查找节省一次堆分配。高频场景下显著降低延迟。
+
+## 错误处理
+
+| 错误场景 | 返回错误码 | 说明 |
+|----------|-----------|------|
+| 反向查找未命中 | 降级为 forward | 非错误，正常降级 |
+| IPv6 禁用 + IPv6 字面量 | `host_unreachable` | 明确拒绝 |
+| DNS 解析失败 | `host_unreachable` | 域名不可达 |
+| DNS 解析超时 | `host_unreachable` | 超时 |
+| 连接池获取失败 | 对应错误码 | 连接失败 |
+| Happy Eyeballs 全部失败 | `host_unreachable` | 无可用端点 |
+| UDP socket 创建失败 | 对应错误码 | 端口不可用等 |
+
+## 路由性能调优
+
+### 场景推荐
+
+| 场景 | 推荐模式 | 说明 |
+|------|----------|------|
+| 反向代理 | `async_reverse` | 预知目标 IP，跳过 DNS |
+| 直连后端 | `async_direct` | 已知端点，零开销 |
+| 正向代理 | `async_forward` | 需要 DNS 解析 |
+| UDP 通信 | `async_datagram` | 创建 UDP socket |
+
+### 连接池复用
+
+```
+首次连接 "api.example.com:443":
+  DNS 解析 → Happy Eyeballs → 建立连接 → 存入 pool_
+
+第二次连接 "api.example.com:443":
+  → 从 pool_ 直接获取已有连接
+  → 跳过 DNS 和连接建立
+  → 延迟从 ~50ms 降至 ~1ms
+```

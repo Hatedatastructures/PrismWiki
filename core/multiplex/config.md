@@ -80,3 +80,130 @@ graph TD
 - [[core/multiplex/core|core]] - 多路复用核心抽象基类
 - [[core/multiplex/smux/config|smux::config]] - smux 协议配置
 - [[core/multiplex/yamux/config|yamux::config]] - yamux 协议配置
+
+---
+
+## 配置详解
+
+### multiplex::config 完整结构
+
+```cpp
+struct config {
+    bool enabled = false;   // 全局开关
+
+    smux::config smux;      // smux 专属配置
+    yamux::config yamux;    // yamux 专属配置
+};
+```
+
+### enabled — 全局开关
+
+| 值 | 行为 |
+|----|------|
+| `true` | Agent Session 检测到 mux 协商头后启动多路复用会话 |
+| `false` | 忽略 mux 协商头，按标准传输层处理 |
+
+**性能影响**: 关闭时不会创建任何 mux 相关对象，零开销。
+
+## 各参数的性能影响
+
+### smux::config 参数
+
+| 参数 | 默认值 | 范围 | 性能影响 |
+|------|--------|------|----------|
+| `max_streams` | 1000 | 1-65535 | 最大并发流数。增大可同时处理更多连接，但增加内存占用 |
+| `buffer_size` | 32768 | 4096-262144 | 写通道缓冲区大小。增大减少反压触发频率，但增加内存 |
+| `keepalive_interval_ms` | 30000 | 1000-60000 | 心跳间隔。减小更快检测断连，但增加网络开销 |
+| `udp_idle_timeout_ms` | 30000 | 5000-300000 | UDP 管道空闲超时。减小更快释放 UDP socket |
+| `udp_max_datagram` | 1500 | 512-65535 | 最大 UDP 数据报。匹配 MTU 可避免 IP 分片 |
+
+**内存估算**:
+```
+每条 TCP 流内存 ≈ buffer_size × 2 (读写缓冲)
+总内存 ≈ max_streams × buffer_size × 2 + 固定开销
+
+示例: max_streams=1000, buffer_size=32KB
+     峰值内存 ≈ 1000 × 64KB = 64MB
+```
+
+### yamux::config 参数
+
+| 参数 | 默认值 | 范围 | 性能影响 |
+|------|--------|------|----------|
+| `max_streams` | 1000 | 1-65535 | 同 smux |
+| `buffer_size` | 32768 | 4096-262144 | 同 smux |
+| `initial_window` | 262144 | 65536-1048576 | 初始流窗口。增大提高大文件传输吞吐，增加内存 |
+| `enable_ping` | true | true/false | 启用 Ping/Pong 心跳。关闭减少开销但无法检测死连接 |
+| `ping_interval_ms` | 30000 | 1000-60000 | Ping 间隔。影响死连接检测速度 |
+| `stream_open_timeout_ms` | 10000 | 1000-60000 | 流打开超时。减小更快拒绝僵尸流 |
+| `stream_close_timeout_ms` | 5000 | 1000-60000 | 流关闭超时。影响 FIN 传播速度 |
+| `udp_idle_timeout_ms` | 30000 | 5000-300000 | 同 smux |
+| `udp_max_datagram` | 1500 | 512-65535 | 同 smux |
+
+### 参数调优建议
+
+#### 低延迟场景（实时通信）
+```json
+{
+  "enabled": true,
+  "smux": {
+    "max_streams": 500,
+    "buffer_size": 8192,
+    "keepalive_interval_ms": 10000,
+    "udp_idle_timeout_ms": 15000
+  }
+}
+```
+- 小 buffer → 减少排队延迟
+- 短 keepalive → 快速检测断连
+- 适中 max_streams → 控制资源
+
+#### 高吞吐场景（大文件传输）
+```json
+{
+  "enabled": true,
+  "yamux": {
+    "max_streams": 200,
+    "buffer_size": 262144,
+    "initial_window": 1048576,
+    "enable_ping": true
+  }
+}
+```
+- 大 buffer + 大 window → 最大化管道填充
+- 较少流数 → 集中资源
+- yamux 优先 → 更好的流量控制
+
+#### 移动端场景（网络不稳定）
+```json
+{
+  "enabled": true,
+  "smux": {
+    "max_streams": 200,
+    "buffer_size": 16384,
+    "keepalive_interval_ms": 5000,
+    "udp_idle_timeout_ms": 10000
+  }
+}
+```
+- 短 keepalive → 快速检测网络切换
+- 短 udp_idle_timeout → 及时释放闲置 UDP
+- 适中 buffer → 平衡内存和延迟
+
+### 配置加载路径
+
+```
+Agent 配置 (JSON/YAML)
+    ↓
+解析 multiplex::config
+    ↓
+bootstrap(transport, router, cfg, mr)
+    ↓
+根据协商头中的 Protocol 选择:
+    ├── Protocol=0 → 使用 cfg.smux
+    └── Protocol=1 → 使用 cfg.yamux
+    ↓
+craft 构造函数接收对应子配置
+```
+
+**注意**: `smux` 和 `yamux` 子配置不会被交叉使用，仅在对应协议被选中时生效。

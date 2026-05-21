@@ -250,3 +250,162 @@ blacklist_v4 = {
 - [[core/resolve/dns/upstream|upstream]] — DNS 查询客户端
 - [[core/resolve/dns/detail/rules|rules_engine]] — 域名规则引擎
 - [[core/resolve/dns/detail/cache|cache]] — DNS 结果缓存
+
+---
+
+## 各配置字段详解
+
+### 上游服务器 (servers)
+
+每个 `dns_remote` 实例的完整配置字段：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `address` | string | (必填) | 服务器地址（IP 或域名） |
+| `protocol` | dns_protocol | `udp` | 传输协议类型 |
+| `hostname` | string | 从 address 提取 | TLS SNI / HTTPS Host 头 |
+| `port` | uint16 | 按协议默认 | 服务端口 |
+| `timeout_ms` | uint32 | 5000 | 单次查询超时时间（毫秒） |
+| `http_path` | string | `/dns-query` | DoH 路径 |
+| `no_check_certificate` | bool | `false` | 跳过 TLS 证书验证 |
+
+**协议默认端口映射**:
+
+```cpp
+auto default_port(dns_protocol proto) -> uint16_t {
+    switch (proto) {
+        case dns_protocol::udp:     return 53;
+        case dns_protocol::tcp:     return 53;
+        case dns_protocol::tls:     return 853;
+        case dns_protocol::https:   return 443;
+    }
+}
+```
+
+### 解析模式 (mode)
+
+```cpp
+enum class resolve_mode : std::uint8_t {
+    fastest,   // 并发全部，选择 RTT 最低的
+    first,     // 并发全部，首个成功即返回
+    fallback   // 逐一尝试，前一个失败后尝试下一个
+};
+```
+
+| 模式 | 查询策略 | 适用场景 | 延迟特征 |
+|------|----------|----------|----------|
+| `fastest` | 全部上游并发 | 追求最低延迟 | 等于最快上游的 RTT |
+| `first` | 全部上游并发 | 追求可靠性 | 等于首个成功上游的 RTT |
+| `fallback` | 逐一串行尝试 | 上游有优先级 | 等于失败上游数 × RTT + 成功上游 RTT |
+
+### 缓存参数
+
+| 参数 | 默认值 | 推荐范围 | 说明 |
+|------|--------|----------|------|
+| `cache_enabled` | `true` | - | 全局缓存开关 |
+| `cache_size` | 10000 | 1000-100000 | 最大缓存条目数 |
+| `cache_ttl` | 120s | 30s-600s | 默认 TTL（当 DNS 响应无 TTL 时使用） |
+| `serve_stale` | `true` | - | 是否提供过期数据 |
+| `negative_ttl` | 300s | 60s-600s | 负缓存 TTL（失败域名缓存时间） |
+
+### TTL 钳制
+
+```
+实际 TTL = clamp(响应中的 TTL, ttl_min, ttl_max)
+
+默认:
+  ttl_min = 60s    → 防止 TTL=0 导致无缓存
+  ttl_max = 86400s → 防止 TTL 过长导致数据陈旧
+
+建议:
+  低延迟场景: ttl_min=30, ttl_max=3600
+  标准场景:   ttl_min=60, ttl_max=86400
+  高可用场景: ttl_min=120, ttl_max=43200
+```
+
+### IPv6 控制
+
+| 值 | 行为 |
+|----|------|
+| `false` (默认) | 正常查询 A 和 AAAA 记录 |
+| `true` | 跳过 AAAA 查询，仅返回 A 记录 |
+
+**使用场景**: IPv6 网络不可用或不稳定时禁用。
+
+### IP 黑名单
+
+```cpp
+// 黑名单配置示例
+blacklist_v4 = {
+    "10.0.0.0/8",        // 内网 A 类
+    "172.16.0.0/12",     // 内网 B 类
+    "192.168.0.0/16",    // 内网 C 类
+    "127.0.0.0/8",       // 回环地址
+    "0.0.0.0/32"         // 无效地址
+};
+blacklist_v6 = {
+    "::1/128",           // 回环地址
+    "fe80::/10"          // 链路本地地址
+};
+```
+
+**过滤逻辑**: 解析结果中的 IP 若命中黑名单网段则被移除，不返回给调用方。
+
+## 配置字段默认值汇总
+
+```cpp
+config default_config() {
+    return {
+        .servers = {},
+        .mode = resolve_mode::fastest,
+        .timeout_ms = 5000,
+
+        .cache_enabled = true,
+        .cache_size = 10000,
+        .cache_ttl = std::chrono::seconds(120),
+        .serve_stale = true,
+        .negative_ttl = std::chrono::seconds(300),
+
+        .ttl_min = 60,
+        .ttl_max = 86400,
+
+        .address_rules = {},
+        .cname_rules = {},
+
+        .disable_ipv6 = false,
+
+        .blacklist_v4 = {},
+        .blacklist_v6 = {}
+    };
+}
+```
+
+## 性能影响分析
+
+### servers 数量
+
+| 上游数 | fastest 模式 | fallback 模式 |
+|--------|-------------|---------------|
+| 1 | 单次查询，延迟 = RTT | 同 fastest |
+| 2 | 2 次并发，延迟 = min(RTT1, RTT2) | 最多 2 次串行 |
+| 3+ | N 次并发，延迟 = min(RTTi) | 最多 N 次串行 |
+
+**建议**: fastest 模式 2-3 个上游为最优，过多上游增加并发开销但收益递减。
+
+### cache_size
+
+```
+cache_size = 10000  →  约 500KB - 2MB 内存（取决于平均 IP 数）
+cache_size = 100000 →  约 5MB - 20MB 内存
+```
+
+缓存命中率随 size 增大而提高，但边际收益递减。
+
+### serve_stale 的影响
+
+```
+无 serve_stale:  过期 → 重新查询 → 查询期间阻塞
+有 serve_stale:  过期 → 立即返回旧数据 + 后台刷新 → 无阻塞
+```
+
+在网络不稳定的场景下，`serve_stale=true` 显著提升可用性。

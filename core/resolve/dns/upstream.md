@@ -257,3 +257,228 @@ upstream
 - [[core/resolve/dns/dns|resolver]] — DNS 解析器接口
 - [[core/resolve/dns/config|dns_remote]] — 上游服务器配置
 - [[core/resolve/dns/detail/format|message]] — DNS 报文编解码
+
+---
+
+## 上游服务器选择逻辑
+
+### 选择决策树
+
+```
+upstream::resolve(domain, qtype)
+    │
+    ▼
+resolve_mode 是什么?
+    │
+    ├── fastest (默认)
+    │     │
+    │     ├── 遍历所有 servers_
+    │     ├── 对每个 server 创建查询任务
+    │     ├── 并发执行所有查询
+    │     ├── 等待所有结果或超时
+    │     ├── 过滤失败的查询
+    │     ├── 在成功结果中选择 RTT 最低的
+    │     └── 无成功结果 → 返回最后一个错误
+    │
+    ├── first
+    │     │
+    │     ├── 遍历所有 servers_
+    │     ├── 对每个 server 创建查询任务
+    │     ├── 并发执行所有查询
+    │     ├── 等待首个成功结果
+    │     ├── 返回首个成功
+    │     └── 全部失败 → 返回首个错误
+    │
+    └── fallback
+          │
+          ├── 按 servers_ 顺序逐一执行
+          ├── server[0]: 查询
+          │     ├── 成功 → 立即返回
+          │     └── 失败 → 继续下一个
+          ├── server[1]: 查询
+          │     └── ...
+          └── 全部失败 → 返回最后一个错误
+```
+
+### fastest 模式详解
+
+```cpp
+auto resolve_fastest(domain, qt) -> awaitable<query_result> {
+    std::vector<awaitable<query_result>> futures;
+
+    // 为每个上游创建并发查询
+    for (const auto& server : servers_) {
+        futures.push_back(query_server(server, make_query(domain, qt)));
+    }
+
+    // 等待所有查询
+    auto results = co_await when_all(std::move(futures));
+
+    // 选择最佳结果 (RTT 最低的成功响应)
+    query_result* best = nullptr;
+    for (auto& r : results) {
+        if (r.error == fault::code::success) {
+            if (!best || r.rtt_ms < best->rtt_ms) {
+                best = &r;
+            }
+        }
+    }
+
+    if (best) co_return std::move(*best);
+    co_return results.back();  // 返回最后的结果（含错误信息）
+}
+```
+
+**并发模型**:
+```
+Server A ──▶ query ──▶ [RTT=15ms] ──▶ 成功 ──┐
+Server B ──▶ query ──▶ [RTT=25ms] ──▶ 成功 ──┤── 选 A (RTT 最低)
+Server C ──▶ query ──▶ [timeout] ──▶ 失败 ────┘
+```
+
+### first 模式详解
+
+```cpp
+auto resolve_first(domain, qt) -> awaitable<query_result> {
+    std::vector<awaitable<query_result>> futures;
+
+    for (const auto& server : servers_) {
+        futures.push_back(query_server(server, make_query(domain, qt)));
+    }
+
+    // 等待首个成功结果
+    auto results = co_await when_any(std::move(futures));
+    if (results.value.error == fault::code::success)
+        co_return std::move(results.value);
+
+    // 首个失败了，继续等待其他
+    // ... 或者返回错误
+}
+```
+
+**与 fastest 的区别**:
+- `fastest` 等待所有响应完成后比较 RTT
+- `first` 在首个成功响应到达时立即返回
+- `first` 的延迟可能更低，但不保证是最优结果
+
+### fallback 模式详解
+
+```cpp
+auto resolve_fallback(domain, qt) -> awaitable<query_result> {
+    fault::code last_error;
+
+    for (const auto& server : servers_) {
+        auto result = co_await query_server(server, make_query(domain, qt));
+        if (result.error == fault::code::success) {
+            co_return result;
+        }
+        last_error = result.error;
+    }
+
+    co_return query_result{.error = last_error};
+}
+```
+
+**串行模型**:
+```
+Server A ──▶ query ──▶ 失败 ──▶ 继续
+Server B ──▶ query ──▶ 失败 ──▶ 继续
+Server C ──▶ query ──▶ 成功 ──▶ 返回
+
+总延迟 = RTT_A + RTT_B + RTT_C
+```
+
+## Fallback 机制详解
+
+### 查询失败场景
+
+| 失败原因 | 错误码 | fallback 行为 |
+|----------|--------|---------------|
+| 上游不可达 | `host_unreachable` | 立即尝试下一上游 |
+| 查询超时 | `timed_out` | 超时后尝试下一上游 |
+| DNS 错误 (SERVFAIL) | `dns_server_failure` | 尝试下一上游 |
+| 空响应 (NOERROR, 0 answers) | `success` (但 ips 为空) | 视情况继续 |
+| 网络断开 | `network_error` | 立即尝试下一上游 |
+
+### 超时传递
+
+每个 `dns_remote` 可独立配置 `timeout_ms`:
+
+```json
+{
+  "servers": [
+    {"address": "8.8.8.8", "timeout_ms": 3000},
+    {"address": "1.1.1.1", "timeout_ms": 5000},
+    {"address": "9.9.9.9", "timeout_ms": 10000}
+  ]
+}
+```
+
+fallback 模式下，上游按顺序尝试，每个有自己的超时时间。
+
+### 智能回退策略
+
+```
+主上游 (最快但可能不稳定)
+    ↓ 失败
+备用上游 (次快但更稳定)
+    ↓ 失败
+兜底上游 (最慢但最可靠)
+    ↓ 失败
+返回错误
+```
+
+### 各传输协议的 fallback 行为
+
+```
+query_udp(server, query):
+    ├── 成功 → 返回结果
+    ├── 超时 → 尝试 query_tcp (UDP fallback to TCP)
+    └── 截断 (TC=1) → 自动重试 query_tcp
+
+query_tcp(server, query):
+    ├── 成功 → 返回结果
+    ├── 连接失败 → 返回错误
+    └── 超时 → 返回错误
+
+query_tls(server, query):
+    ├── TLS 握手失败 → 返回错误
+    │     (证书无效、SNI 不匹配等)
+    ├── 成功 → 返回结果
+    └── 超时 → 返回错误
+
+query_https(server, query):
+    ├── HTTPS 连接失败 → 返回错误
+    ├── HTTP 错误状态 → 返回错误
+    ├── 成功 → 返回结果
+    └── 超时 → 返回错误
+```
+
+### UDP 截断自动重试
+
+DNS over UDP 响应有大小限制（通常 512 字节）。当响应超过限制：
+
+```
+query_udp → 收到响应
+    │
+    检查 TC (Truncated) 标志
+    │
+    ├── TC=0 (完整) → 正常处理
+    └── TC=1 (截断)
+          │
+          自动重试 query_tcp
+          │
+          返回 TCP 完整响应
+```
+
+这是 DNS 协议的标准行为，确保大响应（如包含大量记录的域）不被截断。
+
+## 上游选择策略推荐
+
+| 场景 | 推荐模式 | 上游数量 | 说明 |
+|------|----------|----------|------|
+| 标准场景 | fastest | 2-3 | 自动选择最优响应 |
+| 低延迟优先 | first | 2-3 | 首个响应即返回 |
+| 高可靠优先 | fallback | 2+ | 保证有序尝试 |
+| 单上游 | 任意 | 1 | 模式无区别 |
+| DoT/DoH 混合 | fastest | 2-4 | 利用不同协议优势 |

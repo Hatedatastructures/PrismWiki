@@ -137,3 +137,296 @@ namespace psm::module_name {
 - [[overview]] - 编码规范概览
 - [[doxygen]] - Doxygen 注释规范
 - [[dev/modules|modules]] - 模块命名空间说明
+
+## 命名反例对比
+
+以下列举 Prism 项目中常见的命名错误及其修正方案。
+
+### 缩写滥用
+
+| 错误命名 | 问题 | 正确命名 |
+|----------|------|----------|
+| `conn` | 过于简短，可读性差 | `connection` |
+| `ctx` | 上下文含义不明 | `context` |
+| `buf` | 缩写不一致 | `buffer` |
+| `req` / `resp` | 不对称缩写 | `request` / `response` |
+| `cfg` | 非标准缩写 | `config` |
+| `tmp` | 语义模糊 | `temp_buffer` / `scratch_space` |
+
+### 命名风格混用
+
+**错误：**
+```cpp
+// 生产代码误用 PascalCase
+class ConnectionPool { };        // 应为 connection_pool
+struct DnsConfig { };            // 应为 dns_config
+auto CreateConnection() -> ...;  // 应为 create_connection
+```
+
+**正确：**
+```cpp
+class connection_pool { };
+struct dns_config { };
+auto create_connection() -> ...;
+```
+
+### 变量名与类型名混淆
+
+**错误：**
+```cpp
+// 变量使用类型风格
+ConnectionPool Pool;             // 变量不应是大写开头
+auto DNSConfig = parse_config(); // 变量不应是 PascalCase
+```
+
+**正确：**
+```cpp
+connection_pool pool;
+auto dns_config = parse_config();
+```
+
+### 布尔值命名不表达意图
+
+**错误：**
+```cpp
+bool flag;           // 什么标志？
+bool state;          // 什么状态？
+bool check;          // 是动词，像函数名
+bool dns;            // 布尔值应该是"is_xxx"或"has_xxx"
+```
+
+**正确：**
+```cpp
+bool is_encrypted;
+bool has_pending_request;
+bool should_reconnect;
+bool enable_dns_cache;
+```
+
+### 魔法数字命名
+
+**错误：**
+```cpp
+std::vector<connection> connections;
+connections.reserve(100);  // 100 是什么？
+```
+
+**正确：**
+```cpp
+constexpr size_t default_pool_capacity = 100;
+std::vector<connection> connections;
+connections.reserve(default_pool_capacity);
+```
+
+## 命名决策树
+
+当为一个新元素命名时，遵循以下决策流程：
+
+```
+这是什么类型的元素？
+│
+├── 命名空间？
+│   └── 使用 psm:: + 模块名（lowercase）
+│       例：psm::resolve, psm::channel
+│
+├── 文件？
+│   ├── 头文件？→ snake_case.hpp
+│   └── 源文件？→ snake_case.cpp
+│       例：connection_pool.hpp
+│
+├── 类型（class/struct/enum/enum class）？
+│   └── snake_case
+│       例：connection_pool, dns_config
+│
+├── 类型别名（using/typedef）？
+│   └── snake_case + 语义后缀
+│       例：connection_ptr, buffer_span
+│
+├── 函数/方法？
+│   ├── 生产代码？→ snake_case 动词开头
+│   │   例：create_connection, is_valid, parse_header
+│   └── 测试代码？→ PascalCase TestXxx 格式
+│       例：TestBasicGetRequest
+│
+├── 变量？
+│   ├── 局部变量？→ snake_case 名词
+│   │   例：connection_count, domain_name
+│   ├── 成员变量？→ snake_case（可选 m_ 前缀）
+│   │   例：m_connection_count, buffer_
+│   └── 循环变量？→ 单字母或短名
+│       例：i, it, pos
+│
+├── 常量？
+│   ├── constexpr？→ snake_case 或 UPPER_SNAKE_CASE
+│   │   例：max_buffer_size, MAX_RETRIES
+│   └── const 局部？→ snake_case
+│       例：default_timeout
+│
+└── 宏？（应尽量避免）
+    └── UPPER_SNAKE_CASE
+        例：PSM_ASSERT, PSM_UNUSED
+```
+
+### 函数命名动词前缀约定
+
+| 前缀 | 语义 | 示例 |
+|------|------|------|
+| `create_` | 创建新对象 | `create_connection()` |
+| `build_` | 构建复杂对象 | `build_packet()` |
+| `parse_` | 解析数据 | `parse_clienthello()` |
+| `is_` | 布尔查询 | `is_encrypted()` |
+| `has_` | 是否存在 | `has_pending_data()` |
+| `should_` | 是否应该 | `should_reconnect()` |
+| `get_` | 获取（轻量操作） | `get_stats()` |
+| `set_` | 设置 | `set_timeout()` |
+| `handle_` | 处理事件 | `handle_packet()` |
+| `process_` | 处理数据 | `process_buffer()` |
+
+### `get_` 使用约束
+
+`get_` 前缀仅用于**轻量级**操作，不应用于涉及 I/O、分配或复杂计算的函数：
+
+**正确：**
+```cpp
+auto get_stats() const -> session_stats;       // 轻量，返回成员变量
+auto get_capacity() const -> size_t;           // 轻量
+```
+
+**错误：**
+```cpp
+auto get_connection() -> net::awaitable<connection_ptr>;  // 涉及 I/O，应用 create_
+auto get_all_data() -> std::vector<record>;               // 可能涉及分配和计算
+```
+
+## 常见命名错误
+
+### 1. 匈牙利命名法残留
+
+**问题：** 使用类型前缀标识变量类型，这是 C 时代的遗留习惯，在 C++ 中不需要。
+
+```cpp
+// 错误：匈牙利命名法
+int iCount;
+char* pszName;
+std::vector<connection>* pvecConnections;
+
+// 正确：语义命名
+int connection_count;
+std::string name;
+std::vector<connection> connections;
+```
+
+### 2. 驼峰命名法混入
+
+**问题：** 从其他语言或代码库迁移时带来的命名风格不一致。
+
+```cpp
+// 错误：来自其他项目的驼峰风格
+class SessionManager { };
+auto getConnection() -> connection_ptr;
+int connectionCount;
+
+// 正确：统一 snake_case
+class session_manager { };
+auto get_connection() -> connection_ptr;
+int connection_count;
+```
+
+### 3. 双命名同义
+
+**问题：** 同一概念在不同文件中使用不同名称。
+
+```cpp
+// 文件 A 中
+using connection_ptr = std::shared_ptr<connection>;
+
+// 文件 B 中
+using conn_shared = std::shared_ptr<connection>;  // 不一致！
+
+// 应统一为 connection_ptr
+```
+
+### 4. 过度泛化的名称
+
+**问题：** 名称过于宽泛，无法表达具体用途。
+
+```cpp
+// 错误：过度泛化
+class handler { };          // 处理什么？
+auto process() -> void;     // 处理什么？
+struct data { };            // 什么数据？
+
+// 正确：具体化
+class packet_handler { };
+auto process_inbound_traffic() -> void;
+struct dns_query_data { };
+```
+
+### 5. 否定式布尔名
+
+**问题：** 使用否定前缀导致双重否定难以理解。
+
+```cpp
+// 错误：双重否定
+bool not_found;     // !not_found 是什么？
+bool no_error;      // !no_error 是什么？
+bool dont_retry;    // !dont_retry 是什么？
+
+// 正确：正向命名
+bool is_missing;
+bool has_error;
+bool should_retry;
+```
+
+### 6. 缩写不一致
+
+**问题：** 同一概念在不同地方使用不同缩写。
+
+```cpp
+// 错误：缩写不统一
+auto init_connection() -> ...;    // init
+auto initialize_pool() -> ...;    // initialize
+
+// 正确：统一使用完整形式或统一缩写
+auto initialize_connection() -> ...;
+auto initialize_pool() -> ...;
+```
+
+### 7. 文件名与类型名不匹配
+
+**问题：** 文件名与内部主要类型名称不对应，导致查找困难。
+
+```cpp
+// 错误：文件名与内容不匹配
+// 文件：ConnectionPool.hpp（错误：生产代码不应 PascalCase）
+// 内容：class connection_pool { };
+
+// 正确
+// 文件：connection_pool.hpp
+// 内容：class connection_pool { };
+```
+
+## 命名审查自动化建议
+
+以下 Clang-Tidy 检查可以帮助自动发现命名问题：
+
+```yaml
+# .clang-tidy 建议配置
+Checks: >
+  readability-identifier-naming,
+  google-readability-avoid-underscore-in-googletest-name
+
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+```

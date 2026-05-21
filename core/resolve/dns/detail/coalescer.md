@@ -219,3 +219,227 @@ resolver::resolve(host)
 
 - [[core/resolve/dns/dns|resolver]] — DNS 解析器接口
 - [[core/resolve/dns/detail/transparent|transparent_hash]] — 透明哈希
+
+---
+
+## 查询合并机制
+
+### 合并动机
+
+在并发服务中，多个请求可能同时到达：
+
+```
+无合并:
+  Request 1 ──▶ resolve("www.example.com") ──▶ upstream query
+  Request 2 ──▶ resolve("www.example.com") ──▶ upstream query
+  Request 3 ──▶ resolve("www.example.com") ──▶ upstream query
+
+  → 3 次独立上游查询，3 倍延迟和带宽
+
+有合并:
+  Request 1 ──▶ coalescer ──▶ upstream query ──▶ 分发结果
+  Request 2 ──▶ coalescer ──▶ wait ────────────────▶ 收到结果
+  Request 3 ──▶ coalescer ──▶ wait ────────────────▶ 收到结果
+
+  → 1 次上游查询，所有请求共享结果
+```
+
+### 合并数据结构
+
+```cpp
+struct flight {
+    memory::string key;           // 合并键: "host:qtype"
+    net::steady_timer timer;      // 等待通知定时器
+    std::size_t waiters{0};       // 等待者数量
+    bool ready{false};            // 是否已完成
+    bool pending_cleanup{false};  // 是否待清理
+};
+```
+
+**双索引结构**:
+```
+flights_ (list<flight>):
+  ┌─────────────────────────────────────────┐
+  │ [flight_1] → [flight_2] → [flight_3]   │
+  │  key="a.com:1"   key="b.com:1"  ...     │
+  └─────────────────────────────────────────┘
+
+flight_map_ (hash_map<string_view, iterator>):
+  ┌─────────────────────────────────────────┐
+  │ "a.com:1" → iterator→flight_1           │
+  │ "b.com:1" → iterator→flight_2           │
+  └─────────────────────────────────────────┘
+```
+
+**设计原因**: `flight_map_` 使用 `string_view` 键指向 `flights_` 中的 `flight::key`，避免重复存储字符串。
+
+## 去重策略
+
+### 查找与创建
+
+```cpp
+auto find_or_create(const memory::string& key, const executor& exec)
+    -> pair<flight_iterator, bool>
+{
+    // 1. 在 flight_map_ 中查找
+    auto it = flight_map_.find(key);
+    if (it != flight_map_.end()) {
+        // 已存在 → 等待
+        it->second->waiters++;
+        return {it->second, false};
+    }
+
+    // 2. 不存在 → 创建新 flight
+    flights_.emplace_back(key, exec);
+    auto flight_it = std::prev(flights_.end());
+    flight_map_.emplace(flight_it->key, flight_it);
+    return {flight_it, true};  // 新请求，需要发起查询
+}
+```
+
+### 等待者通知
+
+```cpp
+// 主查询完成:
+flight->ready = true;
+flight->timer.cancel();  // 取消定时器 → 唤醒所有等待者
+
+// 等待者被唤醒:
+co_await flight->timer.async_wait();
+// timer.cancel() 导致 async_wait 立即完成 (operation_aborted)
+```
+
+**关键设计**: `timer` 设为永不超时（`time_point::max()`），确保只有 `cancel()` 才能唤醒等待者。
+
+### 去重键
+
+```cpp
+auto make_key(host, port) -> memory::string {
+    return host + ":" + port;
+}
+```
+
+**合并粒度**: 按 `"host:port"` 去重。相同域名但不同端口的请求视为不同请求。
+
+### 竞争条件处理
+
+```
+线程 A: find_or_create("a.com:1") → 未找到
+线程 B: find_or_create("a.com:1") → 未找到 (竞争!)
+线程 A: 创建 flight → 插入 map
+线程 B: 创建 flight → 发现已有 → 返回已存在
+
+→ 仅发起一次实际查询
+```
+
+**注意**: 该组件非线程安全，应在单个 `io_context` 线程中使用。Co-Asio 的单线程事件循环模型天然保证串行访问。
+
+## 延迟清理机制
+
+### 问题
+
+如果在迭代 `flights_` 列表时删除条目，会导致迭代器失效：
+
+```cpp
+// 错误示例
+for (auto it = flights_.begin(); it != flights_.end(); ) {
+    if (it->ready && it->waiters == 0) {
+        flights_.erase(it);  // 迭代器失效!
+    }
+}
+```
+
+### 解决方案: 两阶段清理
+
+```
+阶段 1: cleanup_flight(flight)
+  └── 设置 flight.pending_cleanup = true
+      (不执行删除，迭代器仍有效)
+
+阶段 2: flush_cleanup()
+  └── 遍历 flights_，删除所有 pending_cleanup 标记的条目
+      同时从 flight_map_ 中移除对应键
+```
+
+```cpp
+static void cleanup_flight(const flight_iterator flight) {
+    if (flight->waiters == 0) {
+        flight->pending_cleanup = true;
+    }
+}
+
+void flush_cleanup() {
+    // 先清除 flight_map_ 中的引用
+    for (auto it = flights_.begin(); it != flights_.end(); ) {
+        if (it->pending_cleanup) {
+            flight_map_.erase(it->key);
+            it = flights_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+```
+
+**调用时机**: 在 `resolver::resolve()` 完成查询后调用 `flush_cleanup()`。
+
+## 合并效果分析
+
+### 并发场景
+
+```
+N 个并发请求解析同一域名:
+
+无合并:  N 次上游查询, 总延迟 = N × RTT
+有合并:  1 次上游查询, 总延迟 = 1 × RTT
+
+合并效率 = 1/N (查询次数/请求数)
+```
+
+### 实际场景
+
+```
+Web 服务器启动时:
+  50 个请求 → resolve("api.example.com")
+  30 个请求 → resolve("cdn.example.com")
+  20 个请求 → resolve("auth.example.com")
+
+无合并: 100 次上游查询
+有合并: 3 次上游查询 (减少 97%)
+```
+
+## 状态转换
+
+```
+flight 生命周期:
+
+  ┌──────────┐    find_or_create     ┌──────────┐
+  │  不存在   │ ────────────────────▶ │  创建中   │
+  │ (新请求)  │                       │ (active) │
+  └──────────┘                       └────┬─────┘
+                                          │
+                                   upstream.query()
+                                          │
+                                    ┌─────▼─────┐
+                                    │  等待中    │
+                                    │ (waiters) │
+                                    └─────┬─────┘
+                                          │
+                                  timer.cancel()
+                                   (结果就绪)
+                                    ┌─────▼─────┐
+                                    │  已完成    │
+                                    │ (ready)   │
+                                    └─────┬─────┘
+                                          │
+                              waiters=0 → cleanup_flight
+                                    ┌─────▼─────┐
+                                    │  待清理    │
+                                    │ (pending) │
+                                    └─────┬─────┘
+                                          │
+                                 flush_cleanup
+                                    ┌─────▼─────┐
+                                    │  已删除    │
+                                    └───────────┘
+```

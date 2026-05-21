@@ -170,6 +170,14 @@ tags: [module tags]
 ### 类型标签
 - module, architecture, coding, testing, debugging, building, performance, bug, guide, reference
 
+### 深层分析标签
+- deep-dive — 深层故障分析
+- failure-analysis — 故障分析
+- known-issues — 已知问题
+- resource-exhaustion — 资源耗尽
+- misclassification — 误判
+- implementation-boundary — 实现边界
+
 ## wikilink 规范
 
 - 使用 Obsidian 格式：`[[path/to/page|显示名]]`
@@ -214,6 +222,12 @@ fix_commit: commit hash
 - 根因
 - 修复位置
 - 预防措施
+
+deep-dive 类型正文结构：
+1. 概述 — 问题描述和严重度
+2. 详解 — 按故障场景分节，每节含触发条件、日志序列、影响
+3. 排障方法 — 日志关键字、诊断命令
+4. 相关文档 — wikilink 到 core 层实现细节
 
 ## Page Thresholds
 

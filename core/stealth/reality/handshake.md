@@ -855,3 +855,39 @@ static auto read_exact(channel::transport::transmission &transport, std::span<st
 - [[crypto-base64]] ← 私钥解码
 - [[transmission]] ← 传输层接口
 - [[pipeline-primitives]] ← tunnel 透明代理
+
+## 故障模式
+
+### 五阶段失败条件速查表
+
+| 阶段 | 失败条件 | 错误码 | 行为 |
+|------|----------|--------|------|
+| Stage 1 | TLS 记录读取失败 | io_error | 返回错误 |
+| Stage 1 | ClientHello 解析失败 | parse_error | fallback_to_dest |
+| Stage 1 | fallback dest 不可达 | reality_dest_unreachable | 返回错误 |
+| Stage 2 | 私钥解码失败（长度 ≠ 32） | - | fallback_to_dest |
+| Stage 2 | SNI 不匹配 | reality_sni_mismatch | not_reality, 交下一方案 |
+| Stage 2 | X25519 密钥交换失败 | reality_key_exchange_failed | 返回错误 |
+| Stage 2 | short_id 不匹配 | - | not_reality, 交下一方案 |
+| Stage 3 | ServerHello 生成失败 | reality_key_schedule_error | 返回错误 |
+| Stage 3 | 密钥派生失败（9 个 HKDF 步骤中任一） | reality_key_schedule_error | 返回错误 |
+| Stage 4 | 发送握手记录失败 | io_error | 返回错误 |
+| Stage 4 | CCS 循环无迭代限制 | - | 资源耗尽向量 |
+| Stage 4 | 客户端 TLS ALERT | reality_handshake_failed | 握手被拒绝 |
+| Stage 4 | 客户端 Finished 解密失败 | reality_handshake_failed | 返回错误 |
+| Stage 5 | 应用密钥派生失败 | reality_key_schedule_error | 返回错误 |
+| Stage 5 | 预读内层失败 | io_error | 返回错误 |
+
+### 资源泄漏向量
+
+- **fallback_to_dest 裸 socket 泄漏**：`dest_conn.release()` 后如果 `async_write` 失败，`dest_socket_raw` 已 release 无法自动回收（handshake.cpp 行 148-157）
+- **consume_client_finished CCS 循环**：while 循环无最大迭代限制，恶意客户端可发送无限 CCS 记录（handshake.cpp 行 288-366）
+- **read_encrypted_record 无长度上限**：`record_len` 最大 65535 字节，无额外检查（seal.cpp 行 153-156）
+
+### short_id 认证要点
+
+- 纯密码学比对（HKDF + AES-256-GCM），**不涉及时钟/时间窗口**
+- short_id 无过期机制，需通过配置轮换管理
+- 合成 Ed25519 证书有效期仅 1 小时
+
+详见 [[dev/debugging/deep-dive/reality-handshake|Reality 握手深层故障分析]]

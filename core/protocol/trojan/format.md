@@ -151,3 +151,13 @@ auto parse_udp_packet(std::span<const std::byte> buffer)
 - [[core/protocol/trojan/relay|Relay]] - 协议中继器使用这些解析函数
 - [[core/protocol/trojan/config|Config]] - 配置传递给中继器
 - [[core/channel/transport/transmission|Transmission]] - 底层传输层接口
+
+## 实现边界
+
+- **56 字节 SHA224 明文传输**：密码以 hex 明文在 TLS 内层传输，TLS 配置错误（如降级）时密码暴露
+- **缓冲区精确边界**：域地址长度 255 时 `required_total = 320`，恰好等于固定缓冲区大小，零余量
+- **日志不区分错误类型**：`credential verification failed` 不区分"格式错误"还是"密码错误"
+
+排障建议：`echo -n "password" | openssl dgst -sha224` 验证客户端密码配置
+
+详见 [[dev/debugging/deep-dive/protocol-boundaries|代理协议实现边界与认证深层分析]]

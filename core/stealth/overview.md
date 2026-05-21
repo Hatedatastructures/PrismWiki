@@ -118,6 +118,25 @@ scheme_executor 执行
 | TrustTunnel | 2 | 否 | SNI 匹配 | 模糊匹配方案 |
 | Native | 2 | 否 | 兜底 | 标准 TLS 处理 |
 
+## 故障模式
+
+### 空壳方案
+
+以下伪装方案当前为框架状态，`handshake()` 直接返回 `detected=tls`：
+- **Restls** — Tier 2，score=100
+- **AnyTLS** — Tier 2，支持 ECH 扩展检测但解密未实现
+- **TrustTunnel** — Tier 2，score=100
+
+配置这些方案不会生效，流量走 native 兜底（标准 TLS 终止）。
+
+### 方案选择与故障传播
+
+- 确定性命中（Tier 0/1 独占）→ 单方案执行，失败无回退
+- 候选方案执行失败 + 可 rewind → 尝试下一方案
+- 候选方案执行失败 + 不可 rewind → 终止或 native 兜底
+
+详见 [[dev/debugging/deep-dive/stealth-limitations|伪装方案执行器限制与故障分析]]
+
 ## 依赖关系
 
 | 依赖方向 | 模块 | 说明 |

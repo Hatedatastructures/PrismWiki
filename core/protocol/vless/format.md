@@ -101,3 +101,11 @@ auto parse_udp_packet(std::span<const std::byte> buffer)
 - [[core/protocol/vless/relay|Relay]] - 中继器使用这些解析函数
 - [[core/protocol/vless/config|Config]] - 配置传递给中继器
 - [[core/fault/code|Fault Code]] - 错误码处理
+
+## 实现边界
+
+- **XTLS/Vision flow 不支持**：`addnl_info != 0` 时直接返回 `bad_message`。客户端配置 Vision flow 时连接立即失败
+- **固定 320 字节缓冲区**：最大请求 278 字节（domain=255），320 字节够用但无余量
+- **UUID 验证失败无额外资源分配**：此时仅读取了固定缓冲区，不存在泄漏
+
+详见 [[dev/debugging/deep-dive/protocol-boundaries|代理协议实现边界与认证深层分析]]

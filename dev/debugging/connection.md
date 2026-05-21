@@ -469,6 +469,10 @@ sysctl -w net.ipv4.tcp_fin_timeout=30
 
 ---
 
+## 深层故障分析
+
+- [[dev/debugging/deep-dive/system-risks|系统级风险]] — 连接池无总上限、Session 无超时、EMFILE 不恢复
+
 ## 相关链接
 
 - [[dev/debugging/overview]] — 排障体系概述

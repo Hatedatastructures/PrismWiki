@@ -389,6 +389,22 @@ grep "network_error" include/prism/fault/code.hpp
 
 ---
 
+### 深层故障分析
+
+以下文档基于源码深度分析，覆盖各模块的实现边界和深层故障模式：
+
+- [[dev/debugging/deep-dive/protocol-boundaries|协议实现边界与认证深层分析]] — SS2022/Trojan/VLESS/SOCKS5 的深层边界条件
+- [[dev/debugging/deep-dive/reality-handshake|Reality 握手深层故障分析]] — 12 步认证 + 5 阶段握手每步的独立失败条件
+- [[dev/debugging/deep-dive/shadowtls-limitations|ShadowTLS 深层限制与故障分析]] — 竞态、HMAC 性能退化、无上限检查
+- [[dev/debugging/deep-dive/stealth-limitations|伪装方案执行器限制]] — rewind 限制、不可逆点、空壳方案
+- [[dev/debugging/deep-dive/recognition-weaknesses|协议识别弱点与误判分析]] — SS2022 误判、VLESS 弱特征、排除法
+- [[dev/debugging/deep-dive/system-risks|系统级风险与资源耗尽分析]] — 无优雅关闭、Session 无超时、连接池无上限
+- [[dev/debugging/deep-dive/multiplex-boundaries|多路复用边界条件分析]] — pending 超时、资源上限
+
+### 日志参考
+
+- [[dev/debugging/log-reference|完整日志字典]] — 按模块索引的所有日志消息与错误码交叉引用
+
 ## 相关链接
 
 - [[dev/debugging/connection]] — 连接问题排查

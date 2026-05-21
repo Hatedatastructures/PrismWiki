@@ -181,6 +181,30 @@ graph TD
 
 全部方案失败时，自动执行 Native 方案作为兜底，确保连接不会因方案不匹配而中断。
 
+## 故障模式
+
+### rewind 不可逆限制
+
+- `try_rewind()` 只在纯读取时有效
+- 一旦方案向传输层写入数据（如 Reality 的 ServerHello），snapshot 的 `wrote_=true`，无法回退
+- **Reality 不可逆点**：`async_write_scatter` 发送 ServerHello 后（Stage 3）
+- **ShadowTLS 不可逆点**：转发 ClientHello 到后端后
+
+### 确定性命中风险
+
+- Tier 0 独占命中时只执行单个方案，无回退可能
+- Reality 为 Tier 0 方案，命中后失败则直接返回错误
+
+### 空壳方案
+
+以下方案 `handshake()` 直接返回 `detected=tls`，不执行实际操作：
+- Restls、AnyTLS、TrustTunnel
+- ECH 解密完全未实现（`decrypt.cpp` 返回 `not_supported`）
+
+用户配置了这些方案但实际上无效，流量最终走 native 兜底。
+
+详见 [[dev/debugging/deep-dive/stealth-limitations|伪装方案执行器限制与故障分析]]
+
 ## 相关文档
 
 - [[overview|Stealth 模块总览]]

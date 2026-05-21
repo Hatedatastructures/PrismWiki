@@ -142,3 +142,14 @@ inline auto make_relay(shared_transmission next_layer, const config &cfg,
 - [[core/crypto/aead|AEAD]] - AEAD 加密上下文
 - [[core/channel/transport/transmission|Transmission]] - 底层传输层接口
 - [[core/protocol/analysis|Analysis]] - 目标地址封装
+
+## 实现边界
+
+- **timestamp_window 默认 30s**：两端时钟偏移超过 30 秒会导致 `timestamp_expired` 错误。过窄（如 1s）在时钟漂移时大量失败，过宽（如 3600s）降低重放保护
+- **PSK 半初始化风险**：构造函数中 PSK 解码失败不抛异常，`decrypt_ctx_` 为空 unique_ptr。正常路径（handshake 先检查 `psk_.empty()`）不会触发
+- **salt_pool 线性增长**：`unordered_map<string, time_point>` 每秒清理一次过期条目，高连接速率（1000/s）下约 60000 条目，无上限保护
+- **"乐观响应"设计**：acknowledge() 延迟到上游拨号成功后发送，但握手成功后拨号失败时客户端看到空连接
+- **UDP session_tracker 资源耗尽向量**：`get_or_create` 在 AEAD 解密前调用，无效 session 不会被清理
+- **nonce 递增不同步**：错误信息只有 `crypto_error`，无法区分密钥错/nonce 错/数据损坏
+
+详见 [[dev/debugging/deep-dive/protocol-boundaries|代理协议实现边界与认证深层分析]]

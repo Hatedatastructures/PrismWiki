@@ -161,3 +161,10 @@ relay::relay_single_datagram -> wire::encode_udp_datagram
 - 实例非线程安全，应在同一协程内使用
 - 拥有底层传输层的所有权
 - 默认仅支持无认证，生产环境需启用认证
+
+## 实现边界
+
+- **UDP ASSOCIATE 仅绑定 IPv4**：`udp::v4()` 硬编码，IPv6 客户端的 UDP ASSOCIATE 静默失败，**完全没有日志**
+- **nmethods 最大 256**：处理正确，nmethods=0 时返回"无可用方法"（0xFF）
+
+详见 [[dev/debugging/deep-dive/protocol-boundaries|代理协议实现边界与认证深层分析]]

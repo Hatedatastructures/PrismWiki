@@ -1197,6 +1197,12 @@ python jarm.py www.example.com
 
 ---
 
+## 深层故障分析
+
+- [[dev/debugging/deep-dive/reality-handshake|Reality 握手深层故障]] — 5 阶段 12 个独立失败条件
+- [[dev/debugging/deep-dive/shadowtls-limitations|ShadowTLS 深层故障]] — 竞态、HMAC 性能退化
+- [[dev/debugging/deep-dive/stealth-limitations|伪装方案执行器故障]] — rewind 限制、方案选择机制
+
 ## 相关链接
 
 - [[dev/debugging/overview]] -- 排障体系概述

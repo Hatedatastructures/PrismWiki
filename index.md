@@ -91,6 +91,17 @@ layer: root
 - [[dev/debugging/tls|TLS 问题排查]]
 - [[dev/debugging/log-analysis|日志分析方法]]
 
+#### 深层故障分析
+
+- [[dev/debugging/deep-dive/protocol-boundaries|协议实现边界]] — SS2022/Trojan/VLESS/SOCKS5 深层边界
+- [[dev/debugging/deep-dive/reality-handshake|Reality 握手故障]] — 12 步认证 + 5 阶段故障
+- [[dev/debugging/deep-dive/shadowtls-limitations|ShadowTLS 限制]] — 竞态、HMAC 退化
+- [[dev/debugging/deep-dive/stealth-limitations|伪装方案限制]] — rewind、空壳方案
+- [[dev/debugging/deep-dive/recognition-weaknesses|识别弱点]] — 误判、弱特征
+- [[dev/debugging/deep-dive/system-risks|系统级风险]] — 资源耗尽、无优雅关闭
+- [[dev/debugging/deep-dive/multiplex-boundaries|多路复用边界]] — pending、资源上限
+- [[dev/debugging/log-reference|日志字典]] — 完整日志消息与错误码索引
+
 ### 构建
 
 - [[dev/building/cmake|CMake 结构]]
@@ -127,6 +138,7 @@ layer: root
 
 - [[docs/troubleshooting|故障排查]]
 - [[docs/faq|常见问题]]
+- [[docs/known-issues|已知问题清单]]
 
 ### 其他
 

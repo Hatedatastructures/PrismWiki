@@ -133,6 +133,29 @@ sequenceDiagram
     C->>C: push_frame → send_loop
 ```
 
+## 故障模式
+
+### smux pending 流无超时
+
+smux 协议的 pending 流（SYN 已收到但首个 PSH 帧未到达的流）没有超时机制。有 `max_streams=32` 兜底，每个 pending 的 buffer 最大几十字节。恶意客户端可占用 pending 槽位。
+
+### yamux pending timeout
+
+yamux 有 30s 的 pending 超时（`stream_open_timeout_ms`），比 smux 更健壮。
+
+### 单会话资源上限
+
+| 资源 | 上限 | 说明 |
+|------|------|------|
+| 并发流 | 32 | `max_streams` 硬限制 |
+| 协程数 | 67 | 32 ducts × 2 + 控制流 |
+| 内存 | ~66MB | 32 条 duct write_channel 满载的极端条件 |
+| 文件描述符 | 65 | 1 底层 + 32 target + 32 UDP socket |
+
+核心结论：多路复用系统设计健全，不存在严重的流泄漏或资源无限增长路径。
+
+详见 [[dev/debugging/deep-dive/multiplex-boundaries|多路复用边界条件分析]]
+
 ## 关联模块
 
 - [[core/channel|channel]] - 传输层抽象

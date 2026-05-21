@@ -492,6 +492,12 @@ esac
 
 ---
 
+## 深层故障分析
+
+当基本排障无法定位问题时，参考以下深层分析文档：
+
+- [[dev/debugging/deep-dive/protocol-boundaries|协议实现边界与认证深层分析]] — SS2022 timestamp_window、PSK 半初始化、Trojan 缓冲区边界、VLESS Vision 不支持、SOCKS5 IPv6 限制
+
 ## 相关链接
 
 - [[dev/debugging/overview]] — 排障体系概述

@@ -162,6 +162,18 @@ resolve/
 | `first` | 并发查询所有上游，返回首个成功 | 追求可靠性 |
 | `fallback` | 逐一尝试上游，失败后尝试下一个 | 单上游或高容错场景 |
 
+## 故障模式
+
+### DNS 负缓存 TTL 300s
+
+DNS 解析失败结果被缓存 300 秒（硬编码）。临时 DNS 故障 → 写入负缓存 → 5 分钟内该域名所有查询直接失败，即使 DNS 已恢复。
+
+与 blacklist 的交互：所有解析 IP 被 blacklist 过滤也写入负缓存（`fault::code::blocked`），导致 300s 内该域名不可达。
+
+**排障**：检查 DNS 缓存状态，评估是否需要重启清除。考虑减小 `negative_ttl` 配置。
+
+详见 [[dev/debugging/deep-dive/system-risks|系统级风险与资源耗尽分析]]
+
 ## 参见
 
 - [[core/resolve/router|router]] — 分发层路由器

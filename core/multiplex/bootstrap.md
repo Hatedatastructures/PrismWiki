@@ -39,7 +39,7 @@ title: multiplex::bootstrap - 多路复用会话引导
 
 ```cpp
 [[nodiscard]] auto bootstrap(
-    channel::transport::shared_transmission transport,
+    transport::shared_transmission transport,
     resolve::router &router,
     const config &cfg,
     memory::resource_pointer mr = memory::current_resource()
@@ -163,7 +163,7 @@ graph TD
 
 ```cpp
 auto bootstrap(
-    channel::transport::shared_transmission transport,
+    transport::shared_transmission transport,
     resolve::router &router,
     const config &cfg,
     memory::resource_pointer mr)

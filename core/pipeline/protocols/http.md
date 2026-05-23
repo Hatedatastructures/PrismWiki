@@ -113,7 +113,7 @@ CONNECT   普通 HTTP
 
 ### 被调用（向上）
 
-- [[core/agent/dispatch/table|dispatch]] — 协议分发表注册为 HTTP 处理器
+- [[core/instance/dispatch/table|dispatch]] — 协议分发表注册为 HTTP 处理器
 
 ### 实现细节
 

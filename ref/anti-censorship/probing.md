@@ -747,5 +747,5 @@ ShadowTLS 配置：
 - [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] — TLS 指纹识别
 - [[ref/anti-censorship/mitm-hijack|中间人劫持]] — MITM 攻击防御
 - [[ref/anti-censorship/traffic-analysis|流量分析]] — 流量分析对抗
-- [[prism/stealth/reality|Reality 协议]] — Reality 实现细节
-- [[prism/stealth/shadowtls|ShadowTLS 协议]] — ShadowTLS 实现细节
+- [[core/stealth/reality|Reality 协议]] — Reality 实现细节
+- [[core/stealth/shadowtls|ShadowTLS 协议]] — ShadowTLS 实现细节

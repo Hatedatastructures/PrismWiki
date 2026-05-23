@@ -23,10 +23,10 @@ updated: 2026-05-17
 ## 核心类型定义
 
 ```cpp
-using ssl_connector = channel::connector;
+using ssl_connector = connect::connector;
 using ssl_stream = ssl::stream<ssl_connector>;
 using shared_ssl_stream = std::shared_ptr<ssl_stream>;
-using shared_transmission = channel::transport::shared_transmission;
+using shared_transmission = transport::shared_transmission;
 ```
 
 ---
@@ -42,7 +42,7 @@ using shared_transmission = channel::transport::shared_transmission;
 ### 签名
 
 ```cpp
-inline void shut_close(psm::channel::transport::transmission *trans) noexcept;
+inline void shut_close(psm::transport::transmission *trans) noexcept;
 ```
 
 ### 参数
@@ -54,7 +54,7 @@ inline void shut_close(psm::channel::transport::transmission *trans) noexcept;
 ### 实现逻辑
 
 ```cpp
-inline void shut_close(psm::channel::transport::transmission *trans) noexcept
+inline void shut_close(psm::transport::transmission *trans) noexcept
 {
     if (trans)
     {
@@ -195,7 +195,7 @@ auto ssl_handshake(shared_transmission inbound, ssl::context &ssl_ctx)
 
 ### 调用链
 
-- 调用: [[core/channel/adapter/connector|connector]] — 适配 Boost.Asio 流接口
+- 调用: [[core/transport/adapter/connector|connector]] — 适配 Boost.Asio 流接口
 - 调用: `ssl::stream::async_handshake()` — TLS 服务端握手
 - 被调用: `stealth::native` — TLS 伪装方案
 
@@ -212,7 +212,7 @@ auto ssl_handshake(shared_transmission inbound, ssl::context &ssl_ctx)
 
 ### 继承关系
 
-继承自 `channel::transport::transmission` 抽象基类。
+继承自 `transport::transmission` 抽象基类。
 
 ### 成员变量
 
@@ -427,16 +427,16 @@ auto make_datagram_router(resolve::router &router)
 
 ```cpp
 inline auto find_reliable(shared_transmission &trans) noexcept
-    -> psm::channel::transport::reliable *;
+    -> psm::transport::reliable *;
 ```
 
 ### 实现逻辑
 
 ```cpp
 inline auto find_reliable(shared_transmission &trans) noexcept
-    -> psm::channel::transport::reliable *
+    -> psm::transport::reliable *
 {
-    psm::channel::transport::transmission *raw = trans.get();
+    psm::transport::transmission *raw = trans.get();
     while (raw)
     {
         if (auto *p = dynamic_cast<preview *>(raw))
@@ -444,14 +444,14 @@ inline auto find_reliable(shared_transmission &trans) noexcept
             raw = p->inner().get();
             continue;
         }
-        if (auto *s = dynamic_cast<channel::transport::snapshot *>(raw))
+        if (auto *s = dynamic_cast<transport::snapshot *>(raw))
         {
             raw = s->inner().get();
             continue;
         }
         break;
     }
-    return dynamic_cast<channel::transport::reliable *>(raw);
+    return dynamic_cast<transport::reliable *>(raw);
 }
 ```
 
@@ -460,6 +460,6 @@ inline auto find_reliable(shared_transmission &trans) noexcept
 ## 相关文档
 
 - [[core/pipeline/overview|Pipeline 层总览]]
-- [[core/channel/transport/transmission|传输层抽象]]
+- [[core/transport/transmission|传输层抽象]]
 - [[core/resolve/router|路由器]]
 - [[outbound/proxy|出站代理]]

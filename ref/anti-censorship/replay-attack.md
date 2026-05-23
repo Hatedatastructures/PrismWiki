@@ -810,5 +810,5 @@ Reality 使用多层机制：
 - [[ref/anti-censorship/probing|主动探测]] — 主动探测防御
 - [[ref/anti-censorship/mitm-hijack|中间人劫持]] — MITM 攻击防御
 - [[ref/protocol/shadowsocks|Shadowsocks 协议]] — Shadowsocks 实现
-- [[prism/stealth/reality|Reality 协议]] — Reality 实现细节
-- [[prism/crypto/hmac|HMAC]] — HMAC 实现
+- [[core/stealth/reality|Reality 协议]] — Reality 实现细节
+- [[core/crypto/hkdf|HMAC]] — HMAC 实现

@@ -105,8 +105,8 @@ related:
 | 依赖方向 | 模块 | 说明 |
 |----------|------|------|
 | 依赖 | [[core/crypto/hkdf]] | 密钥派生 |
-| 继承 | [[core/channel/transport/transmission]] | 传输层接口 |
-| 被依赖 | [[core/agent/session/session|session]] | session 启动时调用 |
+| 继承 | [[core/transport/transmission]] | 传输层接口 |
+| 被依赖 | [[core/instance/session/session|session]] | session 启动时调用 |
 ```
 
 依赖方向填写：`依赖` / `继承` / `组合` / `被依赖` / `被调用`
@@ -616,8 +616,8 @@ index.md 是全库入口页，按模块分组列出所有内容页面。
 
 ## Agent 模块
 
-- [[core/agent/config|config]] — Agent 运行时配置
-- [[core/agent/session/session|session]] — 会话管理
+- [[core/instance/config|config]] — Agent 运行时配置
+- [[core/instance/session/session|session]] — 会话管理
 ...
 ```
 

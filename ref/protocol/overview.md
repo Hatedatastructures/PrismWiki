@@ -4,7 +4,7 @@ category: "protocol"
 type: ref
 layer: ref
 module: ref
-source: ""
+source: []
 tags: [协议, 规范, 概览, tls, socks5, http, tcp, udp, quic]
 created: 2026-05-17
 updated: 2026-05-17
@@ -36,11 +36,11 @@ Prism 项目中协议的应用：
 
 | 协议 | 应用场景 | 实现模块 |
 |------|----------|----------|
-| TLS 1.3 | 安全传输、伪装 | [[core/channel/transport/encrypted]], [[core/stealth/overview|stealth]] |
+| TLS 1.3 | 安全传输、伪装 | [[core/transport/encrypted]], [[core/stealth/overview|stealth]] |
 | SOCKS5 | 入站代理协议 | [[core/protocol/socks5|socks5]] |
 | HTTP CONNECT | 入站代理协议 | [[core/protocol/http|http]] |
-| TCP | 底层传输 | [[core/channel/transport|transport]] |
-| UDP | 底层传输 | [[core/channel/transport|transport]] |
+| TCP | 底层传输 | [[core/transport|transport]] |
+| UDP | 底层传输 | [[core/transport|transport]] |
 
 ## 核心协议
 

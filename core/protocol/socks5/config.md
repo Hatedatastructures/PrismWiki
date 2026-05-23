@@ -47,7 +47,7 @@ struct config
 
 ## 配置管理
 
-- 由 [[core/agent/config|config]] 持有
+- 由 [[core/instance/config|config]] 持有
 - 随服务启动时初始化
 - 传递给 `socks5::relay` 构造函数
 
@@ -62,7 +62,7 @@ protocol/socks5::relay::async_associate -> config.udp_bind_port/udp_idle_timeout
 
 ## 依赖
 
-- [[core/agent/config|config]] - Agent 全局配置
+- [[core/instance/config|config]] - Agent 全局配置
 - [[core/protocol/socks5/stream]] - SOCKS5 中继器
 
 ## 注意事项

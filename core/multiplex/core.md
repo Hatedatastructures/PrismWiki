@@ -69,7 +69,7 @@ memory::unordered_map<std::uint32_t, std::shared_ptr<parcel>> parcels_; // 活�
 ### 构造与生命周期
 
 ```cpp
-core(channel::transport::shared_transmission transport,
+core(transport::shared_transmission transport,
      resolve::router &router,
      const config &cfg,
      memory::resource_pointer mr = {});

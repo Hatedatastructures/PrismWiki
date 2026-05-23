@@ -103,7 +103,7 @@ CONNECT  UDP_ASSOCIATE
 
 ### 被调用（向上）
 
-- [[core/agent/dispatch/table|dispatch]] — 协议分发表注册为 SOCKS5 处理器
+- [[core/instance/dispatch/table|dispatch]] — 协议分发表注册为 SOCKS5 处理器
 
 ---
 

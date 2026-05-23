@@ -9,7 +9,7 @@ created: 2026-05-17
 updated: 2026-05-17
 related:
   - core/outbound/direct
-  - core/channel/transport/transmission
+  - core/transport/transmission
   - core/protocol/analysis
   - core/fault/code
 ---
@@ -40,10 +40,10 @@ UDP 数据报路由回调函数类型，接受 `(host, port)` 参数，返回 `(
 ### shared_transmission
 
 ```cpp
-using shared_transmission = channel::transport::shared_transmission;
+using shared_transmission = transport::shared_transmission;
 ```
 
-传输层智能指针类型，用于管理传输层对象的生命周期。详见 [[core/channel/transport/transmission|transmission]]。
+传输层智能指针类型，用于管理传输层对象的生命周期。详见 [[core/transport/transmission|transmission]]。
 
 ## 接口定义
 
@@ -51,7 +51,7 @@ using shared_transmission = channel::transport::shared_transmission;
 namespace psm::outbound
 {
     namespace net = boost::asio;
-    using shared_transmission = channel::transport::shared_transmission;
+    using shared_transmission = transport::shared_transmission;
 
     using datagram_router_fn = std::function<net::awaitable<std::pair<fault::code,
                                                       net::ip::udp::endpoint>>(std::string_view, std::string_view)>;
@@ -224,7 +224,7 @@ namespace protocol::analysis
 ## 参见
 
 - [[core/outbound/direct|direct]] — 直连出站代理实现
-- [[core/channel/transport/transmission|transmission]] — 传输层抽象接口
+- [[core/transport/transmission|transmission]] — 传输层抽象接口
 - [[core/protocol/analysis|protocol::analysis]] — 协议分析模块
 - [[core/fault/code|fault::code]] — 错误码定义
 - [[core/resolve/router|router]] — 分发层路由器

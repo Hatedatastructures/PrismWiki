@@ -152,8 +152,8 @@ relay::relay_single_datagram -> wire::encode_udp_datagram
 - [[core/protocol/socks5/wire]] - 线级解析
 - [[core/protocol/common/address]] - 地址类型
 - [[core/protocol/common/form]] - 传输形态
-- [[core/channel/transport/transmission]] - 传输层接口
-- [[core/agent/account/directory|directory]] - 账户目录
+- [[core/transport/transmission]] - 传输层接口
+- [[core/instance/account/directory|directory]] - 账户目录
 - [[core/crypto/sha224]] - 密码哈希
 
 ## 注意事项

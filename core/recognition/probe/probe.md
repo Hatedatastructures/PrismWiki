@@ -49,7 +49,7 @@ struct probe_result
 
 ```cpp
 auto probe(
-    channel::transport::transmission &transport,
+    transport::transmission &transport,
     const std::size_t max_peek_size = 24)
     -> net::awaitable<probe_result>;
 ```
@@ -173,7 +173,7 @@ graph TD
 
 ```cpp
 auto probe(
-    channel::transport::transmission &transport,
+    transport::transmission &transport,
     const std::size_t max_peek_size = 24)  // 默认 24，可调整
     -> net::awaitable<probe_result>;
 ```

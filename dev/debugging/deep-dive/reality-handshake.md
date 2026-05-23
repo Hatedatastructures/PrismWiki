@@ -428,7 +428,7 @@ memory::vector<std::byte> rec_body(rec_len);
 
 ## seal 加密传输层
 
-握手完成后，`seal` 类接管所有后续的加密读写。seal 继承 `channel::transport::transmission` 接口，封装 TLS 1.3 应用数据记录的加密/解密。日志使用 `[Stealth.Session]` 标签。
+握手完成后，`seal` 类接管所有后续的加密读写。seal 继承 `transport::transmission` 接口，封装 TLS 1.3 应用数据记录的加密/解密。日志使用 `[Stealth.Session]` 标签。
 
 ### seal 错误条件
 

@@ -55,4 +55,4 @@ graph TD
 
 - [[core/transformer/json]] - JSON反序列化
 - [[core/exception]] - 异常处理
-- [[core/agent/account/directory]] - 账户目录
+- [[core/instance/account/directory]] - 账户目录

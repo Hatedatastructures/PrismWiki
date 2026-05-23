@@ -98,6 +98,6 @@ relay::release -> transport::shared_transmission
 ## 依赖
 
 - [[core/protocol/http/parser]] - 请求解析器
-- [[core/channel/transport/transmission]] - 传输层接口
-- [[core/agent/account/directory|directory]] - 账户目录
-- [[core/agent/account/entry|entry]] - 连接租约
+- [[core/transport/transmission]] - 传输层接口
+- [[core/instance/account/directory|directory]] - 账户目录
+- [[core/instance/account/entry|entry]] - 连接租约

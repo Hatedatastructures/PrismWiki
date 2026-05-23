@@ -47,7 +47,7 @@ HTTP 代理协议实现，支持 CONNECT 隧道和正向代理。
 
 ## 调用链
 
-协议层被 [[core/agent/worker/worker|worker]] 调用，处理入站连接的握手和路由决策：
+协议层被 [[core/instance/worker/worker|worker]] 调用，处理入站连接的握手和路由决策：
 
 ```
 agent/front/listener -> agent/worker/worker -> protocol::*::relay -> channel/transport/transmission

@@ -11,7 +11,7 @@ layer: dev
 ### Transmission 接口
 
 ```cpp
-// include/prism/channel/transport/transmission.hpp
+// include/prism/transport/transmission.hpp
 class transmission {
 public:
     virtual ~transmission() = default;
@@ -40,10 +40,10 @@ public:
 
 ### WebSocket 传输示例
 
-文件：`include/prism/channel/transport/websocket.hpp`
+文件：`include/prism/transport/websocket.hpp`
 
 ```cpp
-class websocket final : public channel::transport::transmission {
+class websocket final : public transport::transmission {
     shared_transmission inner_;        // 底层 TCP 或 TLS
     memory::string read_buffer_;       // 帧累积缓冲区
     std::size_t frame_offset_{0};     // 当前帧解析偏移

@@ -43,7 +43,7 @@ struct client_hello_info
 ### read_tls_record
 
 ```cpp
-auto read_tls_record(channel::transport::transmission &transport)
+auto read_tls_record(transport::transmission &transport)
     -> net::awaitable<std::pair<fault::code, memory::vector<std::uint8_t>>>
 ```
 

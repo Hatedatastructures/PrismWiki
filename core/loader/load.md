@@ -130,4 +130,4 @@ graph TD
 - [[core/loader/overview]] - Loader模块总览
 - [[core/transformer/json]] - JSON反序列化
 - [[core/exception/security]] - 安全异常
-- [[core/agent/account/directory]] - 账户目录
+- [[core/instance/account/directory]] - 账户目录

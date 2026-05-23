@@ -64,7 +64,7 @@ Transport 层: transmission 接口 → reliable/websocket/...
 ### Handler 接口
 
 ```cpp
-// include/prism/agent/dispatch/handler.hpp
+// include/prism/instance/dispatch/handler.hpp
 class handler : public std::enable_shared_from_this<handler>
 {
 public:
@@ -102,7 +102,7 @@ public:
 ### Transmission 接口
 
 ```cpp
-// include/prism/channel/transport/transmission.hpp
+// include/prism/transport/transmission.hpp
 class transmission {
 public:
     virtual auto async_read_some(std::span<std::byte> buffer)

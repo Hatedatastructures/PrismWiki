@@ -17,7 +17,7 @@ layer: dev
 namespace psm::resolve { /* DNS 解析模块 */ }
 namespace psm::channel { /* 连接通道模块 */ }
 namespace psm::recognition { /* 协议识别模块 */ }
-namespace psm::agent { /* 代理核心模块 */ }
+namespace psm::instance { /* 代理核心模块 */ }
 namespace psm::pipeline { /* 协议管道 */ }
 namespace psm::multiplex { /* 多路复用 */ }
 namespace psm::stealth { /* TLS 伪装 */ }

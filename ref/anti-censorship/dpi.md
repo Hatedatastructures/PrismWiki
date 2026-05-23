@@ -531,5 +531,5 @@ Prism 已实现 ECH 支持，但需要服务端和客户端同时支持才能生
 - [[ref/anti-censorship/probing|主动探测]] — 主动探测防御
 - [[ref/anti-censorship/mitm-hijack|中间人劫持]] — MITM 攻击防御
 - [[ref/protocol/tls-clienthello|TLS ClientHello]] — ClientHello 结构解析
-- [[prism/stealth/reality|Reality 协议]] — Reality 实现细节
-- [[prism/stealth/shadowtls|ShadowTLS 协议]] — ShadowTLS 实现细节
+- [[core/stealth/reality|Reality 协议]] — Reality 实现细节
+- [[core/stealth/shadowtls|ShadowTLS 协议]] — ShadowTLS 实现细节

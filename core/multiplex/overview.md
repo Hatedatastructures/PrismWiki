@@ -158,6 +158,6 @@ yamux 有 30s 的 pending 超时（`stream_open_timeout_ms`），比 smux 更健
 
 ## 关联模块
 
-- [[core/channel|channel]] - 传输层抽象
+- [[core/connect|connect]] - 连接层抽象
 - [[core/resolve|resolve]] - DNS 解析和路由
 - [[core/memory|memory]] - PMR 内存管理

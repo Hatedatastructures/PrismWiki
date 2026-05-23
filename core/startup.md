@@ -71,7 +71,7 @@ loader::build_account_directory(config)
 
 从配置的 `authentication.users` 构建账户目录，用于后续认证。
 
-详见 [[core/agent/account/directory|账户目录]]
+详见 [[core/instance/account/directory|账户目录]]
 
 ### Step 6: 创建 Worker 线程池
 
@@ -82,7 +82,7 @@ workers.resize(std::thread::hardware_concurrency() - 1)
 
 每个 worker 持有独立的 `io_context`，处理连接。
 
-详见 [[core/agent/worker/worker|Worker]]
+详见 [[core/instance/worker/worker|Worker]]
 
 ### Step 7: 构建负载均衡器
 
@@ -92,7 +92,7 @@ balancer{workers}
 
 负载均衡器持有 worker 引用，根据亲和性哈希分发连接。
 
-详见 [[core/agent/front/balancer|负载均衡器]]
+详见 [[core/instance/front/balancer|负载均衡器]]
 
 ### Step 8: 启动监听器
 
@@ -102,7 +102,7 @@ listener{balancer, endpoint, tls_context}
 
 监听配置的端点，接受连接后分发给 balancer。
 
-详见 [[core/agent/front/listener|监听器]]
+详见 [[core/instance/front/listener|监听器]]
 
 ### Step 9: 启动所有线程
 

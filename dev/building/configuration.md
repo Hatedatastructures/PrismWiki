@@ -3,8 +3,8 @@ title: 配置文件完整参考
 source:
   - I:/code/Prism/src/configuration.json
   - I:/code/Prism/include/prism/config.hpp
-  - I:/code/Prism/include/prism/agent/config.hpp
-  - I:/code/Prism/include/prism/channel/connection/pool.hpp
+  - I:/code/Prism/include/prism/instance/config.hpp
+  - I:/code/Prism/include/prism/connect/pool/pool.hpp
   - I:/code/Prism/include/prism/multiplex/config.hpp
   - I:/code/Prism/include/prism/resolve/dns/config.hpp
   - I:/code/Prism/include/prism/trace/config.hpp
@@ -14,8 +14,8 @@ tags: [configuration, json, agent, pool, protocol, multiplex, stealth, dns, trac
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - "[[core/agent/overview|agent]]"
-  - "[[core/channel/overview|channel]]"
+  - "[[core/instance/overview|agent]]"
+  - "[[core/connect/overview|channel]]"
   - "[[core/multiplex/overview|multiplex]]"
   - "[[core/stealth/overview|stealth]]"
   - "[[core/resolve/overview|resolve]]"
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     
     // 4. 初始化各模块
     psm::trace::init(config.trace);
-    psm::agent::directory::build(config.agent.authentication);
+    psm::instance::directory::build(config.agent.authentication);
     // ...
 }
 ```
@@ -103,12 +103,12 @@ int main(int argc, char** argv) {
 ```cpp
 // C++ 配置结构
 struct config {
-    psm::agent::config agent;
-    psm::channel::config pool;
-    psm::agent::buffer buffer;
+    psm::instance::config agent;
+    psm::connect::config pool;
+    psm::instance::buffer buffer;
     psm::protocol::config protocol;
     psm::multiplex::config multiplex;
-    psm::agent::stealth::config stealth;
+    psm::instance::stealth::config stealth;
     psm::resolve::dns::config dns;
     psm::trace::config trace;
 };
@@ -135,7 +135,7 @@ auto result = glz::read_json<config>(json_string);
 
 ### agent — 代理服务核心配置
 
-对应类型：`psm::agent::config`（`include/prism/agent/config.hpp`）
+对应类型：`psm::instance::config`（`include/prism/instance/config.hpp`）
 
 #### 基础参数
 
@@ -242,7 +242,7 @@ auto result = glz::read_json<config>(json_string);
 
 ### pool — 连接池配置
 
-对应类型：`psm::channel::config`（`include/prism/channel/connection/pool.hpp`）
+对应类型：`psm::connect::config`（`include/prism/connect/pool/pool.hpp`）
 
 #### 缓存配置
 
@@ -308,7 +308,7 @@ auto result = glz::read_json<config>(json_string);
 
 ### buffer — 缓冲区配置
 
-对应类型：`psm::agent::buffer`
+对应类型：`psm::instance::buffer`
 
 | JSON 字段 | 类型 | 默认值 | 说明 |
 |-----------|------|--------|------|
@@ -513,7 +513,7 @@ Shadowsocks 2022 配置示例：
 
 ### stealth — TLS 伪装配置
 
-对应类型：`psm::agent::stealth::config`
+对应类型：`psm::instance::stealth::config`
 
 #### reality 子配置
 
@@ -1059,8 +1059,8 @@ kill -HUP <pid>  # 不支持热加载，需要完全重启
 
 ## 相关链接
 
-- [[core/agent/overview|agent]] — Agent 模块
-- [[core/channel/overview|channel]] — Channel 连接池
+- [[core/instance/overview|agent]] — Agent 模块
+- [[core/connect/overview|channel]] — Channel 连接池
 - [[core/multiplex/overview|multiplex]] — Multiplex 多路复用
 - [[core/stealth/overview|stealth]] — Stealth TLS伪装
 - [[core/resolve/overview|resolve]] — DNS 解析模块

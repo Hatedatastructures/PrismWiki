@@ -427,8 +427,8 @@ struct pool_config {
 
 | 模块 | 功能 | 文档 |
 |------|------|------|
-| listener | TCP 监听 | [[core/agent/front/listener|listener]] |
-| connection_pool | 连接池 | [[core/channel/connection/pool|connection-pool]] |
+| listener | TCP 监听 | [[core/instance/front/listener|listener]] |
+| connection_pool | 连接池 | [[core/connect/pool/pool|connection-pool]] |
 | duct | TCP 流多路复用 | [[core/multiplex/duct|duct]] |
 | parcel | UDP 数据包 | [[core/multiplex/parcel|parcel]] |
 | tunnel | 双向转发 | [[core/pipeline/tunnel|tunnel]] |
@@ -660,5 +660,5 @@ grep -i "timeout" /var/log/prism/trace.log
 - [[ref/network/udp|UDP]] — 用户数据报协议
 - [[ref/network/happy-eyeballs|Happy Eyeballs]] — 连接竞争算法
 - [[ref/network/connection-pool|连接池]] — 连接复用技术
-- [[core/channel/connection/pool|连接池实现]] — Prism 连接池模块
+- [[core/connect/pool/pool|连接池实现]] — Prism 连接池模块
 - [[core/multiplex/duct|Duct]] — TCP 流多路复用

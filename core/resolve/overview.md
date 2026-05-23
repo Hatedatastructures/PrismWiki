@@ -76,8 +76,8 @@ resolve/
 
 | 下游模块 | 调用出口 | 说明 |
 |----------|----------|------|
-| [[core/channel/connection/pool|connection_pool]] | `async_acquire()` | 建立 TCP 连接 |
-| [[core/channel/eyeball/racer|address_racer]] | `race()` | Happy Eyeballs 竞速 |
+| [[core/connect/pool/pool|connection_pool]] | `async_acquire()` | 建立 TCP 连接 |
+| [[core/connect/dial/racer|address_racer]] | `race()` | Happy Eyeballs 竞速 |
 | Boost.Asio | `udp::socket::open()` | 创建 UDP 套接字 |
 
 ### 内部调用链

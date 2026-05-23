@@ -14,7 +14,7 @@ layer: dev
 created: 2026-05-21
 updated: 2026-05-21
 related:
-  - "[[core/agent/session/session]]"
+  - "[[core/instance/session/session]]"
   - "[[core/multiplex/overview]]"
   - "[[core/resolve/overview]]"
   - "[[dev/debugging/connection]]"

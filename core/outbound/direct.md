@@ -10,8 +10,8 @@ updated: 2026-05-17
 related:
   - core/outbound/proxy
   - core/resolve/router
-  - core/channel/transport/reliable
-  - core/channel/connection/pool
+  - core/transport/reliable
+  - core/connect/pool/pool
 ---
 
 # direct — 直连出站代理
@@ -21,7 +21,7 @@ related:
 
 ## 组件定位
 
-`direct` 是最简单的 `outbound::proxy` 实现，将连接请求直接通过 DNS 解析和 Happy Eyeballs 建立连接，不经过任何上游代理。该类包装现有 `resolve::router` 和 `channel::connection_pool` 的直连行为。
+`direct` 是最简单的 `outbound::proxy` 实现，将连接请求直接通过 DNS 解析和 Happy Eyeballs 建立连接，不经过任何上游代理。该类包装现有 `resolve::router` 和 `connect::pool::connection_pool` 的直连行为。
 
 **等价于 mihomo 的 `adapter/outbound/direct.go`。**
 
@@ -94,7 +94,7 @@ auto async_connect(const protocol::analysis::target &target,
 
     // 2. 路由到目标
     fault::code ec;
-    channel::pooled_connection conn;
+    connect::pooled_connection conn;
 
     if (!target.positive)
     {
@@ -129,7 +129,7 @@ auto async_connect(const protocol::analysis::target &target,
     // 5. 成功返回
     trace::info("[Outbound.Direct] success, target: {}:{}", target.host, target.port);
     co_return std::pair{fault::code::success,
-                        channel::transport::make_reliable(std::move(conn))};
+                        transport::make_reliable(std::move(conn))};
 }
 ```
 
@@ -282,7 +282,7 @@ direct::async_connect
     │             └─→ reverse_map_.find()
     │
     └─→ 返回传输对象
-            → channel::transport::make_reliable(conn)
+            → transport::make_reliable(conn)
 ```
 
 ## 设计决策
@@ -327,6 +327,6 @@ if (!conn.valid())
 
 - [[core/outbound/proxy|proxy]] — 出站代理抽象接口
 - [[core/resolve/router|router]] — 分发层路由器
-- [[core/channel/transport/reliable|reliable]] — TCP 可靠传输实现
-- [[core/channel/connection/pool|connection_pool]] — TCP 连接池
+- [[core/transport/reliable|reliable]] — TCP 可靠传输实现
+- [[core/connect/pool/pool|connection_pool]] — TCP 连接池
 - [[core/fault/code|fault::code]] — 错误码定义

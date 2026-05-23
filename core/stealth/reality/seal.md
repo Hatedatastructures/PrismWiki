@@ -15,7 +15,7 @@ Reality 加密传输层实现。
 ## 类定义
 
 ```cpp
-class seal final : public channel::transport::transmission
+class seal final : public transport::transmission
 ```
 
 继承 [[transmission]] 接口，封装 TLS 1.3 应用数据记录的加密/解密。
@@ -23,7 +23,7 @@ class seal final : public channel::transport::transmission
 ## 构造函数
 
 ```cpp
-explicit seal(channel::transport::shared_transmission transport,
+explicit seal(transport::shared_transmission transport,
               key_material keys)
 ```
 

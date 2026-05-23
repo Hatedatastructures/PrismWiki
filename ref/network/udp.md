@@ -318,7 +318,7 @@ struct parcel_frame {
 | 模块 | 功能 | 文档 |
 |------|------|------|
 | parcel | UDP 数据包多路复用 | [[core/multiplex/parcel|parcel]] |
-| udp_relay | UDP 中继 | [[core/protocol/common/udp_relay|udp_relay]] |
+| udp_relay | UDP 中继 | [[core/protocol/common/udp-relay|udp_relay]] |
 | upstream | DNS 上游查询 | [[core/resolve/dns/upstream|upstream]] |
 | duct | TCP 流多路复用 | [[core/multiplex/duct|duct]] |
 

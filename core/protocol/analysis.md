@@ -162,4 +162,4 @@ static auto detect_tls(std::string_view peek_data)
 - [[core/protocol/vless/relay|VLESS Relay]] - VLESS 协议处理
 - [[core/protocol/shadowsocks/relay|SS2022 Relay]] - SS2022 协议处理
 - [[core/memory/container|Memory Container]] - memory::string 定义
-- [[core/agent/resolve/router|Router]] - 路由决策使用目标信息
+- [[core/instance/resolve/router|Router]] - 路由决策使用目标信息

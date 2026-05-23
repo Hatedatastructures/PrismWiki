@@ -4,7 +4,7 @@ category: "network"
 type: ref
 layer: ref
 module: ref
-source: ""
+source: []
 tags: [网络, 概览, dns, 连接池, happy-eyeballs, gfw]
 created: 2026-05-17
 updated: 2026-05-17
@@ -34,8 +34,8 @@ Prism 项目中网络原理的应用：
 
 | 技术 | 应用场景 | 实现模块 |
 |------|----------|----------|
-| Happy Eyeballs | 双栈连接 | [[core/channel/eyeball|eyeball]] |
-| 连接池 | 连接复用 | [[core/channel/connection/pool|connection-pool]] |
+| Happy Eyeballs | 双栈连接 | [[core/connect/dial|eyeball]] |
+| 连接池 | 连接复用 | [[core/connect/pool/pool|connection-pool]] |
 | DNS 解析 | DNS 查询 | [[core/resolve/dns|dns]] |
 | GFW 知识 | 伪装设计 | [[core/stealth/overview|stealth]] |
 
@@ -228,7 +228,7 @@ GFW 检测技术：
 ## 参见
 
 - [[ref/protocol/overview|协议规范概览]] — 协议层索引
-- [[core/channel/overview|Channel 模块]] — 传输实现
+- [[core/transport/overview|Channel 模块]] — 传输实现
 - [[core/resolve/dns|DNS 模块]] — DNS 实现
 - [[core/stealth/overview|Stealth 模块]] — 伪装方案
 - [[ref/overview|参考资料概览]] — 参考资料层索引

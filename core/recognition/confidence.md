@@ -86,7 +86,7 @@ graph TD
 ### 被引用
 
 - [[result]]：分析结果结构使用
-- [[layered-pipeline]]：分层检测管道使用
+- [[layered_pipeline]]：分层检测管道使用
 - [[../stealth/scheme|stealth::scheme]]：方案检测返回值
 
 ---

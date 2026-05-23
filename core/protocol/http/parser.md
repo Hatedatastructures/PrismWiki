@@ -121,7 +121,7 @@ protocol/http::relay::forward -> build_forward_request_line -> memory::string
 ## 依赖
 
 - [[core/protocol/http/relay]] - HTTP 代理中继器
-- [[core/agent/account/directory]] - 账户目录
+- [[core/instance/account/directory]] - 账户目录
 - [[core/crypto/base64]] - Base64 解码
 - [[core/crypto/sha224]] - 密码哈希
 

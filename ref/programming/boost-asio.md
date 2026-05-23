@@ -205,9 +205,9 @@ Prism 使用 Asio 协程实现：
 
 | 模块 | 使用方式 | 详见 |
 |------|----------|------|
-| Agent | 监听接受协程 | [[core/agent/front/listener|Listener]] |
+| Agent | 监听接受协程 | [[core/instance/front/listener|Listener]] |
 | Session | 会话处理协程 | [[core/session/session|Session]] |
-| Channel | 连接建立协程 | [[core/channel/overview|Channel]] |
+| Channel | 连接建立协程 | [[core/connect/overview|Channel]] |
 | Pipeline | 协议处理协程 | [[core/pipeline/overview|Pipeline]] |
 
 ---
@@ -216,7 +216,7 @@ Prism 使用 Asio 协程实现：
 
 - [[cpp23-coroutine|C++23 协程]] — 协程原理
 - [[dev/coding/coroutine|协程约定]] — Prism 协程规范
-- [[core/agent/front/listener|Listener 实现]] — Asio 使用实例
+- [[core/instance/front/listener|Listener 实现]] — Asio 使用实例
 
 ---
 

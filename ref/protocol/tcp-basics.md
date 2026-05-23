@@ -411,7 +411,7 @@ Prism TCP 使用：
 - Happy Eyeballs 双栈连接
 ```
 
-详见 [[core/channel/transport|传输层]]。
+详见 [[core/transport|传输层]]。
 
 ### TCP 配置优化
 
@@ -447,4 +447,4 @@ TCP 优化建议：
 - [[ref/protocol/udp-basics|UDP 基础]] — UDP 协议对比
 - [[ref/network/happy-eyeballs|Happy Eyeballs]] — 双栈连接
 - [[ref/network/connection-pool|连接池]] — 连接复用
-- [[core/channel/transport|传输层]] — Prism 实现
+- [[core/transport|传输层]] — Prism 实现

@@ -4,7 +4,7 @@ category: "ref"
 type: ref
 layer: ref
 module: ref
-source: ""
+source: []
 tags: [参考, 知识库, 概览]
 created: 2026-05-17
 updated: 2026-05-17
@@ -110,8 +110,8 @@ PrismWiki 采用三层知识架构：
 | 文件 | 内容 | 参见 |
 |------|------|------|
 | [[ref/network/overview|overview]] | 网络基础概览 | 本目录索引 |
-| [[ref/network/happy-eyeballs|happy-eyeballs]] | RFC 6555 Happy Eyeballs | [[core/channel/eyeball|eyeball]] |
-| [[ref/network/connection-pool|connection-pool]] | 连接池原理 | [[core/channel/connection/pool|connection-pool]] |
+| [[ref/network/happy-eyeballs|happy-eyeballs]] | RFC 6555 Happy Eyeballs | [[core/connect/dial|eyeball]] |
+| [[ref/network/connection-pool|connection-pool]] | 连接池原理 | [[core/connect/pool/pool|connection-pool]] |
 | [[ref/network/dns-resolution|dns-resolution]] | DNS 解析原理 | [[core/resolve/dns|dns]] |
 | [[ref/network/gfw|gfw]] | GFW 原理 | [[core/stealth/overview|stealth]] |
 | [[ref/network/proxy-detection|proxy-detection]] | 代理检测原理 | [[core/recognition/overview|recognition]] |

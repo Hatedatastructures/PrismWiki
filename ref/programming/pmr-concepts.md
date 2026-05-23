@@ -246,7 +246,7 @@ class FixedPool : public std::pmr::memory_resource {
 | 场景 | 资源类型 | 详见 |
 |------|----------|------|
 | 协程帧临时 | monotonic_buffer | [[dev/coding/pmr|PMR 使用规范]] |
-| 连接池 | synchronized_pool | [[core/channel/overview|Channel]] |
+| 连接池 | synchronized_pool | [[core/connect/overview|Channel]] |
 | 协议处理 | monotonic_buffer | [[core/pipeline/overview|Pipeline]] |
 
 ### 规范要求

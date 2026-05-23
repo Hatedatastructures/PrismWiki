@@ -19,7 +19,7 @@ title: 共享 I/O 读取工具
 批量读取至少指定数量的字节。
 
 ```cpp
-auto read_at_least(channel::transport::transmission &transport,
+auto read_at_least(transport::transmission &transport,
                     const std::span<std::byte> buffer,
                     const std::size_t min_size)
     -> net::awaitable<std::pair<fault::code, std::size_t>>;
@@ -39,7 +39,7 @@ auto read_at_least(channel::transport::transmission &transport,
 精确补读剩余字节。
 
 ```cpp
-auto read_remaining(channel::transport::transmission &transport,
+auto read_remaining(transport::transmission &transport,
                      const std::span<std::byte> buffer,
                      std::size_t current,
                      const std::size_t target)
@@ -72,5 +72,5 @@ protocol/common::read_remaining -> transport.async_read_some
 
 ## 依赖
 
-- [[core/channel/transport/transmission]] - 传输层接口
+- [[core/transport/transmission]] - 传输层接口
 - [[log/fault/code]] - 错误码系统

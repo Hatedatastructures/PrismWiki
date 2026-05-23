@@ -39,8 +39,9 @@ tags: [skill, sync, mapping]
 
 | 源码路径 | Wiki 路径 |
 |----------|-----------|
-| `include/prism/agent/` | `core/agent/` |
-| `include/prism/channel/` | `core/channel/` |
+| `include/prism/instance/` | `core/instance/` |
+| `include/prism/connect/` | `core/connect/`
+| `include/prism/transport/` | `core/transport/` |
 | `include/prism/pipeline/` | `core/pipeline/` |
 | `include/prism/protocol/` | `core/protocol/` |
 | `include/prism/stealth/` | `core/stealth/` |

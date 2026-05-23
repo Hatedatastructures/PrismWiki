@@ -15,7 +15,7 @@ SS2022 (SIP022) 协议中继器，是一个 AEAD 加密传输层装饰器。与 
 ## 类定义
 
 ```cpp
-class relay : public channel::transport::transmission, 
+class relay : public transport::transmission, 
               public std::enable_shared_from_this<relay>
 ```
 
@@ -140,7 +140,7 @@ inline auto make_relay(shared_transmission next_layer, const config &cfg,
 - [[core/protocol/shadowsocks/config|Config]] - 配置结构
 - [[core/protocol/shadowsocks/salts|Salts]] - Salt 重放保护
 - [[core/crypto/aead|AEAD]] - AEAD 加密上下文
-- [[core/channel/transport/transmission|Transmission]] - 底层传输层接口
+- [[core/transport/transmission|Transmission]] - 底层传输层接口
 - [[core/protocol/analysis|Analysis]] - 目标地址封装
 
 ## 实现边界

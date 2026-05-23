@@ -38,8 +38,9 @@ layer: root
 
 | 模块 | 职责 | 源码位置 |
 |------|------|----------|
-| [[core/agent/overview|Agent]] | 前端监听、会话管理 | `include/prism/agent/` |
-| [[core/channel/overview|Channel]] | 连接池、传输层 | `include/prism/channel/` |
+| [[core/instance/overview|Instance]] | 前端监听、会话管理 | `include/prism/instance/` |
+| [[core/connect/overview|Connect]] | 连接池、拨号、隧道 | `include/prism/connect/` |
+| [[core/transport/overview|Transport]] | 传输层抽象 | `include/prism/transport/` |
 | [[core/pipeline/overview|Pipeline]] | 协议处理器 | `include/prism/pipeline/` |
 | [[core/protocol/overview|Protocol]] | 协议格式、常量 | `include/prism/protocol/` |
 | [[core/stealth/overview|Stealth]] | TLS 伪装 | `include/prism/stealth/` |
@@ -48,6 +49,9 @@ layer: root
 | [[core/multiplex/overview|Multiplex]] | 多路复用 | `include/prism/multiplex/` |
 | [[core/crypto/overview|Crypto]] | 加密模块 | `include/prism/crypto/` |
 | [[core/outbound/overview|Outbound]] | 出站代理 | `include/prism/outbound/` |
+| [[core/account/overview|Account]] | 用户账户管理 | `include/prism/account/` |
+| [[core/context/context|Context]] | 请求上下文 | `include/prism/context/` |
+| [[core/stats/overview|Stats]] | 运行时统计 | `include/prism/stats/` |
 
 ### 基础设施
 

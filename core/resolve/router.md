@@ -9,8 +9,8 @@ created: 2026-05-17
 updated: 2026-05-17
 related:
   - core/resolve/dns/dns
-  - core/channel/connection/pool
-  - core/channel/eyeball/racer
+  - core/connect/pool/pool
+  - core/connect/dial/racer
 ---
 
 # router — 分发层路由器
@@ -123,12 +123,12 @@ auto router::connect_with_retry(std::span<const tcp::endpoint> endpoints)
     -> net::awaitable<pooled_connection>
 {
     // RFC 8305 Happy Eyeballs：staggered delay 竞速
-    channel::eyeball::address_racer racer(pool_);
+    connect::dial::address_racer racer(pool_);
     co_return co_await racer.race(endpoints);
 }
 ```
 
-委托给 [[core/channel/eyeball/racer|address_racer]] 实现并发竞速连接。
+委托给 [[core/connect/dial/racer|address_racer]] 实现并发竞速连接。
 
 ### async_datagram 实现
 
@@ -236,8 +236,8 @@ reverse_map_.find(host);  // 直接使用 string_view
 ## 参见
 
 - [[core/resolve/dns/dns|resolver]] — DNS 解析器接口
-- [[core/channel/connection/pool|connection_pool]] — TCP 连接池
-- [[core/channel/eyeball/racer|address_racer]] — Happy Eyeballs 竞速器
+- [[core/connect/pool/pool|connection_pool]] — TCP 连接池
+- [[core/connect/dial/racer|address_racer]] — Happy Eyeballs 竞速器
 - [[core/resolve/dns/detail/utility|parse_port]] — 零分配端口解析
 
 ---

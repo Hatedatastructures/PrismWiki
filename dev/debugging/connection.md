@@ -1,7 +1,7 @@
 ---
 title: 连接问题排查指南
 source:
-  - I:/code/Prism/include/prism/channel/
+  - I:/code/Prism/include/prism/connect/
   - I:/code/Prism/src/prism/channel/
 module: debugging
 type: reference
@@ -11,7 +11,7 @@ created: 2026-05-17
 updated: 2026-05-17
 related:
   - "[[dev/debugging/overview]]"
-  - "[[core/channel/overview|channel]]"
+  - "[[core/connect/overview|channel]]"
   - "[[dev/debugging/tcp|tcp]]"
   - "[[dev/debugging/udp|udp]]"
 ---

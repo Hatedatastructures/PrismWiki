@@ -21,7 +21,7 @@ Recognition 模块聚合头文件，提供统一的协议识别入口。
 ```cpp
 struct recognize_context
 {
-    channel::transport::shared_transmission transport;  // 传输层
+    transport::shared_transmission transport;  // 传输层
     const psm::config *cfg;                              // 全局配置
     resolve::router *router;                             // 路由器
     agent::session_context *session;                      // 会话上下文
@@ -36,7 +36,7 @@ struct recognize_context
 ```cpp
 struct recognize_result
 {
-    channel::transport::shared_transmission transport;  // 最终传输层
+    transport::shared_transmission transport;  // 最终传输层
     protocol::protocol_type detected;                    // 检测到的协议类型
     memory::vector<std::byte> preread;                  // 预读数据
     fault::code error;                                  // 错误码
@@ -52,7 +52,7 @@ TLS 协议识别上下文。
 ```cpp
 struct identify_context
 {
-    channel::transport::shared_transmission transport;   // 传输层
+    transport::shared_transmission transport;   // 传输层
     const psm::config *cfg;                               // 全局配置
     std::span<const std::byte> preread;                  // 预读数据
     resolve::router *router;                             // 路由器
@@ -68,7 +68,7 @@ struct identify_context
 ```cpp
 struct identify_result
 {
-    channel::transport::shared_transmission transport;  // 最终传输层
+    transport::shared_transmission transport;  // 最终传输层
     protocol::protocol_type detected;                   // 检测到的协议类型
     memory::vector<std::byte> preread;                  // 内层预读数据
     fault::code error;                                  // 错误码
@@ -136,7 +136,7 @@ graph TD
 
 - [[confidence]]：置信度枚举
 - [[result]]：分析结果
-- [[layered-pipeline]]：分层检测管道
+- [[layered_pipeline]]：分层检测管道
 - [[scheme-route-table]]：SNI 路由表
 - [[probe/probe]]：外层协议探测
 - [[probe/analyzer]]：协议类型检测

@@ -60,4 +60,4 @@ struct config
 
 - [[core/protocol/trojan/relay|Relay]] - 中继器使用配置检查命令权限
 - [[core/protocol/trojan/constants|Constants]] - 常量配合配置使用
-- [[core/agent/config|Agent Config]] - 服务级配置持有此结构
+- [[core/instance/config|Agent Config]] - 服务级配置持有此结构

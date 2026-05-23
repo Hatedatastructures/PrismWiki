@@ -1,23 +1,23 @@
 ---
 title: "health — Socket 健康检测"
 layer: core
-source: "I:/code/Prism/include/prism/channel/health.hpp"
+source: "I:/code/Prism/include/prism/connect/pool/health.hpp"
 module: "channel"
 type: api
 tags: [channel, health, socket, 连接池, 健康检测]
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - core/channel/connection/pool
-  - core/channel/transport/reliable
+  - core/connect/pool/pool
+  - core/transport/reliable
   - ref/network/tcp
 ---
 
 # health — Socket 健康检测
 
-> 源码: `I:/code/Prism/include/prism/channel/health.hpp`
+> 源码: `I:/code/Prism/include/prism/connect/pool/health.hpp`
 > 实现: `src/prism/channel/health.cpp`
-> 模块: [[core/channel/overview|channel]]
+> 模块: [[core/connect/overview|connect]]
 
 ## 模块职责
 
@@ -41,7 +41,7 @@ Socket 健康检测模块。提供 TCP socket 健康状态检测功能，用于�
 
 | 文件 | 路径 |
 |------|------|
-| 头文件 | `I:/code/Prism/include/prism/channel/health.hpp` |
+| 头文件 | `I:/code/Prism/include/prism/connect/pool/health.hpp` |
 | 实现 | `I:/code/Prism/src/prism/channel/health.cpp` |
 
 ## API
@@ -126,8 +126,8 @@ enum class socket_state {
 
 | 调用者 | 调用点 | 说明 |
 |--------|--------|------|
-| [[core/channel/connection/pool|pool]] | `async_acquire()` | 缓存命中时健康检测 |
-| [[core/channel/connection/pool|pool]] | `recycle()` | 归还时健康检测 |
+| [[core/connect/pool/pool|pool]] | `async_acquire()` | 缓存命中时健康检测 |
+| [[core/connect/pool/pool|pool]] | `recycle()` | 归还时健康检测 |
 
 ### 调用（向下）
 
@@ -153,6 +153,6 @@ enum class socket_state {
 
 ## 参见
 
-- [[core/channel/overview|channel overview]] — 通道阶段概述
-- [[core/channel/connection/pool|pool]] — TCP 连接池
-- [[core/channel/transport/reliable|reliable]] — TCP 可靠传输
+- [[core/connect/overview|connect overview]] — 通道阶段概述
+- [[core/connect/pool/pool|pool]] — TCP 连接池
+- [[core/transport/reliable|reliable]] — TCP 可靠传输

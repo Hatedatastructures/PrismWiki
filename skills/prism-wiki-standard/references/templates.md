@@ -49,8 +49,8 @@ related:
 | 依赖方向 | 模块 | 说明 |
 |----------|------|------|
 | 依赖 | [[core/crypto/aead]] | 使用 AEAD 加解密 |
-| 继承 | [[core/channel/transport/transmission]] | 传输层接口 |
-| 被依赖 | [[core/agent/session/session|session]] | session 启动时调用 |
+| 继承 | [[core/transport/transmission]] | 传输层接口 |
+| 被依赖 | [[core/instance/session/session|session]] | session 启动时调用 |
 
 ## 类与结构体
 
@@ -103,7 +103,7 @@ related:
   - [[core/crypto/aead#函数: encrypt]] — 加密握手数据
   - [[core/protocol/common/address#函数: parse]] — 解析目标地址
 - **被调用**（向上）:
-  - [[core/agent/session/session#函数: start|session#函数: start]] — session 启动时调用
+  - [[core/instance/session/session#函数: start|session#函数: start]] — session 启动时调用
 
 **知识域**（可选）:
 - [[ref/crypto/tls-handshake]] — TLS 握手流程
@@ -292,7 +292,7 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 related:
   - "[[core/transformer/json]]"
-  - "[[core/agent/account/directory|directory]]"
+  - "[[core/instance/account/directory|directory]]"
 ---
 
 # Loader 模块
@@ -359,7 +359,7 @@ Loader 模块负责配置文件加载和账户目录构建。所有函数为 hea
 ## 相关页面
 
 - [[core/transformer/json]] — JSON 序列化
-- [[core/agent/account/directory|directory]] — 账户目录
+- [[core/instance/account/directory|directory]] — 账户目录
 ```
 
 ---
@@ -542,7 +542,7 @@ fix_commit: abc1234
 ## 相关模块
 
 - [[core/stealth/shadowtls/handshake]]
-- [[core/channel/transport/snapshot]]
+- [[core/transport/snapshot]]
 
 ## 预防措施
 
@@ -594,7 +594,7 @@ updated: YYYY-MM-DD
 ## 相关页面
 
 - [[dev/modules]] — 模块结构
-- [[core/channel/transport/reliable]] — TCP 传输层
+- [[core/transport/reliable]] — TCP 传输层
 ```
 
 ---

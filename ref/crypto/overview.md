@@ -4,7 +4,7 @@ category: "crypto"
 type: ref
 layer: ref
 module: ref
-source: ""
+source: []
 tags: [密码学, 概览, 加密, 密钥派生, 密钥交换]
 created: 2026-05-17
 updated: 2026-05-17
@@ -38,7 +38,7 @@ Prism 项目中密码学原理的应用场景：
 | Reality TLS 伪装 | X25519 + HKDF + AES-GCM | [[core/stealth/reality/handshake|reality]] |
 | SS2022 加密 | BLAKE3 + AES-GCM/ChaCha20 | [[core/protocol/shadowsocks|shadowsocks]] |
 | Trojan 认证 | SHA-224 | [[core/protocol/trojan|trojan]] |
-| TLS 记录层加密 | AES-GCM | [[core/channel/transport/encrypted|encrypted]] |
+| TLS 记录层加密 | AES-GCM | [[core/transport/encrypted|encrypted]] |
 
 ## 核心概念
 

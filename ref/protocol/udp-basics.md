@@ -325,7 +325,7 @@ Prism UDP 转发：
 6. 封装返回客户端
 ```
 
-详见 [[core/channel/transport|传输层]]。
+详见 [[core/transport|传输层]]。
 
 ### NAT 处理
 
@@ -358,4 +358,4 @@ Symmetric NAT 问题：
 - [[ref/protocol/quic-basics|QUIC 基础]] — QUIC 协议
 - [[ref/protocol/socks5-spec|SOCKS5 规范]] — SOCKS5 UDP
 - [[core/protocol/shadowsocks|SS2022]] — SS2022 UDP
-- [[core/channel/transport|传输层]] — Prism 实现
+- [[core/transport|传输层]] — Prism 实现

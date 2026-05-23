@@ -33,7 +33,7 @@ enum class handshake_result_type
 struct handshake_result
 {
     handshake_result_type type;
-    channel::transport::shared_transmission encrypted_transport;  // 认证成功时的加密传输层
+    transport::shared_transmission encrypted_transport;  // 认证成功时的加密传输层
     memory::vector<std::byte> inner_preread;                       // 内层预读数据
     memory::vector<std::byte> raw_tls_record;                      // 非 Reality 时原始 TLS 记录
     fault::code error;
@@ -61,9 +61,9 @@ Reality 握手分为 5 个主要阶段：
 ### 源码逐行解释（行 399-441）
 
 ```cpp
-auto handshake(channel::transport::shared_transmission inbound,
+auto handshake(transport::shared_transmission inbound,
                const psm::config &cfg,
-               psm::agent::session_context &session)
+               psm::instance::session_context &session)
     -> net::awaitable<handshake_result>
 {
     handshake_result result;
@@ -491,7 +491,7 @@ static auto derive_and_encrypt_finished(
 
 ```cpp
 static auto consume_client_finished(
-    channel::transport::transmission &inbound,
+    transport::transmission &inbound,
     const key_material &keys)
     -> net::awaitable<fault::code>
 {
@@ -730,8 +730,8 @@ static auto consume_client_finished(
 ### fallback_to_dest（行 122-164）
 
 ```cpp
-auto fallback_to_dest(psm::agent::session_context &session,
-                      channel::transport::shared_transmission inbound,
+auto fallback_to_dest(psm::instance::session_context &session,
+                      transport::shared_transmission inbound,
                       const std::span<const std::uint8_t> raw_record)
     -> net::awaitable<fault::code>
 {
@@ -785,7 +785,7 @@ auto fallback_to_dest(psm::agent::session_context &session,
 - 这是 ClientHello，目标服务器会继续 TLS 握手
 
 ```cpp
-    auto dest_trans = channel::transport::make_reliable(std::move(*dest_socket_raw));
+    auto dest_trans = transport::make_reliable(std::move(*dest_socket_raw));
     co_await pipeline::primitives::tunnel(inbound, std::move(dest_trans), session);
 
     trace::debug("{} fallback tunnel completed", HsTag);
@@ -828,7 +828,7 @@ auto fetch_dest_certificate(const std::string_view host, const std::uint16_t por
 ### read_exact（行 53-67）
 
 ```cpp
-static auto read_exact(channel::transport::transmission &transport, std::span<std::byte> buf)
+static auto read_exact(transport::transmission &transport, std::span<std::byte> buf)
     -> net::awaitable<bool>
 ```
 

@@ -105,7 +105,7 @@ auto shadowsocks(session_context &ctx, std::span<const std::byte> data)
 
 ### 被调用（向上）
 
-- [[core/agent/dispatch/table|dispatch]] — 协议分发表注册为 SS2022 处理器
+- [[core/instance/dispatch/table|dispatch]] — 协议分发表注册为 SS2022 处理器
 
 ---
 
@@ -208,7 +208,7 @@ SS2022 的 relay 本身是传输层，负责持续的 AEAD 加解密：
 
 ```cpp
 // relay 继承 transmission
-class relay : public channel::transport::transmission
+class relay : public transport::transmission
 {
     // async_read_some: 解密数据
     // async_write_some: 加密数据

@@ -63,5 +63,5 @@ VLESS 协议的 UUID 认证不在此配置中处理，而是通过:
 
 - [[core/protocol/vless/relay|Relay]] - 中继器使用配置控制 UDP 权限
 - [[core/protocol/vless/constants|Constants]] - 常量配合配置使用
-- [[core/agent/config|Agent Config]] - 服务级配置持有此结构
-- [[core/agent/account/directory|Account Directory]] - UUID 凭证查询
+- [[core/instance/config|Agent Config]] - 服务级配置持有此结构
+- [[core/instance/account/directory|Account Directory]] - UUID 凭证查询

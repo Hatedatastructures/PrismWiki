@@ -25,7 +25,7 @@ namespace psm::protocol::tls
 读取完整的 TLS 记录。
 
 ```cpp
-auto read_tls_record(channel::transport::transmission &transport)
+auto read_tls_record(transport::transmission &transport)
     -> net::awaitable<std::pair<fault::code, memory::vector<std::uint8_t>>>;
 ```
 
@@ -39,7 +39,7 @@ auto read_tls_record(channel::transport::transmission &transport)
 读取完整的 TLS 记录，使用已预读的数据作为前缀。
 
 ```cpp
-auto read_tls_record(channel::transport::transmission &transport, 
+auto read_tls_record(transport::transmission &transport, 
                      std::span<const std::byte> preread)
     -> net::awaitable<std::pair<fault::code, memory::vector<std::uint8_t>>>;
 ```
@@ -85,7 +85,7 @@ auto read_tls_record(channel::transport::transmission &transport,
 
 - [[core/protocol/tls/types|Types]] - client_hello_features 结构定义
 - [[core/protocol/tls/feature_bitmap|Feature Bitmap]] - 使用特征构建位图
-- [[core/channel/transport/transmission|Transmission]] - 底层传输接口
+- [[core/transport/transmission|Transmission]] - 底层传输接口
 - [[core/stealth/reality/handshake|Reality]] - Reality 协议检测
 - [[core/stealth/ech|ECH]] - ECH 协议检测
 - [[core/stealth/shadowtls|ShadowTLS]] - ShadowTLS 协议检测

@@ -150,7 +150,7 @@ auto parse_udp_packet(std::span<const std::byte> buffer)
 - [[core/protocol/trojan/constants|Constants]] - 命令和地址类型枚举定义
 - [[core/protocol/trojan/relay|Relay]] - 协议中继器使用这些解析函数
 - [[core/protocol/trojan/config|Config]] - 配置传递给中继器
-- [[core/channel/transport/transmission|Transmission]] - 底层传输层接口
+- [[core/transport/transmission|Transmission]] - 底层传输层接口
 
 ## 实现边界
 

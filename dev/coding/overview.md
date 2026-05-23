@@ -36,7 +36,7 @@ Prism 项目的编码规范围绕以下核心原则展开：
 namespace psm::resolve { /* DNS 解析 */ }
 namespace psm::channel { /* 连接通道 */ }
 namespace psm::recognition { /* 协议识别 */ }
-namespace psm::agent { /* 代理核心 */ }
+namespace psm::instance { /* 代理核心 */ }
 ```
 
 ## 关键别名

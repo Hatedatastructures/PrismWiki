@@ -110,7 +110,7 @@ class relay : public transmission {
 
 Trojan 协议中继器。装饰器模式，包装底层传输层并添加协议处理。
 
-继承自 [[core/channel/transport/transmission]]
+继承自 [[core/transport/transmission]]
 
 **成员变量**:
 | 类型 | 名称 | 说明 |

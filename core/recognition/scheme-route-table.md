@@ -113,5 +113,5 @@ graph TD
 
 ### 被引用
 
-- [[layered-pipeline]]：Tier 2 检测使用
+- [[layered_pipeline]]：Tier 2 检测使用
 - [[../recognition]]：识别入口引用

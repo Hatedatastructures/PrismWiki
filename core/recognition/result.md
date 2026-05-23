@@ -84,5 +84,5 @@ graph TD
 ### 被引用
 
 - [[recognition]]：识别入口使用
-- [[layered-pipeline]]：分层检测管道使用
+- [[layered_pipeline]]：分层检测管道使用
 - [[../stealth/scheme|stealth::scheme]]：方案检测返回值

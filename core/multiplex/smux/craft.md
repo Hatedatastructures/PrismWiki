@@ -56,7 +56,7 @@ header 与 payload 分离传递，消除 payload memcpy。
 ## 公开接口
 
 ```cpp
-craft(channel::transport::shared_transmission transport,
+craft(transport::shared_transmission transport,
       resolve::router &router,
       const multiplex::config &cfg,
       memory::resource_pointer mr = {});

@@ -64,7 +64,7 @@ hash = affinity_hash(socket.remote_endpoint());
 
 计算客户端地址的哈希值，用于分发到固定 worker。
 
-详见 [[core/agent/front/listener|监听器]]
+详见 [[core/instance/front/listener|监听器]]
 
 ### Step 2: balancer 分发连接
 
@@ -77,7 +77,7 @@ worker.post(socket);
 
 分发 socket 到选中的 worker 的 io_context。
 
-详见 [[core/agent/front/balancer|负载均衡器]]
+详见 [[core/instance/front/balancer|负载均衡器]]
 
 ### Step 3: launch 创建会话
 
@@ -89,7 +89,7 @@ launch(socket, config, tls_context, account_directory)
 
 创建 session 对象，开始会话生命周期。
 
-详见 [[core/agent/worker/launch|会话启动]]
+详见 [[core/instance/worker/launch|会话启动]]
 
 ### Step 4: Recognition 协议识别
 
@@ -148,7 +148,7 @@ Handler 类型：
 - ShadowsocksHandler
 - UnknownHandler
 
-详见 [[core/agent/dispatch/table|处理器分发表]]
+详见 [[core/instance/dispatch/table|处理器分发表]]
 
 ### Step 6: Pipeline 处理
 

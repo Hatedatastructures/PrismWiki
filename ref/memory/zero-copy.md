@@ -624,7 +624,7 @@ Prism 的 transmission 模块是隧道转发的核心：
 **示例实现**：
 
 ```cpp
-namespace psm::channel::transport {
+namespace psm::transport {
   class transmission {
     static constexpr size_t buffer_size = 64 * 1024;
     std::array<char, buffer_size> buffer_;  // 固定大小栈缓冲
@@ -974,5 +974,5 @@ Prism 等异步架构更适合 io_uring。
 
 - [[ref/memory/pmr|PMR 内存资源]] — 多态内存资源基础
 - [[ref/memory/arena|Arena 分配器]] — 帧级线性分配
-- [[core/channel/transport/transmission|传输层]] — Prism 隧道实现
+- [[core/transport/transmission|传输层]] — Prism 隧道实现
 - [[core/memory/container|PMR 容器别名]] — 容器类型定义

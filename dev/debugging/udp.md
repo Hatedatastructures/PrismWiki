@@ -1,7 +1,7 @@
 ---
 title: UDP 协议实践指南
 source:
-  - I:/code/Prism/include/prism/channel/parcel.hpp
+  - I:/code/Prism/include/prism/connect/dial/parcel.hpp
   - I:/code/Prism/include/prism/protocol/socks5/udp.hpp
   - I:/code/Prism/src/prism/channel/parcel/
   - I:/code/Prism/src/prism/protocol/socks5/udp.cpp
@@ -11,7 +11,7 @@ tags: [udp, transport, network, socks5, parcel, datagram, dns]
 created: 2026-05-17
 updated: 2026-05-17
 related:
-  - "[[core/channel/overview|channel]]"
+  - "[[core/connect/overview|channel]]"
   - "[[core/protocol/overview|protocol]]"
   - "[[core/multiplex/overview|multiplex]]"
   - "[[dev/debugging/tcp|tcp]]"
@@ -898,7 +898,7 @@ void validate_udp_header(udp_header header) {
 
 ## 相关链接
 
-- [[core/channel/overview|channel]] — 通道模块与连接管理
+- [[core/connect/overview|channel]] — 通道模块与连接管理
 - [[core/protocol/overview|protocol]] — 协议模块概览
 - [[core/multiplex/overview|multiplex]] — 多路复用模块
 - [[dev/debugging/tcp|tcp]] — TCP 协议实践

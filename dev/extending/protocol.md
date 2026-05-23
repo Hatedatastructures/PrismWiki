@@ -20,9 +20,9 @@ Pipeline 层: handler::process() → parse → auth → resolve → dial → tun
 |------|------|------|
 | 协议类型 | `include/prism/protocol/analysis.hpp` | `protocol_type` 枚举定义 |
 | 协议检测 | `src/prism/protocol/analysis.cpp` | `detect()` 函数，嗅探首包判断协议 |
-| Handler 基类 | `include/prism/agent/dispatch/handler.hpp` | 抽象基类，3 个纯虚函数 |
-| 注册表 | `include/prism/agent/dispatch/registry.hpp` | 单例工厂，`register_handler<T>` + `create` |
-| 全部注册 | `include/prism/agent/dispatch/handlers.hpp` | `register_handlers()` 统一注册入口 |
+| Handler 基类 | `include/prism/instance/dispatch/handler.hpp` | 抽象基类，3 个纯虚函数 |
+| 注册表 | `include/prism/instance/dispatch/registry.hpp` | 单例工厂，`register_handler<T>` + `create` |
+| 全部注册 | `include/prism/instance/dispatch/handlers.hpp` | `register_handlers()` 统一注册入口 |
 | Pipeline | `src/prism/pipeline/protocols/` | 各协议的具体 pipeline 实现 |
 
 ## Handler 接口
@@ -30,7 +30,7 @@ Pipeline 层: handler::process() → parse → auth → resolve → dial → tun
 每个协议 handler 必须继承 `handler` 并实现 3 个纯虚函数：
 
 ```cpp
-// include/prism/agent/dispatch/handler.hpp
+// include/prism/instance/dispatch/handler.hpp
 class handler : public std::enable_shared_from_this<handler>
 {
 public:
@@ -109,7 +109,7 @@ enum class protocol_type
 
 ### 步骤 6：实现 Handler
 
-文件：`include/prism/agent/dispatch/handlers.hpp`（header-only）
+文件：`include/prism/instance/dispatch/handlers.hpp`（header-only）
 
 ```cpp
 class <protocol>_handler : public handler
@@ -126,7 +126,7 @@ Handler 是 header-only 的，直接调用 pipeline 函数。参考现有 handle
 
 ### 步骤 7：注册 Handler
 
-文件：`include/prism/agent/dispatch/handlers.hpp`，在 `register_handlers()` 函数中添加：
+文件：`include/prism/instance/dispatch/handlers.hpp`，在 `register_handlers()` 函数中添加：
 
 ```cpp
 inline void register_handlers()

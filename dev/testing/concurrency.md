@@ -97,16 +97,16 @@ int main() {
     auto config = load_test_config();
     
     // 创建 worker 线程池
-    std::vector<std::unique_ptr<psm::agent::worker>> workers;
+    std::vector<std::unique_ptr<psm::instance::worker>> workers;
     for (size_t i = 0; i < config.worker_count; ++i) {
-        workers.emplace_back(std::make_unique<psm::agent::worker>());
+        workers.emplace_back(std::make_unique<psm::instance::worker>());
     }
     
     // 创建 balancer
-    psm::agent::balancer balancer(workers);
+    psm::instance::balancer balancer(workers);
     
     // 创建 listener
-    psm::agent::listener listener(balancer, config.endpoint);
+    psm::instance::listener listener(balancer, config.endpoint);
     
     // 启动
     listener.start();

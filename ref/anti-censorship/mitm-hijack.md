@@ -1037,5 +1037,5 @@ Prism 配置示例：
 - [[ref/anti-censorship/probing|主动探测]] — 主动探测防御
 - [[ref/anti-censorship/replay-attack|重放攻击]] — 重放攻击防御
 - [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] — TLS 指纹识别
-- [[prism/stealth/reality|Reality 协议]] — Reality 实现细节
-- [[prism/crypto/certificate|证书验证]] — 证书验证实现
+- [[core/stealth/reality|Reality 协议]] — Reality 实现细节
+- [[core/crypto/hkdf|证书验证]] — 证书验证实现

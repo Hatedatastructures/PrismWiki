@@ -189,7 +189,7 @@ inline void register_all_schemes()
 - ClientHello 解析: `protocol::tls::parse_client_hello()` (`include/prism/protocol/tls/signal.hpp`)
 - TLS 后端连接: `src/prism/stealth/reality/handshake.cpp` 的 TLS 握手逻辑
 - 密码哈希: `src/prism/crypto/` 中的哈希函数
-- 后端连接竞速: `channel::eyeball::racer`
+- 后端连接竞速: `connect::dial::racer`
 
 ## 注意事项
 

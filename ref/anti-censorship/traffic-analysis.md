@@ -655,7 +655,7 @@ auto apply_padding(
 Prism 实现时序混淆机制：
 
 ```cpp
-// include/prism/channel/timing.hpp
+// include/prism/transport/timing.hpp
 
 /// @brief 时序混淆配置
 struct timing_config {
@@ -931,5 +931,5 @@ Reality 是最有效的流量分析对抗方案之一。
 - [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] — TLS 指纹识别
 - [[ref/anti-censorship/probing|主动探测]] — 主动探测防御
 - [[ref/protocol/multiplex|多路复用协议]] — 多路复用实现
-- [[prism/multiplex|多路复用模块]] — Prism 多路复用实现
-- [[prism/pipeline|Pipeline 模块]] — Prism 流量处理实现
+- [[core/multiplex/overview|多路复用模块]] — Prism 多路复用实现
+- [[core/pipeline/overview|Pipeline 模块]] — Prism 流量处理实现

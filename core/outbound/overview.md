@@ -9,7 +9,7 @@ created: 2026-05-17
 updated: 2026-05-17
 related:
   - core/resolve/router
-  - core/channel/transport/transmission
+  - core/transport/transmission
   - core/protocol/analysis
 ---
 
@@ -120,6 +120,6 @@ public:
 ## 参见
 
 - [[core/resolve/router|router]] — 分发层路由器
-- [[core/channel/transport/transmission|transmission]] — 传输层抽象接口
+- [[core/transport/transmission|transmission]] — 传输层抽象接口
 - [[core/protocol/analysis|protocol::analysis]] — 协议分析模块
 - [[core/fault/code|fault::code]] — 错误码定义

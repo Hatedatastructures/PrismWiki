@@ -1,5 +1,6 @@
 ---
 layer: dev
+title: 基准测试
 source: I:/code/Prism/benchmarks/
 module: testing
 type: reference
@@ -9,7 +10,7 @@ updated: 2026-05-17
 related:
   - "[[dev/testing/overview]]"
   - "[[dev/testing/commands]]"
-  - "[[performance/benchmark]]"
+  - "[[dev/performance/report|performance/benchmark]]"
 ---
 
 # 基准测试体系
@@ -415,5 +416,5 @@ build_release/benchmarks/CryptoBench.exe --benchmark_format=csv > crypto_results
 
 - [[dev/testing/overview]] — 测试体系概述
 - [[dev/testing/commands]] — 测试命令详解
-- [[performance/benchmark]] — 性能基准报告
+- [[dev/performance/report|performance/benchmark]] — 性能基准报告
 - [[dev/testing/stress]] — 压力测试体系

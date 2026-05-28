@@ -86,5 +86,5 @@ relay 曾实现多跳代理链：
 ## 相关文档
 
 - [[overview]] - 代理组概述
-- [[../protocols/vless|VLESS 协议]]
-- [[../protocols/vmess|VMess 协议]]
+- [[ref/mihomo/protocols/vless|VLESS 协议]]
+- [[ref/mihomo/protocols/vmess|VMess 协议]]

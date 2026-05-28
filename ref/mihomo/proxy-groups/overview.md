@@ -108,5 +108,5 @@ type GroupCommonOption struct {
 - [[ref/mihomo/proxy-groups/fallback|fallback]] - fallback 代理组
 - [[load-balance]] - load-balance 代理组
 - [[config]] - 代理组配置详解
-- [[../provider/overview|Provider 概述]]
+- [[ref/mihomo/provider/overview|Provider 概述]]
 - [[ref/mihomo/proxy-groups|proxy-groups]]

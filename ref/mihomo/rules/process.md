@@ -145,4 +145,4 @@ rules:
 
 - [[overview]] - 规则系统概述
 - [[port]] - 端口规则
-- [[../tun|TUN 模式]]
+- [[ref/mihomo/tun|TUN 模式]]

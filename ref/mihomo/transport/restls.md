@@ -253,4 +253,4 @@ auto select_fingerprint(client_fingerprint fp)
 - [[ref/mihomo/transport/overview|Transport 概览]] — Transport 模块总览
 - [[ref/mihomo/transport/shadowtls|ShadowTLS]] — TLS 握手伪装
 - [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] — TLS 指纹检测原理
-- [[core/stealth/restls|RestLS 协议]] — RestLS 设计原理
+- [[core/stealth/restls/scheme|RestLS 协议]] — RestLS 设计原理

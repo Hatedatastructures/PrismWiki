@@ -11,7 +11,7 @@ updated: 2026-05-17
 related:
   - "[[core/stealth/overview|stealth]]"
   - "[[dev/debugging/tls|tls]]"
-  - "[[configuration]]"
+  - "[[docs/configuration|configuration]]"
 layer: dev
 ---
 
@@ -767,4 +767,4 @@ openssl s_client -connect YOUR_SERVER:443
 
 - [[core/stealth/overview|stealth]] — Stealth 模块详解
 - [[dev/debugging/tls|tls]] — TLS 协议实践
-- [[configuration]] — 伪装配置参数
+- [[docs/configuration|configuration]] — 伪装配置参数

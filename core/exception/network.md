@@ -1,121 +1,62 @@
 ---
+tags: [exception, network]
 layer: core
-source: prism/exception/network.hpp
-title: Exception Network
+module: exception
+source: I:/code/Prism/include/prism/exception/network.hpp
+title: exception::network
 ---
 
-# Exception Network
+# exception::network
 
-网络异常类，用于处理网络配置和初始化阶段的错误。
+网络配置异常，用于启动阶段的网络相关错误。运行时网络 I/O 错误应使用 `fault::code`。
 
-## 源码位置
+## 构造函数
 
-`I:/code/Prism/include/prism/exception/network.hpp`
+| 构造方式 | 说明 |
+|----------|------|
+| `network(fault::code)` | 错误码构造（推荐） |
+| `network(fault::code, string_view desc)` | 错误码 + 额外描述 |
+| `network(const string&)` | 向后兼容，映射为 `generic_error` |
+| `network(format_string, Args...)` | 格式化构造，映射为 `generic_error` |
 
-## 适用场景
-
-- 网络配置加载失败
-- DNS解析配置错误
-- 上游服务器配置无效
-- 端口绑定失败
-
-**运行时网络I/O错误应使用错误码而非异常。**
-
-## 类定义
-
-```cpp
-class network : public deviant {
-public:
-    // 错误码构造
-    explicit network(fault::code err,
-                     const std::source_location &loc = std::source_location::current());
-    
-    // 错误码 + 描述
-    explicit network(fault::code err, std::string_view desc,
-                     const std::source_location &loc = std::source_location::current());
-    
-    // 向后兼容字符串构造
-    explicit network(const std::string &msg,
-                     const std::source_location &loc = std::source_location::current());
-    
-    // 格式化构造
-    template <typename... Args>
-    explicit network(std::format_string<Args...> fmt, Args &&...args);
-    
-protected:
-    std::string_view type_name() const noexcept override { return "NETWORK"; }
-};
-```
+所有构造函数自动捕获 `std::source_location`。`type_name()` 返回 `"NETWORK"`。
 
 ## 相关错误码
 
 | 错误码 | 说明 |
 |--------|------|
-| `dns_failed` | DNS配置错误 |
-| `upstream_unreachable` | 上游服务器不可达 |
-| `connection_refused` | 连接被拒绝 |
-| `host_unreachable` | 主机不可达 |
-| `network_unreachable` | 网络不可达 |
-| `port_already_in_use` | 端口已被占用 |
+| `dns_failed` | DNS 配置错误 |
+| `unreachable` | 上游服务器不可达 |
+| `port_busy` | 端口已被占用 |
+| `config_err` | 网络配置格式错误 |
 
-## 使用示例
+## 使用场景
 
-```cpp
-// 配置加载
-if (!validate_upstream_config(cfg)) {
-    throw exception::network(
-        fault::code::upstream_unreachable,
-        "上游服务器地址无效"
-    );
-}
+| 场景 | 代码 |
+|------|------|
+| 端口绑定失败 | `throw exception::network(fault::code::port_busy, "8080 已占用");` |
+| DNS 配置无效 | `throw exception::network(fault::code::dns_failed);` |
+| 上游配置无效 | `throw exception::network(fault::code::unreachable);` |
 
-// DNS配置
-if (!setup_dns_resolver(dns_config)) {
-    throw exception::network(fault::code::dns_failed);
-}
+## 约束
 
-// 端口绑定
-if (!bind_listener(port)) {
-    throw exception::network(
-        fault::code::port_already_in_use,
-        std::format("端口 {} 已被占用", port)
-    );
-}
-```
+### 禁止在热路径使用
 
-## 禁止用法
+**类型**: 编码规范
 
-```cpp
-// 错误！运行时网络I/O错误应使用错误码
-void on_read_complete(boost::system::error_code ec) {
-    if (ec) {
-        // throw exception::network(...);  // 禁止
-        return fault::to_code(ec);         // 正确
-    }
-}
-```
+**规则**: 异步 I/O 回调中的网络错误必须用 `fault::code`，不能用此异常。
 
-## dump 输出
+**违反后果**: 异常栈展开破坏协程执行流，延迟不可预测。
 
-```cpp
-// [listener.cpp:89] [NETWORK:31] 端口已被占用: 8080
-```
+**源码依据**: `network.hpp:8-9`
 
-## 调用链
+## 引用关系
 
-```mermaid
-graph TD
-    A[配置加载代码] --> B[throw network]
-    B --> C[network构造]
-    C --> D[deviant基类]
-    D --> E[fault::make_error_code]
-    
-    F[运行时回调] --> G[禁止抛出network]
-    G --> H[应使用fault::code返回]
-```
+### 依赖
 
-## 相关页面
+- [[core/exception/deviant|deviant]]：基类
 
-- [[core/exception/overview]] - Exception模块总览
-- [[core/exception/deviant]] - 异常基类
-- [[core/fault/code]] - 错误码枚举
+### 被引用
+
+- [[core/loader/load|loader]]：配置加载使用
+- [[core/instance/listener|listener]]：启动绑定使用

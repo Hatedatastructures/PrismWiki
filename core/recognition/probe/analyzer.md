@@ -1,338 +1,100 @@
 ---
+tags: [recognition, probe, analyzer]
 layer: core
+module: recognition
 source: I:/code/Prism/include/prism/recognition/probe/analyzer.hpp
 title: analyzer.hpp
 ---
 
 # analyzer.hpp
 
-外层协议检测（纯内存操作），通过魔术字节判断协议类型。
-
-## 源码位置
-
-`I:/code/Prism/include/prism/recognition/probe/analyzer.hpp`
+外层协议检测（纯内存操作），通过魔术字节判断协议类型。包含 `detect()` 和 `detect_tls()` 两个检测函数。
 
 ## 核心函数
 
 ### detect()
 
-从预读数据检测外层协议类型。
-
 ```cpp
 [[nodiscard]] auto detect(std::string_view peek_data) -> protocol::protocol_type;
 ```
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `peek_data` | `string_view` | 预读数据（通常是前 24 字节） |
+从预读数据检测外层协议类型。检测顺序：SOCKS5 → TLS → HTTP → Shadowsocks（排除法 fallback）。空数据返回 `unknown`。
 
-**返回**：协议类型枚举值
+纯函数，无状态，线程安全，零堆分配。
 
-## 检测顺序
-
-采用排除法检测：
-
-```
-┌───────────────┐
-│ 首字节 0x05?  │ ──▶ SOCKS5
-└───────┬───────┘
-        │ 否
-        ▼
-┌───────────────┐
-│前两字节 0x16 0x03?│ ──▶ TLS
-└───────┬───────┘
-        │ 否
-        ▼
-┌───────────────┐
-│ HTTP 方法名?  │ ──▶ HTTP
-└───────┬───────┘
-        │ 否
-        ▼
-┌───────────────┐
-│   fallback    │ ──▶ Shadowsocks
-└───────────────┘
-```
-
-## 协议特征
-
-### SOCKS5
+### detect_tls()
 
 ```cpp
-if (peek_data[0] == 0x05) {
-    return protocol_type::socks5;
-}
+[[nodiscard]] inline auto detect_tls(std::string_view peek_data) -> protocol::protocol_type;
 ```
 
-### TLS
+TLS 握手完成后探测内层协议类型（HTTP/VLESS/Trojan）。检测顺序：HTTP → VLESS → Trojan → unknown。
+
+数据不足 60 字节且不匹配 HTTP/VLESS 时返回 `unknown`，让调用者继续读取。60+ 字节仍无法识别也返回 `unknown`。
+
+### is_http_request()
 
 ```cpp
-// 必须检查两字节，SS2022 salt 有约 1/256 概率首字节为 0x16
-if (peek_data.size() >= 2 &&
-    peek_data[0] == 0x16 && peek_data[1] == 0x03) {
-    return protocol_type::tls;
-}
+[[nodiscard]] inline auto is_http_request(std::string_view data) noexcept -> bool;
 ```
 
-### HTTP
+检查数据是否以已知 HTTP 方法前缀开头。匹配 `GET`、`POST`、`HEAD`、`PUT`、`DELETE`、`CONNECT`、`OPTIONS`、`TRACE`、`PATCH` 共 9 种方法。
 
-```cpp
-// 检查常见 HTTP 方法名
-if (starts_with(peek_data, "GET ") ||
-    starts_with(peek_data, "POST ") ||
-    starts_with(peek_data, "HEAD ") ||
-    // ... 其他方法
-    ) {
-    return protocol_type::http;
-}
-```
+## 设计决策
 
-### Shadowsocks
+### 为什么 TLS 检测必须检查两字节？
 
-排除已知协议后，fallback 到 Shadowsocks：
+SS2022 的 salt 是随机字节，首字节恰好为 `0x16` 的概率约 1/256。如果仅检查首字节，约 0.4% 的 SS2022 连接会被误判为 TLS。检查前两字节 `0x16 0x03` 将误判率降至 1/65536。
 
-```cpp
-return protocol_type::shadowsocks;
-```
+**后果**: SOCKS5 仅检查首字节（`0x05`），理论上仍有约 0.4% 误判率，但 SOCKS5 握手有后续验证阶段可纠正。
 
-## 特性
+### 为什么 Shadowsocks 用排除法 fallback？
 
-- **纯内存操作**：无网络 I/O
-- **线程安全**：无状态，可并发调用
-- **零拷贝**：使用 `string_view`
+Shadowsocks 2022 数据包以随机 salt 开头，没有固定魔术字节。无法正向识别，只能排除所有已知协议后假定是 SS2022。
 
-## 注意事项
+**后果**: 任何无法识别的流量都会被当作 Shadowsocks。如果将来新增无特征协议，必须在此处调整检测逻辑。
 
-- TLS 检测必须检查两字节（`0x16 0x03`）
-- SS2022 salt 有约 1/256 概率首字节恰好为 `0x16`
-- 探测结果基于有限数据，后续数据可能推翻判断
+### 为什么 detect_tls() 需要至少 60 字节？
 
-## 调用链
+Trojan 协议头部最少 60 字节：56 字节 hex 编码密码 + `\r\n` + 1 字节命令 + 1 字节地址类型。不足 60 字节无法可靠区分 Trojan 和其他协议，返回 `unknown` 让调用者继续读取。
 
-```mermaid
-graph TD
-    A[probe::probe] -->|调用| B[detect]
-    B -->|检查| C[SOCKS5: 0x05]
-    B -->|检查| D[TLS: 0x16 0x03]
-    B -->|检查| E[HTTP: 方法名]
-    B -->|fallback| F[Shadowsocks]
-```
+**后果**: 调用方需要处理 `unknown` 结果，可能需要读取更多数据后重试。
+
+### 为什么 detect_tls() 是 inline 而 detect() 不是？
+
+`detect_tls()` 逻辑较长但全部是 constexpr 兼容的字节比较，编译器可内联优化。`detect()` 调用 `is_http_request()`（遍历 9 种方法），分离编译避免调用站点的代码膨胀。
+
+**后果**: `detect_tls()` 在 header 中定义，包含在多个编译单元不会增加二进制体积。
+
+## 约束
+
+### 探测结果非终局
+
+**类型**: 状态前置
+
+**规则**: `detect()` 和 `detect_tls()` 的结果基于有限数据，后续数据可能推翻当前判断。例如，误判为 SS2022 的连接在握手阶段会因解密失败而被纠正。
+
+**违反后果**: 调用方不能假设检测结果 100% 正确，必须为后续阶段的失败准备回退路径。
+
+**源码依据**: `analyzer.hpp:11-12`
+
+### detect_tls() 数据来源要求
+
+**类型**: 数据格式
+
+**规则**: `detect_tls()` 的输入必须是 TLS 握手完成后读取的应用层数据，不是原始 TLS 记录。
+
+**违反后果**: 如果传入 TLS 记录头（`0x17 0x03 0x03`），所有检测逻辑都会失败。
+
+**源码依据**: `analyzer.hpp:62-64`
 
 ## 引用关系
 
 ### 依赖
 
-- [[../protocol/analysis|protocol::protocol_type]]：协议类型枚举
+- [[core/protocol/analysis|protocol::protocol_type]]：协议类型枚举
 
 ### 被引用
 
-- [[probe]]：probe() 中调用
-
----
-
-## 分析器架构
-
-### 分析器接口定义
-
-`detect()` 函数是分析器的核心接口，采用纯函数设计：
-
-```cpp
-namespace prism::recognition::probe {
-
-/// 外层协议检测器接口
-class analyzer_interface {
-public:
-    virtual ~analyzer_interface() = default;
-
-    /// 从预读数据检测协议类型
-    /// @param peek_data 预读数据视图（不拥有所有权）
-    /// @return 检测到的协议类型
-    [[nodiscard]] virtual auto detect(std::string_view peek_data)
-        -> protocol::protocol_type = 0;
-
-    /// 获取分析器名称（用于调试和日志）
-    [[nodiscard]] virtual auto name() const -> std::string_view = 0;
-};
-
-/// 默认分析器实现（header-only）
-class default_analyzer : public analyzer_interface {
-public:
-    [[nodiscard]] auto detect(std::string_view peek_data)
-        -> protocol::protocol_type override;
-    [[nodiscard]] auto name() const -> std::string_view override {
-        return "default";
-    }
-};
-
-} // namespace prism::recognition::probe
-```
-
-**接口设计原则**:
-- 纯虚函数接口支持自定义分析器实现
-- `string_view` 参数实现零拷贝
-- 无状态设计，天然线程安全
-- 返回确定性枚举，无异常抛出
-
-### 分析器注册机制
-
-系统支持运行时注册自定义分析器：
-
-```cpp
-namespace prism::recognition::probe {
-
-/// 分析器注册表
-class analyzer_registry {
-public:
-    /// 注册自定义分析器
-    void register_analyzer(
-        std::string_view name,
-        std::unique_ptr<analyzer_interface> analyzer);
-
-    /// 获取已注册的分析器
-    auto get_analyzer(std::string_view name)
-        -> analyzer_interface*;
-
-    /// 设置默认分析器
-    void set_default(std::unique_ptr<analyzer_interface> analyzer);
-
-    /// 获取默认分析器
-    auto default_analyzer() -> analyzer_interface*;
-
-private:
-    memory::unordered_map<memory::string,
-        std::unique_ptr<analyzer_interface>> registry_;
-    std::unique_ptr<analyzer_interface> default_;
-};
-
-/// 全局注册表（单例）
-auto global_registry() -> analyzer_registry&;
-
-} // namespace prism::recognition::probe
-```
-
-**注册示例**:
-
-```cpp
-// 注册自定义分析器
-auto my_analyzer = std::make_unique<custom_protocol_analyzer>();
-prism::recognition::probe::global_registry()
-    .register_analyzer("custom", std::move(my_analyzer));
-```
-
-**注册时机**: 通常在程序启动时、配置加载后执行注册。
-
-## 检测算法详解
-
-### 字节级匹配策略
-
-`detect()` 采用多层过滤策略，按检测成本和特异性从低到高执行：
-
-```
-┌─────────────────────────────────────────────────┐
-│                  detect()                        │
-│                                                  │
-│  输入: peek_data (std::string_view)              │
-│                                                  │
-│  Step 1: 空数据检查                               │
-│  ┌─────────────────────────────────────┐        │
-│  │ if peek_data.empty() → unknown      │        │
-│  └─────────────────────────────────────┘        │
-│                                                  │
-│  Step 2: SOCKS5 检测 (1 字节)                     │
-│  ┌─────────────────────────────────────┐        │
-│  │ if peek_data[0] == 0x05 → socks5    │        │
-│  └─────────────────────────────────────┘        │
-│                                                  │
-│  Step 3: TLS 检测 (2 字节)                        │
-│  ┌─────────────────────────────────────┐        │
-│  │ if data[0] == 0x16 && data[1] == 0x03  │   │
-│  │     → tls                           │        │
-│  └─────────────────────────────────────┘        │
-│                                                  │
-│  Step 4: HTTP 方法匹配 (4-8 字节)                 │
-│  ┌─────────────────────────────────────┐        │
-│  │ if starts_with(data, "GET ") → http │        │
-│  │ if starts_with(data, "POST ") → http│        │
-│  │ ... 其他 HTTP 方法                   │        │
-│  └─────────────────────────────────────┘        │
-│                                                  │
-│  Step 5: Fallback                                │
-│  ┌─────────────────────────────────────┐        │
-│  │ → shadowsocks (排除法兜底)           │        │
-│  └─────────────────────────────────────┘        │
-└─────────────────────────────────────────────────┘
-```
-
-### HTTP 方法匹配表
-
-```cpp
-// 支持的 HTTP 方法（按常见程度排序）
-static constexpr std::array methods = {
-    "GET ",     // 4 bytes - 最常见
-    "POST ",    // 5 bytes
-    "HEAD ",    // 5 bytes
-    "PUT ",     // 4 bytes
-    "DELETE ",  // 7 bytes
-    "CONNECT ", // 8 bytes
-    "OPTIONS ", // 8 bytes
-    "PATCH ",   // 6 bytes
-    "TRACE ",   // 6 bytes
-};
-```
-
-**优化**: 使用 `memcmp` 而非 `string_view::starts_with` 在编译器优化后可生成更高效的 SIMD 指令。
-
-## 分析结果合并策略
-
-当系统中存在多个分析器时，结果合并遵循以下策略：
-
-### 合并算法
-
-```cpp
-auto merge_analysis_results(
-    const std::vector<protocol_type>& results) -> protocol_type
-{
-    // 1. 统计投票
-    std::unordered_map<protocol_type, int> votes;
-    for (const auto& r : results) {
-        votes[r]++;
-    }
-
-    // 2. 找最高票数
-    auto max_it = std::max_element(votes.begin(), votes.end(),
-        [](const auto& a, const auto& b) { return a.second < b.second; });
-
-    // 3. 多数表决
-    if (max_it->second > results.size() / 2) {
-        return max_it->first;  // 多数一致
-    }
-
-    // 4. 平局时优先 TLS（安全性最高）
-    if (votes.contains(protocol_type::tls)) {
-        return protocol_type::tls;
-    }
-
-    // 5. 最终回退
-    return protocol_type::unknown;
-}
-```
-
-### 合并优先级
-
-| 场景 | 策略 | 结果 |
-|------|------|------|
-| 所有分析器一致 | 直接采纳 | 确定性结果 |
-| 多数一致 (>50%) | 多数表决 | 高置信度结果 |
-| 票数持平 | 优先 TLS | 安全优先原则 |
-| 无明确结果 | 返回 unknown | 触发 fallback |
-
-## 性能特性
-
-| 检测步骤 | 操作 | 复杂度 | 最坏情况 |
-|----------|------|--------|----------|
-| 空检查 | `empty()` | O(1) | O(1) |
-| SOCKS5 | 单字节比较 | O(1) | O(1) |
-| TLS | 双字节比较 | O(1) | O(1) |
-| HTTP | 方法名遍历 | O(N·M) | N=方法数, M=方法名长度 |
-| 总体 | 顺序执行 | O(1) | 常数次字节比较 |
-
-**内存特性**: 零堆分配，仅使用 `string_view`，无状态，栈友好。预期延迟 < 10 纳秒。
+- [[core/recognition/probe/probe|probe]]：probe() 中调用 detect()
+- [[core/stealth/scheme|stealth::scheme]]：伪装方案可能调用 detect_tls() 识别内层协议

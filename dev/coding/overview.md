@@ -2,6 +2,7 @@
 title: 编码规范概览
 description: Prism 项目的整体编码规范与约定，涵盖命名、协程、内存管理等方面
 layer: dev
+tags: [dev, coding, overview]
 ---
 
 # 编码规范概览

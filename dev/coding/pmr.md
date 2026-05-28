@@ -1,4 +1,5 @@
 ---
+layer: dev
 title: PMR 内存策略
 description: Prism 多态内存资源 (PMR) 策略，实现热路径零堆分配
 source:

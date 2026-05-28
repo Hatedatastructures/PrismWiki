@@ -1,5 +1,7 @@
 ---
+tags: [recognition, result]
 layer: core
+module: recognition
 source: I:/code/Prism/include/prism/recognition/result.hpp
 title: result.hpp
 ---
@@ -8,81 +10,51 @@ title: result.hpp
 
 ClientHello 特征分析结果结构定义。
 
-## 源码位置
-
-`I:/code/Prism/include/prism/recognition/result.hpp`
-
 ## 核心类型
 
 ### analysis_result
 
-ClientHello 特征分析结果，由各 scheme 的 detect() 返回。
-
-```cpp
-struct analysis_result
-{
-    memory::vector<memory::string> candidates;    // 候选方案列表
-    confidence score;                              // 整体置信度
-    protocol::tls::client_hello_features features; // 提取的特征
-    fault::code error;                             // 解析错误码
-};
-```
+ClientHello 特征分析结果，由各 scheme 的 `detect()` 返回。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `candidates` | `vector<string>` | 候选方案名称列表（按置信度排序，high 在前） |
-| `score` | [[confidence]] | 整体置信度，取最高候选的置信度 |
-| `features` | `client_hello_features` | 提取的 ClientHello 原始特征 |
-| `error` | `fault::code` | 解析错误码，成功时为 success |
+| `candidates` | `memory::vector<memory::string>` | 候选方案名称列表（按置信度排序，high 在前，none 不加入） |
+| `score` | [[core/recognition/confidence\|confidence]] | 整体置信度，取最高候选的置信度，无候选时为 `none` |
+| `features` | `hello_features` | 提取的 ClientHello 原始特征 |
+| `error` | `fault::code` | 解析错误码，成功时为 `success` |
 
-## 使用场景
+## 约束
 
-### 方案检测返回
+### candidates 排序保证
 
-各伪装方案的 `detect()` 方法返回此结构：
+**类型**: 状态前置
 
-```cpp
-auto reality_scheme::detect(const detect_context &ctx) -> analysis_result;
-auto shadowtls_scheme::detect(const detect_context &ctx) -> analysis_result;
-```
+**规则**: `candidates` 按置信度降序排列。调用方可按顺序依次尝试执行，首个成功即可停止。
 
-### 调用方处理
+**违反后果**: 高成本方案优先执行，增加延迟。
 
-调用方根据 `candidates` 顺序依次尝试方案执行：
+**源码依据**: `result.hpp:29`
 
-```cpp
-auto result = scheme->detect(ctx);
-if (result.score == confidence::high) {
-    // 高置信度，直接执行
-    execute_scheme(result.candidates[0]);
-} else if (result.score == confidence::medium) {
-    // 中置信度，需验证
-    try_schemes(result.candidates);
-} else {
-    // 低/无置信度，fallback 到 native
-    execute_native();
-}
-```
+### score 与 candidates 一致性
 
-## 调用链
+**类型**: 状态前置
 
-```mermaid
-graph TD
-    A[layered_detection_pipeline] -->|收集| B[analysis_result]
-    C[stealth::scheme::detect] -->|返回| B
-    B -->|指导| D[scheme::execute]
-```
+**规则**: `score` 必须是 `candidates` 中最高置信度方案的级别。空 `candidates` 时 `score` 为 `none`。
+
+**违反后果**: 执行策略决策错误（如 `high` 但 `candidates` 为空）。
+
+**源码依据**: `result.hpp:33`
 
 ## 引用关系
 
 ### 依赖
 
-- [[confidence]]：置信度枚举
-- [[../protocol/tls/types|protocol::tls::client_hello_features]]：TLS 特征结构
-- [[../fault/code|fault::code]]：错误码
+- [[core/recognition/confidence|confidence]]：置信度枚举
+- [[core/protocol/tls/types|protocol::tls::hello_features]]：TLS 特征结构
+- [[core/fault/code|fault::code]]：错误码
 
 ### 被引用
 
-- [[recognition]]：识别入口使用
-- [[layered_pipeline]]：分层检测管道使用
-- [[../stealth/scheme|stealth::scheme]]：方案检测返回值
+- [[core/recognition/recognition|recognition]]：识别入口使用
+- [[core/recognition/layered_pipeline|layered_pipeline]]：分层检测管道使用
+- [[core/stealth/scheme|stealth::scheme]]：方案检测返回值

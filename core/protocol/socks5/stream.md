@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/protocol/socks5/stream.hpp
 title: SOCKS5 协议中继器
+tags: [protocol, socks5, stream, relay, handshake, udp, rfc1928]
 ---
 
 # SOCKS5 协议中继器
@@ -153,7 +154,7 @@ relay::relay_single_datagram -> wire::encode_udp_datagram
 - [[core/protocol/common/address]] - 地址类型
 - [[core/protocol/common/form]] - 传输形态
 - [[core/transport/transmission]] - 传输层接口
-- [[core/instance/account/directory|directory]] - 账户目录
+- [[core/account/directory|directory]] - 账户目录
 - [[core/crypto/sha224]] - 密码哈希
 
 ## 注意事项

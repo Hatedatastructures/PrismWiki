@@ -292,7 +292,7 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 related:
   - "[[core/transformer/json]]"
-  - "[[core/instance/account/directory|directory]]"
+  - "[[core/account/directory|directory]]"
 ---
 
 # Loader 模块
@@ -359,7 +359,7 @@ Loader 模块负责配置文件加载和账户目录构建。所有函数为 hea
 ## 相关页面
 
 - [[core/transformer/json]] — JSON 序列化
-- [[core/instance/account/directory|directory]] — 账户目录
+- [[core/account/directory|directory]] — 账户目录
 ```
 
 ---
@@ -553,7 +553,7 @@ fix_commit: abc1234
 
 ## 9. 性能报告模板（performance/）
 
-适用：performance/benchmark.md, performance/report.md
+适用：dev/testing/benchmark.md, performance/report.md
 
 ```markdown
 ---

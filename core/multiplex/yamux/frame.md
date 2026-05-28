@@ -2,6 +2,8 @@
 layer: core
 source: I:/code/Prism/include/prism/multiplex/yamux/frame.hpp
 title: yamux::frame - yamux 协议帧格式定义
+tags: [multiplex, yamux, frame, protocol, encoding]
+updated: 2026-05-28
 ---
 
 # yamux::frame - yamux 协议帧格式定义
@@ -12,143 +14,111 @@ title: yamux::frame - yamux 协议帧格式定义
 
 ## 概述
 
-定义 yamux 多路复用协议的帧格式、消息类型、标志位和编解码函数。兼容 Hashicorp/yamux 协议规范。
+定义 yamux 多路复用协议的帧格式、消息类型、标志位和编解码函数。兼容 Hashicorp/yamux 协议规范。与 smux 的 8 字节小端帧头不同，yamux 使用 12 字节大端帧头，并引入完整的流量控制和标志位系统。
 
 ## 协议常量
 
-```cpp
-constexpr std::uint8_t protocol_version = 0x00;  // yamux 规范规定 Version 固定为 0
-constexpr std::size_t frame_header_size = 12;     // 帧头大小
-constexpr std::uint32_t initial_stream_window = 256 * 1024;  // 256KB
+| 常量 | 值 | 说明 |
+|------|----|------|
+| `protocol_version` | 0x00 | yamux 规范规定 Version 固定为 0 |
+| `frame_hdrsize` | 12 | 帧头大小（字节） |
+| `default_window` | 256KB (262144) | 初始流窗口大小 |
+
+## 帧头字节布局
+
+12 字节定长帧头，所有多字节字段大端序（网络字节序）：
+
+```
+[Version 1B][Type 1B][Flags 2B BE][StreamID 4B BE][Length 4B BE]
 ```
 
-## 帧头结构
+| 偏移 | 字段 | 大小 | 说明 |
+|------|------|------|------|
+| 0 | Version | 1B | 固定 0x00 |
+| 1 | Type | 1B | 消息类型 (0-3) |
+| 2-3 | Flags | 2B BE | 可组合标志位 |
+| 4-7 | StreamID | 4B BE | 流标识符，0=会话级帧 |
+| 8-11 | Length | 4B BE | 含义随 Type 变化 |
 
-```cpp
-struct frame_header
-{
-    std::uint8_t version = protocol_version;     // 协议版本
-    message_type type = message_type::data;      // 消息类型
-    flags flag = flags::none;                    // 标志位
-    std::uint32_t stream_id = 0;                 // 流标识符
-    std::uint32_t length = 0;                    // 长度字段
+## 消息类型 (message_type)
 
-    bool is_session() const noexcept;  // 检查是否为会话级消息
-};
-```
+| 值 | 名称 | Length 含义 | 说明 |
+|----|------|-------------|------|
+| 0x00 | data | 载荷字节数 | 承载流数据或携带 SYN/FIN/RST 控制流生命周期 |
+| 0x01 | window_update | 窗口增量 | 流量控制或携带 SYN/ACK 打开/确认流 |
+| 0x02 | ping | ping 标识符 | SYN 为请求，ACK 为响应 |
+| 0x03 | go_away | 终止原因码 | 会话终止帧 |
 
-帧格式：`[Version 1B][Type 1B][Flags 2B BE][StreamID 4B BE][Length 4B BE]`
+## 标志位 (flags)
 
-## 消息类型
+2 字节大端序，可组合使用。
 
-```cpp
-enum class message_type : std::uint8_t
-{
-    data = 0x00,           // 数据帧
-    window_update = 0x01,  // 窙口更新帧
-    ping = 0x02,           // 心跳帧
-    go_away = 0x03         // 会话终止帧
-};
-```
+| 值 | 名称 | 说明 |
+|----|------|------|
+| 0x0000 | none | 无标志 |
+| 0x0001 | syn | SYN 同步，打开流或发起心跳请求 |
+| 0x0002 | ack | ACK 确认，确认流创建或回复心跳 |
+| 0x0004 | fin | FIN 半关闭，发送端不再发送数据 |
+| 0x0008 | rst | RST 重置，强制关闭流 |
 
-## 标志位
-
-```cpp
-enum class flags : std::uint16_t
-{
-    none = 0x0000,  // 无标志
-    syn = 0x0001,   // SYN 同步标志
-    ack = 0x0002,   // ACK 确认标志
-    fin = 0x0004,   // FIN 半关闭标志
-    rst = 0x0008    // RST 重置标志
-};
-```
-
-### 标志位语义
+### 标志位与消息类型组合语义
 
 | 消息类型 + 标志 | 语义 |
 |----------------|------|
 | Data + SYN | 携带地址数据的新流创建 |
 | Data + FIN | 半关闭流 |
 | Data + RST | 强制重置流 |
-| WindowUpdate + SYN | 打开新流 |
-| WindowUpdate + ACK | 确认流创建 |
+| WindowUpdate + SYN | 打开新流（Length 为初始窗口大小） |
+| WindowUpdate + ACK | 确认流创建（Length 为服务端初始窗口大小） |
 | Ping + SYN | 心跳请求 |
 | Ping + ACK | 心跳响应 |
 
-## GoAway 原因码
+## GoAway 原因码 (away_code)
 
-```cpp
-enum class go_away_code : std::uint32_t
-{
-    protocol_error = 1  // 协议错误
-};
-```
+| 值 | 名称 | 说明 |
+|----|------|------|
+| 1 | protocol_error | 收到无法识别的帧或非法状态转换 |
 
-## Length 字段含义
+## 接口表
 
-| 消息类型 | Length 含义 |
-|----------|-------------|
-| Data | 载荷字节数 |
-| WindowUpdate | 窗口增量 |
-| Ping | ping 标识符 |
-| GoAway | 终止原因码 |
+### frame_header 结构
 
-## 编解码函数
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| version | uint8_t | protocol_version | 协议版本，固定为 0 |
+| type | message_type | data | 消息类型 |
+| flag | flags | none | 标志位组合 |
+| stream_id | uint32_t | 0 | 流标识符，会话级帧为 0 |
+| length | uint32_t | 0 | 长度字段，含义取决于消息类型 |
 
-```cpp
-// 编码帧头
-std::array<std::byte, frame_header_size> build_header(const frame_header &hdr);
+方法：`is_session()` 检查是否为会话级消息（StreamID == 0）。
 
-// 解析帧头
-std::optional<frame_header> parse_header(std::span<const std::byte> buffer);
+### data_frame 结构
 
-// 构建 WindowUpdate 帧
-std::array<std::byte, frame_header_size> build_window_update_frame(
-    flags f, std::uint32_t stream_id, std::uint32_t delta);
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| header | array\<byte, 12\> | 编码后的帧头 |
+| payload | memory::vector\<byte\> | 帧载荷 |
 
-// 构建 Ping 帧
-std::array<std::byte, frame_header_size> build_ping_frame(
-    flags f, std::uint32_t ping_id);
+### 编解码函数
 
-// 构建 GoAway 帧
-std::array<std::byte, frame_header_size> build_go_away_frame(go_away_code code);
+| 函数 | 输入 | 返回 | 说明 |
+|------|------|------|------|
+| `build_header` | frame_header | array\<byte, 12\> | 编码帧头为大端序数组 |
+| `parse_header` | span\<const byte\> | optional\<frame_header\> | 解析 12 字节帧头，Version/Type 非法时返回 nullopt |
+| `build_winupd` | flags, stream_id, delta | array\<byte, 12\> | 构建 WindowUpdate 帧 |
+| `build_ping` | flags, ping_id | array\<byte, 12\> | 构建 Ping 帧 |
+| `build_goaway` | away_code | array\<byte, 12\> | 构建 GoAway 帧 |
+| `build_data` | flags, stream_id, payload | data_frame | 构建 Data 帧 |
+| `build_syn` | stream_id, payload | data_frame | 构建 Data(SYN) 帧，等价于 build_data(flags::syn, ...) |
+| `build_fin` | stream_id | array\<byte, 12\> | 构建 Data(FIN) 帧，无载荷 |
 
-// 构建 FIN 帧
-std::array<std::byte, frame_header_size> make_fin_frame(std::uint32_t stream_id);
-```
+### 辅助函数
 
-## data_frame 结构
-
-```cpp
-struct data_frame
-{
-    std::array<std::byte, frame_header_size> header{};  // 帧头
-    std::vector<std::byte> payload;                     // 载荷
-};
-```
-
-## 帧构建函数
-
-```cpp
-// 构建 Data 帧
-data_frame make_data_frame(flags f, std::uint32_t stream_id,
-                           std::span<const std::byte> payload);
-
-// 构建 SYN 帧
-data_frame make_syn_frame(std::uint32_t stream_id,
-                          std::span<const std::byte> payload);
-```
-
-## 标志位辅助函数
-
-```cpp
-// 按位与运算
-flags operator&(flags a, flags b);
-
-// 检查标志位
-bool has_flag(flags f, flags flag);
-```
+| 函数 | 说明 |
+|------|------|
+| `operator&(flags, flags)` | 标志位按位与运算 |
+| `has_flag(flags, flags) -> bool` | 检查标志位组合中是否包含指定标志 |
 
 ## 关联文档
 

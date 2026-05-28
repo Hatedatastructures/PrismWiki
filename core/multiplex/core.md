@@ -1,350 +1,159 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/core.hpp
-title: multiplex::core - 多路复用核心抽象基类
+title: multiplex::core — 多路复用核心抽象基类
+module: multiplex
+tags: [multiplex, core, abstract, stream-lifecycle]
+updated: 2026-05-27
 ---
 
-# multiplex::core - 多路复用核心抽象基类
+# multiplex::core — 多路复用核心抽象基类
 
-## 源码位置
-
-`I:/code/Prism/include/prism/multiplex/core.hpp`
-
-## 概述
-
-`multiplex::core` 是多路复用协议的抽象基类，提供所有多路复用协议共享的会话生命周期管理、流状态跟踪和发送串行化。协议特定的帧格式、解析和协商由子类实现（如 [[core/multiplex/smux/craft|smux::craft]]、[[core/multiplex/yamux/craft|yamux::craft]]）。
-
-## 设计原则
-
-- core 是协议无关的抽象层，所有帧编解码委托给子类
-- 单个实例非线程安全，应在 transport executor 上串行使用
-- 继承 `std::enable_shared_from_this`，支持协程上下文中安全的共享指针管理
+多路复用协议的抽象基类，提供会话生命周期管理、流状态跟踪和发送串行化。协议特定的帧编解码由子类实现（smux::craft、yamux::craft、h2mux::craft）。
 
 ## 流状态管理
 
-core 管理三种流状态：
-
 | 状态 | 类型 | 说明 |
 |------|------|------|
-| pending | pending_entry | SYN 后等待地址数据 |
-| duct | TCP 流 | [[core/multiplex/duct|duct]] 双向转发 |
-| parcel | UDP 流 | [[core/multiplex/parcel|parcel]] 数据报中继 |
+| pending | `pending_entry` | SYN 后累积地址数据，地址完整后连接目标 |
+| duct | [[core/multiplex/duct\|duct]] | TCP 流双向转发 |
+| parcel | [[core/multiplex/parcel\|parcel]] | UDP 数据报中继 |
 
-## 流状态转换
+流状态转换：SYN → pending_entry（累积地址）→ activate_stream() → duct/parcel → FIN → 关闭
 
-```
-SYN 帧 → 创建 pending_entry 累积地址数据
-        ↓
-地址完整 → activate_stream() 连接目标
-        ↓
-    ┌───┴───┐
-    ↓       ↓
-  duct    parcel
-    ↓       ↓
-FIN 帧 → 半关闭或完全关闭流
-```
+## 核心接口
 
-## 核心成员
+### 公开
 
-### pending_entry 结构
+| 方法 | 说明 |
+|------|------|
+| `core(core_options)` | 构造，聚合传输层/路由器/配置/PMR |
+| `start()` | co_spawn 启动 run() 协程 |
+| `close()` | 幂等关闭，清空所有映射 |
+| `is_active()` | 原子读取活跃标志 |
+| `set_traffic(t, p)` | 设置流量统计和归属协议 |
+| `accumulate_traffic(up, down)` | 原子累加子流流量 |
 
-```cpp
-struct pending_entry
-{
-    memory::vector<std::byte> buffer; // 累积的地址+数据
-    bool connecting = false;          // 是否已发起连接
-};
-```
+### 纯虚（子类必须实现）
 
-### 流映射
+| 方法 | 说明 |
+|------|------|
+| `send_data(stream_id, payload)` | 发送数据帧（零拷贝 move） |
+| `send_fin(stream_id)` | 发送半关闭帧 |
+| `executor()` | 返回执行器 |
+| `run()` | 协议主循环（帧读取/解析/分发） |
 
-```cpp
-memory::unordered_map<std::uint32_t, pending_entry> pending_;           // 待连接流
-memory::unordered_map<std::uint32_t, std::shared_ptr<duct>> ducts_;     // 已连接的活跃 TCP 管道
-memory::unordered_map<std::uint32_t, std::shared_ptr<parcel>> parcels_; // 活跃的 UDP 管道
-```
+### 受保护虚函数
 
-## 公开接口
+| 方法 | 说明 |
+|------|------|
+| `remove_duct(stream_id)` | duct::close() 回调，子类可 override |
+| `remove_parcel(stream_id)` | parcel::close() 回调，子类可 override |
 
-### 构造与生命周期
+## 设计决策
 
-```cpp
-core(transport::shared_transmission transport,
-     resolve::router &router,
-     const config &cfg,
-     memory::resource_pointer mr = {});
+### 为什么 close() 中使用 std::move(ducts_)？
 
-virtual ~core();
+遍历 `ducts_` 时调用 `duct->close()`，而 duct::close() 会回调 `core::remove_duct()` 修改 ducts_，导致迭代器失效。先 std::move 将映射移到局部变量，ducts_ 变空，后续 remove_duct 对空 map 的 erase 是空操作。
 
-void start();              // 启动 mux 会话
-virtual void close();      // 关闭会话（幂等）
-bool is_active() const;    // 检查会话是否活跃
-```
+**后果**: close() 只能执行一次有效清理（由 `active_.exchange(false)` 保证幂等）。
 
-### 纯虚函数（子类必须实现）
+**源码依据**: `core.cpp:101`
 
-```cpp
-virtual auto send_data(std::uint32_t stream_id,
-                       memory::vector<std::byte> payload) const
-    -> net::awaitable<void> = 0;
+### 为什么 pending/ducts/parcels 三态分离？
 
-virtual void send_fin(std::uint32_t stream_id) = 0;
+流在不同阶段有不同行为：pending 需累积地址数据，duct 做 TCP 双向转发，parcel 做 UDP 中继。三个独立的 unordered_map 按流 ID 查找，dispatch 时按优先级依次检查（pending → ducts → parcels），每步 O(1)。
 
-virtual net::any_io_executor executor() const = 0;
+**后果**: 查找需检查三个映射，但每步都是哈希查找，开销可忽略。
 
-virtual auto run() -> net::awaitable<void> = 0;  // 协议主循环
-```
+### 为什么 core 继承 enable_shared_from_this？
 
-## 调用链
+`start()` 通过 co_spawn 启动 run() 协程，协程可能在 core 对象析构后恢复。捕获 `shared_from_this()` 到 lambda 中保证协程运行期间 core 存活。
 
-```mermaid
-graph TD
-    A[bootstrap::bootstrap] --> B[core::start]
-    B --> C[co_spawn run]
-    C --> D[子类::run]
-    D --> E[frame_loop]
-    E --> F[dispatch_data/dispatch_push]
-    F --> G[duct::on_mux_data]
-    F --> H[parcel::on_mux_data]
-    G --> I[duct::target_read_loop]
-    I --> J[core::send_data]
-    H --> K[parcel::relay_datagram]
-    K --> J
-```
+**后果**: core 必须通过 shared_ptr 管理。
 
-## 关联文档
+### 为什么 set_traffic 是可选的？
 
-- [[core/multiplex/bootstrap|bootstrap]] - 多路复用会话引导
-- [[core/multiplex/duct|duct]] - TCP 流管道
-- [[core/multiplex/parcel|parcel]] - UDP 数据报管道
-- [[core/multiplex/config|config]] - 多路复用配置
-- [[core/multiplex/smux/craft|smux::craft]] - smux 协议实现
-- [[core/multiplex/yamux/craft|yamux::craft]] - yamux 协议实现
+bootstrap 创建 core 后调用 set_traffic()。如果跳过此调用，core::close() 不会刷入流量统计（traffic_ 为 nullptr）。这不是错误——某些场景（如内部测试）不需要流量统计。
 
----
+**后果**: 忘记调用 set_traffic 不会崩溃，但子流流量不计入统计。
 
-## 核心架构设计
+**源码依据**: `core.cpp:90-95`
 
-### 分层架构
+## 约束
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    Agent Session Layer                       │
-│                      bootstrap()                              │
-└──────────────────────────┬───────────────────────────────────┘
-                           │
-┌──────────────────────────▼───────────────────────────────────┐
-│                  Multiplex Core Layer                        │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │              core (抽象基类)                          │    │
-│  │                                                     │    │
-│  │  职责:                                              │    │
-│  │  - 会话生命周期管理 (start/close)                   │    │
-│  │  - 流状态跟踪 (pending_/ducts_/parcels_)            │    │
-│  │  - 发送串行化 (确保帧按序发送)                       │    │
-│  │  - 流激活/关闭协议 (SYN/FIN 处理)                   │    │
-│  │  - 地址数据累积与目标连接                            │    │
-│  └─────────────┬───────────────────┬───────────────────┘    │
-│                │                   │                         │
-│    ┌───────────▼──────┐  ┌────────▼──────────┐             │
-│    │   smux::craft    │  │   yamux::craft    │             │
-│    │                  │  │                   │             │
-│    │ 帧格式:           │  │ 帧格式:            │             │
-│    │  [Version][Type] │  │  [Version][Type]  │             │
-│    │  [StreamID]      │  │  [StreamID]       │             │
-│    │  [Length][Data]  │  │  [Length][Data]   │             │
-│    └──────────────────┘  └───────────────────┘             │
-└──────────────────────────────────────────────────────────────┘
-                           │
-┌──────────────────────────▼───────────────────────────────────┐
-│                  Transport Layer                             │
-│                                                              │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
-│  │ TCP/TLS    │  │ WebSocket  │  │ gRPC       │  ...       │
-│  └────────────┘  └────────────┘  └────────────┘            │
-│                                                              │
-│  shared_transmission (统一传输接口)                           │
-└──────────────────────────────────────────────────────────────┘
-```
+### 流 ID 唯一性
 
-### 组件交互
+**类型**: 状态前置
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                     core 内部结构                             │
-│                                                              │
-│  transport (shared_transmission) ── 底层传输                  │
-│       │                                                       │
-│       ▼                                                       │
-│  run() ─── 帧读取循环 ──▶ dispatch_frame()                    │
-│       │                    │                                  │
-│       │                    ├── DATA 帧 → dispatch_data()      │
-│       │                    │       ├── duct → on_mux_data     │
-│       │                    │       └── parcel → on_mux_data   │
-│       │                    │                                  │
-│       │                    ├── SYN 帧 → create_pending()      │
-│       │                    │                                  │
-│       │                    └── FIN 帧 → close_stream()        │
-│       │                                                       │
-│  pending_  ── 待连接流 ──▶ activate_stream()                  │
-│       │                     │                                 │
-│       │                     ├── router.async_forward()        │
-│       │                     ├── make_duct() / make_parcel()   │
-│       │                     └── 发送 SYN 应答                  │
-│       │                                                       │
-│  ducts_  ── 活跃 TCP 管道                                      │
-│  parcels_ ── 活跃 UDP 管道                                     │
-│                                                              │
-│  send_data() ──▶ 子类::push_frame() ──▶ transport->write     │
-│  send_fin()  ──▶ 子类::push_fin()  ──▶ transport->write      │
-└──────────────────────────────────────────────────────────────┘
-```
+**规则**: 客户端分配的流 ID 在同一 mux 会话内必须唯一。
 
-## 多路复用与底层传输的关系
+**违反后果**: 重复 SYN 导致 emplace 失败（yamux 会 trace::warn）或覆盖（smux），数据路由到错误管道。
 
-### 传输层抽象
+### pending_entry 地址累积阈值
 
-`core` 通过 `shared_transmission` 接口与底层传输解耦：
+**类型**: 资源上限
 
-```cpp
-// 传输层接口（简化）
-class transmission {
-    virtual auto async_read(buffer) -> awaitable<std::size_t> = 0;
-    virtual auto async_write(span<const byte>) -> awaitable<void> = 0;
-    virtual auto close() -> void = 0;
-    virtual auto executor() -> any_io_executor = 0;
-};
+**规则**: buffer >= 7 字节时尝试解析地址；>= 21 字节仍无法解析时判定地址格式错误。
 
-using shared_transmission = std::shared_ptr<transmission>;
-```
+**违反后果**: 无法连接目标，发送错误状态后关闭流。
 
-**优势**:
-- `core` 不关心底层是 TCP、TLS、WebSocket 还是 gRPC
-- 同一套 mux 逻辑可在不同传输层上运行
-- 传输层替换不影响 mux 实现
+### 单线程使用
 
-### 数据流向
+**类型**: 线程安全
 
-```
-客户端请求 ──▶ Transport (TCP/TLS/WSS/gRPC)
-                   │
-                   ▼
-             shared_transmission
-                   │
-                   ▼
-             core::run()
-                   │
-              dispatch_frame()
-                   │
-        ┌──────────┼──────────┐
-        ▼          ▼          ▼
-     SYN帧      DATA帧      FIN帧
-        │          │          │
-        ▼          ▼          ▼
-   创建流     duct/parcel   关闭流
-        │          │          │
-        ▼          ▼          ▼
-   router连接   目标服务      资源释放
-```
+**规则**: 单个 core 实例在 transport executor 上串行使用。accumulate_traffic 和 active_ 是原子的，但 pending_/ducts_/parcels_ 非线程安全。
 
-### 发送串行化
+**违反后果**: 数据竞争。
 
-`core` 保证帧的串行发送，避免数据竞争：
+## 故障场景
 
-```cpp
-// core 中的串行化发送
-auto send_data(uint32_t stream_id, vector<byte> payload)
-    -> awaitable<void>
-{
-    // 在 transport executor 上串行执行
-    co_await net::post(executor(), net::use_awaitable);
-    co_await push_frame(DATA, stream_id, payload);
-}
-```
+### 所有活跃流同时失效
 
-**为什么需要串行化**:
-- 多个 duct/parcel 可能同时调用 `send_data`
-- 底层传输层可能不支持并发写入
-- 帧边界必须保持完整（不能交错发送）
+**触发条件**: 底层传输连接断开
+**传播路径**: transport->cancel() → 各协程 operation_canceled → close() 清理所有映射
+**恢复机制**: 客户端重新建立传输连接
 
-### 流状态转换全图
+### pending 流永不激活
 
-```
-                    ┌──────────────┐
-                    │   (无流)     │
-                    └──────┬───────┘
-                           │ SYN 帧到达
-                    ┌──────▼───────┐
-                    │  pending     │
-                    │  (累积地址)   │
-                    └──────┬───────┘
-                           │ 地址完整
-                    ┌──────▼───────┐
-                    │  connecting  │
-                    │  (等待连接)   │
-                    └──────┬───────┘
-                           │
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-        ┌──────────┐ ┌──────────┐ ┌──────────┐
-        │ TCP 连接  │ │ UDP 创建  │ │ 连接失败  │
-        │ 成功     │ │ socket   │ │          │
-        └────┬─────┘ └────┬─────┘ └────┬─────┘
-             │            │            │
-             ▼            ▼            ▼
-        ┌──────────┐ ┌──────────┐ ┌──────────┐
-        │  active  │ │  active  │ │  error   │
-        │  duct    │ │  parcel  │ │ (删除)   │
-        └────┬─────┘ └────┬─────┘ └──────────┘
-             │            │
-             │ FIN/EOF    │ 超时/close
-             │            │
-             ▼            ▼
-        ┌──────────────────┐
-        │    closed        │
-        │  (从映射移除)     │
-        └──────────────────┘
-```
+**触发条件**: 恶意客户端发送 SYN 后不发送后续数据
+**传播路径**: pending_entry 永远留在 pending_ 中
+**外部表现**: 占用流配额，max_streams 限制下可能耗尽
+**恢复机制**: max_streams 兜底限制（默认 32）
 
-### 内存管理
+### 流量统计丢失
 
-所有 `core` 及其子对象使用 PMR 内存资源：
+**触发条件**: 未调用 set_traffic()
+**传播路径**: close() 中 traffic_ 为空则跳过 flush
+**外部表现**: 子流流量不计入统计
+**源码依据**: `core.cpp:90-95`
 
-```cpp
-// core 构造函数接收 memory::resource_pointer
-core(transport, router, config, mr)
-    : pending_(mr), ducts_(mr), parcels_(mr) {}
+## 引用关系
 
-// duct/parcel 工厂函数同样接受 mr
-make_duct(stream_id, owner, target, buffer_size, mr);
-make_parcel(stream_id, owner, router, timeout, max_dg, mr);
-```
+### 依赖
 
-**优势**:
-- 内存资源可运行时切换（如 arena、pool）
-- 支持自定义分配器用于性能调优
-- 会话关闭时统一释放内存池
+| 模块 | 用途 |
+|------|------|
+| [[core/channel/transport/transmission\|transmission]] | 底层传输 |
+| [[core/connect/dial/router\|router]] | 地址解析和目标连接 |
+| [[core/stats/traffic\|traffic_state]] | 流量统计 |
 
-### 错误传播
+### 子类
 
-```
-底层传输错误:
-  transport 读取/写入失败
-    ↓
-  core::run() 协程结束
-    ↓
-  close() → 关闭所有活跃流
-    ↓
-  通知上游 (Agent Session)
+- [[core/multiplex/smux/craft|smux::craft]] — smux v1 协议
+- [[core/multiplex/yamux/craft|yamux::craft]] — yamux 协议
+- [[core/multiplex/h2mux/craft|h2mux::craft]] — h2mux 协议
 
-单个流错误:
-  duct/parcel 内部错误
-    ↓
-  从 ducts_/parcels_ 移除
-    ↓
-  不影响其他流
-    ↓
-  发送 FIN 帧通知客户端
-```
+### 被引用
+
+- [[core/multiplex/bootstrap|bootstrap]] — 创建 core 实例
+- [[core/multiplex/duct|duct]] — friend，直接访问 pending_/ducts_
+- [[core/multiplex/parcel|parcel]] — friend，直接访问 parcels_
+
+### 跨模块契约
+
+| 模块 A | 模块 B | 契约内容 |
+|--------|--------|---------|
+| duct | core | duct::close() 回调 core::remove_duct()，形成重入。core 用 std::move(map) 规避迭代器失效 |
+| parcel | core | 同 duct，close() 回调 remove_parcel() |
+| bootstrap | core | bootstrap 创建 core 后调用 set_traffic()，否则流量统计丢失 |

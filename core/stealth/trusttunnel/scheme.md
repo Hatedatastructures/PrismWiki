@@ -1,4 +1,5 @@
 ---
+tags: [stealth, trusttunnel, scheme]
 layer: core
 source: I:/code/Prism/include/prism/stealth/trusttunnel/scheme.hpp
 title: TrustTunnel 伪装方案
@@ -7,6 +8,45 @@ title: TrustTunnel 伪装方案
 # TrustTunnel 伪装方案
 
 > 源码位置: `I:/code/Prism/include/prism/stealth/trusttunnel/scheme.hpp`
+
+## 设计决策（WHY）
+
+### 为什么 TrustTunnel 支持 HTTP/3 (QUIC)
+
+TrustTunnel 是唯一支持 UDP 传输的伪装方案。HTTP/3 基于 QUIC，天然支持 UDP 传输，在丢包和高延迟网络环境下性能优于 TCP+HTTP/2。通过 `network_type` 配置，可以同时支持 TCP 和 UDP 或选择其中一种。
+
+### 为什么 TrustTunnel 使用 Basic Auth 而非密码学认证
+
+TrustTunnel 的认证发生在 TLS 握手之后的 HTTP/2 或 HTTP/3 应用层。外层 TLS 已经提供了加密和完整性保护，因此简单的 username/password 认证足够。无需像 ShadowTLS 那样在 ClientHello 中嵌入 HMAC。
+
+### 为什么 TrustTunnel 支持可配置的拥塞控制
+
+QUIC 协议允许在用户态实现拥塞控制。TrustTunnel 提供 BBR、Cubic、New Reno 三种算法选择。BBR 在高带宽长距离网络上表现最好，Cubic 在传统网络中更友好，New Reno 作为兼容选项。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| 标准 TLS 证书必须有效 | 与 Reality 不同 | 需 CA 签发 |
+| HTTP/2 或 HTTP/3 必须在应用层支持 | 传输依赖 | 需要 nghttp2 等 HTTP 库 |
+| SNI 匹配是唯一检测依据 | Tier 2 | 多方案可能共享 SNI |
+| 空壳方案：handshake() 直接返回 detected=tls | 未实现 | 流量走 native 兜底 |
+
+## 失败场景
+
+| 场景 | 触发条件 | 后果 |
+|------|----------|------|
+| 证书无效 | 未配置或过期 | TLS 握手失败 |
+| 用户认证失败 | username/password 错误 | 连接拒绝 |
+| QUIC 不支持 | 服务端未配置 UDP | UDP 模式不可用 |
+| 空壳状态 | 当前实现不完整 | 实际走 native 兜底 |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `scheme` → `config` | 依赖 | `active()`/`snis()`/`handshake()` |
+| `scheme` → `stealth_scheme` | 继承 | 实现 Tier 2 接口 |
 
 ## 概述
 

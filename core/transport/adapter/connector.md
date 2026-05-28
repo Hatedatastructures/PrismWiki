@@ -1,4 +1,5 @@
 ---
+tags: [transport, adapter, connector]
 layer: core
 source: I:/code/Prism/include/prism/transport/adapter/connector.hpp
 title: connector
@@ -6,229 +7,61 @@ title: connector
 
 # connector
 
-Socket 异步 IO 适配器，统一 TCP 和 UDP 的异步读写接口。
+Socket 异步 IO 适配器，将 `transmission` 接口适配为 Boost.Asio 的 `AsyncReadStream`/`AsyncWriteStream` 概念。
 
 ## 概述
 
-`connector` 将 `transmission` 接口适配为 Boost.Asio 的 `AsyncReadStream`/`AsyncWriteStream` 概念。核心功能：
+`connector` 解决的核心问题：BoringSSL 的 `ssl::stream<Stream>` 模板要求底层 Stream 满足 AsyncStream 概念（`async_read_some`/`async_write_some` 模板方法 + `get_executor`），而 `transmission` 是纯虚基类，不满足这些模板要求。
 
-- **接口适配**：将 transmission 适配为 Asio 流概念
-- **预读数据注入**：避免协议检测时丢失数据
-- **所有权管理**：使用 `shared_ptr` 持有 transmission
+关键能力：
 
-## 类定义
+- **接口适配** — 将 transmission 适配为 Asio 流概念，使 `ssl::stream<connector>` 可以包装任意 transmission 实现
+- **预读数据注入** — 构造时注入协议检测阶段已读取的数据，首次 `async_read_some` 时优先返回，避免数据丢失
+- **所有权管理** — 使用 `shared_ptr` 持有 transmission，确保异步操作期间对象存活
 
-```cpp
-class connector
-{
-public:
-    using executor_type = net::any_io_executor;
-    using transmission_ptr = transport::shared_transmission;
+## 接口
 
-    explicit connector(transmission_ptr trans, std::span<const std::byte> preread = {});
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| 构造 | `connector(transmission_ptr, span<const byte> preread = {})` | 接受传输层 + 可选预读数据 |
+| 移动 | `connector(connector&&)` / `operator=(connector&&)` | 仅移动，禁止拷贝 |
+| get_executor | `-> executor_type` | 委托给底层 transmission |
+| async_read_some | `(MutableBufferSequence, CompletionToken)` | 预读缓冲区优先，耗尽后委托 transmission |
+| async_write_some | `(ConstBufferSequence, CompletionToken)` | 直接委托 transmission，零额外开销 |
+| async_write | `(span<const byte>, error_code&) -> awaitable<size_t>` | 完整写入，委托 transmission 虚函数 |
+| async_read | `(span<byte>, error_code&) -> awaitable<size_t>` | 完整读取，委托 transmission 虚函数 |
+| lowest_layer | `-> connector&` | 返回自身，满足 Asio lowest_layer 要求 |
+| transmission | `-> transmission&` | 访问底层传输层 |
+| release | `-> transmission_ptr` | 释放所有权，之后对象不可用 |
 
-    connector(connector &&other) noexcept;
-    connector &operator=(connector &&other) noexcept;
+内部状态：`transmission_ptr trans_` + `memory::vector<byte> preread_buffer_` + `size_t preread_offset_`
 
-    // 禁止拷贝
-    connector(const connector &) = delete;
-    connector &operator=(const connector &) = delete;
+### async_read_some 预读逻辑
 
-    // AsyncStream 接口
-    executor_type get_executor();
-    executor_type executor();
-
-    template <typename MutableBufferSequence, typename CompletionToken>
-    auto async_read_some(const MutableBufferSequence &buffers, CompletionToken &&token);
-
-    template <typename ConstBufferSequence, typename CompletionToken>
-    auto async_write_some(const ConstBufferSequence &buffers, CompletionToken &&token);
-
-    // 完整读写
-    auto async_write(std::span<const std::byte> buffer, std::error_code &ec)
-        -> net::awaitable<std::size_t>;
-    auto async_read(std::span<std::byte> buffer, std::error_code &ec)
-        -> net::awaitable<std::size_t>;
-
-    // 最低层访问
-    using lowest_layer_type = connector;
-    lowest_layer_type &lowest_layer();
-    const lowest_layer_type &lowest_layer() const;
-
-    // 传输层访问
-    auto &transmission() const;
-    transmission_ptr release();
-
-private:
-    transmission_ptr trans_;                   // 传输层对象的共享指针
-    memory::vector<std::byte> preread_buffer_;  // 预读数据缓冲区
-    std::size_t preread_offset_ = 0;           // 预读数据当前消费偏移量
-};
-```
-
-## 核心功能
-
-### 预读数据注入
-
-在协议检测阶段，可能已经读取了部分数据。`connector` 支持注入预读数据，在首次 `async_read_some` 时优先返回，避免数据丢失。
-
-**构造时注入：**
-
-```cpp
-// 协议检测阶段已读取的数据
-std::vector<std::byte> detected_data = ...;
-
-// 构造 connector 时注入预读数据
-connector conn(transmission, std::span{detected_data});
-
-// 首次读取会先返回预读数据
-auto n = co_await net::async_read_some(conn, buffer, net::use_awaitable);
-```
-
-### async_read_some 详解
-
-```cpp
-template <typename MutableBufferSequence, typename CompletionToken>
-auto async_read_some(const MutableBufferSequence &buffers, CompletionToken &&token);
-```
-
-**执行流程：**
+预读缓冲区有未消费数据时，直接从缓冲区 memcpy 到用户 buffer 并同步返回（不发起异步操作）。缓冲区耗尽后，委托给 transmission 的 completion-handler 路径。
 
 ```
 async_read_some 调用
-        │
-        ▼
-┌───────────────────┐
-│ 预读缓冲区有数据？ │
-└────────┬──────────┘
-         │
-    ┌────┴────┐
-    │         │
-   Yes       No
-    │         │
-    ▼         ▼
-┌────────┐ ┌────────────────┐
-│从预读  │ │委托给传输层    │
-│缓冲区  │ │async_read_some │
-│拷贝数据│ └────────────────┘
-└────────┘
-    │
-    ▼
-更新偏移量
-同步返回
-```
-
-**逐行解析：**
-
-```cpp
-if (preread_offset_ < preread_buffer_.size())
-{
-    // 计算预读缓冲区剩余字节数
-    std::size_t bytes_available = preread_buffer_.size() - preread_offset_;
-    std::size_t bytes_to_copy = 0;
-
-    // 遍历用户提供的缓冲区序列
-    auto buf_it = net::buffer_sequence_begin(buffers);
-    auto buf_end = net::buffer_sequence_end(buffers);
-    for (; buf_it != buf_end && bytes_to_copy < bytes_available; ++buf_it)
-    {
-        auto buf = *buf_it;
-        std::size_t buf_size = buf.size();
-        // 计算当前缓冲区可拷贝的字节数
-        std::size_t copy_size = std::min(buf_size, bytes_available - bytes_to_copy);
-        // 执行内存拷贝
-        std::memcpy(buf.data(), preread_buffer_.data() + preread_offset_ + bytes_to_copy, copy_size);
-        bytes_to_copy += copy_size;
-    }
-    // 更新偏移量
-    preread_offset_ += bytes_to_copy;
-
-    // 同步返回结果（不发起异步操作）
-    auto handler = [bytes_to_copy]<typename Callback>(Callback &&handler)
-    {
-        boost::system::error_code ec;
-        std::forward<Callback>(handler)(ec, bytes_to_copy);
-    };
-    return net::async_initiate<CompletionToken, void(boost::system::error_code, std::size_t)>(handler, token);
-}
-
-// 预读数据消费完毕，委托给传输层
-return transport::async_read_some(trans_, buffers, std::forward<CompletionToken>(token));
+        |
+        v
+预读缓冲区有数据？
+     |         |
+    Yes       No
+     |         |
+从缓冲区    委托 transmission
+memcpy       async_read_some
+同步返回     异步返回
 ```
 
 ### async_write_some
 
-```cpp
-template <typename ConstBufferSequence, typename CompletionToken>
-auto async_write_some(const ConstBufferSequence &buffers, CompletionToken &&token);
-```
-
-直接委托给传输层的 `async_write_some`，无预读逻辑。
-
-### 完整读写操作
-
-```cpp
-// 完整写入
-auto async_write(std::span<const std::byte> buffer, std::error_code &ec)
-    -> net::awaitable<std::size_t>;
-
-// 完整读取
-auto async_read(std::span<std::byte> buffer, std::error_code &ec)
-    -> net::awaitable<std::size_t>;
-```
-
-委托给 `transmission` 的虚函数，允许子类（如 UDP）自定义完整读写行为。
+直接通过 `async_initiate` 将 Asio buffer 适配为 `std::span<const std::byte>` 委托给 transmission，写入路径零额外开销。
 
 ## 调用链
 
-```mermaid
-graph TD
-    A[protocol layer] --> B[connector]
-    B --> C[transport/transmission]
-    C --> D[TCP/UDP socket]
 ```
-
-被协议层使用，作为传输层的统一接口：
-
+protocol -> connector -> transmission -> socket
 ```
-protocol → connector → transmission → socket
-```
-
-## 使用示例
-
-### 基本用法
-
-```cpp
-// 获取传输层
-auto trans = co_await establish_connection(...);
-
-// 创建适配器
-connector conn(std::move(trans));
-
-// 使用 Asio 异步操作
-std::array<char, 1024> buffer;
-auto n = co_await net::async_read_some(conn, net::buffer(buffer), net::use_awaitable);
-```
-
-### 协议检测场景
-
-```cpp
-// 步骤 1: 读取前几个字节检测协议
-std::array<std::byte, 256> peek_buffer;
-auto n = co_await trans->async_read_some(net::buffer(peek_buffer), net::use_awaitable);
-
-// 步骤 2: 根据数据判断协议
-auto protocol = detect_protocol(std::span{peek_buffer.data(), n});
-
-// 步骤 3: 创建 connector，注入预读数据
-connector conn(std::move(trans), std::span{peek_buffer.data(), n});
-
-// 步骤 4: 协议握手（首次读取会先返回预读数据）
-auto handler = create_protocol_handler(protocol);
-co_await handler->handshake(conn);
-```
-
-## 与 Asio 概念的对应
 
 | Asio 概念 | connector 实现 |
 |-----------|----------------|
@@ -237,12 +70,63 @@ co_await handler->handshake(conn);
 | `get_executor()` | 委托给 transmission |
 | `lowest_layer_type` | 自身 |
 
+## 设计决策
+
+### 为什么需要 connector 适配器？
+
+**问题**: BoringSSL 的 `ssl::stream<Stream>` 模板要求 Stream 满足 Boost.Asio 的 AsyncStream 概念。transmission 是纯虚基类，不满足模板概念。
+
+**选择**: connector 作为适配器，将 transmission 接口适配为 AsyncStream 概念。内部持有 `shared_ptr<transmission>`，提供模板化的 async_read_some/async_write_some 和 get_executor。
+
+**后果**: `ssl::stream<connector>` 可以包装任意 transmission 实现，使 TLS 加密层与传输层完全解耦。
+
+**替代方案**: 让 transmission 继承 AsyncStream 概念，但这需要 transmission 成为模板类，破坏运行时多态。
+
+**源码依据**: `transport/adapter/connector.hpp:39-266`
+
+### 为什么内嵌预读数据而非使用 preview 装饰器？
+
+**问题**: ssl::stream 在构造时就开始使用底层 stream 的 async_read_some。如果底层是 preview 装饰器，ssl::stream 的首次读取会经过 preview 的预读缓冲区再经过 co_spawn 桥接，产生额外协程帧。
+
+**选择**: connector 内嵌独立的 `preread_buffer_`，在首次 async_read_some 时同步返回预读数据，避免额外的协程帧和装饰器层级。
+
+**后果**: 预读数据在 connector 和 preview 两层都存在可能。实际使用中，ssl::stream 构造时使用 connector 的预读，非 TLS 场景使用 preview 的预读，不会重复。
+
+**源码依据**: `transport/adapter/connector.hpp:133-164`
+
+## 约束
+
+### connector 禁止拷贝
+
+**类型**: 所有权
+**规则**: 禁止拷贝构造和拷贝赋值，只允许移动。`shared_ptr<transmission>` 的所有权语义与 `ssl::stream` 的生命周期绑定。
+**违反后果**: 编译期错误
+
+### preread_buffer_ 只在 async_read_some 中消费
+
+**类型**: 状态一致性
+**规则**: 预读缓冲区只在 async_read_some 中消费，async_write_some 不操作预读缓冲区。
+**违反后果**: 无实际违反途径（private 成员）
+
+### release() 后对象不可用
+
+**类型**: 生命周期
+**规则**: release() 将内部 trans_ 移动返回后，connector 不再持有传输层。
+**违反后果**: 空指针解引用
+
+## 跨模块契约
+
+| 上游模块 | 对 connector 的调用 | 契约 |
+|----------|---------------------|------|
+| encrypted | `ssl::stream<connector>(connector(transmission), ssl_ctx)` | connector 满足 AsyncStream 概念 |
+| encrypted::ssl_handshake | `connector(inbound, preread)` + `ssl_stream->handshake()` | 预读数据在 TLS 握手前注入 |
+| stealth/reality | `connector(transmission)` 直接构造 | 无预读数据，纯适配 |
+
 ## 注意事项
 
-1. **预读时机**：预读数据注入必须在协议握手之前完成
-2. **数据丢失**：预读数据注入时机不当可能导致协议解析失败
-3. **内存管理**：内部使用 `shared_ptr` 持有 transmission，确保异步操作期间传输对象不会被提前释放
-4. **线程安全**：遵循 transmission 的线程安全保证
+1. **预读时机** — 预读数据注入必须在协议握手之前完成
+2. **数据丢失** — 注入时机不当可能导致协议解析失败
+3. **线程安全** — 遵循 transmission 的线程安全保证
 
 ## 相关类型
 

@@ -1,4 +1,5 @@
 ---
+tags: [stealth, ech, config]
 layer: core
 source: I:/code/Prism/include/prism/stealth/ech/config.hpp
 title: ECH（Encrypted Client Hello）配置
@@ -7,6 +8,40 @@ title: ECH（Encrypted Client Hello）配置
 # ECH（Encrypted Client Hello）配置
 
 > 源码位置: `I:/code/Prism/include/prism/stealth/ech/config.hpp`
+
+## 设计决策（WHY）
+
+### 为什么 ECH key 是独立的配置而非嵌入其他方案
+
+ECH 是一个通用的 TLS 扩展，可以叠加在任意伪装方案上。将其配置独立出来避免了在每个方案中重复 ECH 相关字段。AnyTLS 和 TrustTunnel 都可以引用同一个 ECH 配置。
+
+### 为什么 `enabled()` 只检查 `ech_key`
+
+ECH 的最小配置只需要密钥。`public_name` 有合理的默认值（空字符串表示不验证），不阻止 ECH 启用。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| `ech_key` 格式必须正确 | HPKE 密钥格式 | 格式错误导致解密失败 |
+| ECH 当前解密未实现 | decrypt.cpp 返回 not_supported | 配置 ECH 不会生效 |
+| `public_name` 用于 ECH 的 outer SNI | 回退机制 | 不匹配可能导致客户端重试 |
+
+## 失败场景
+
+| 场景 | 触发条件 | 后果 |
+|------|----------|------|
+| ech_key 格式错误 | 配置失误 | ECH 解密失败 |
+| 解密未实现 | 当前代码状态 | 返回 `not_supported` |
+| public_name 与外层证书不匹配 | 配置不一致 | 客户端可能拒绝连接 |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `ech::config` → `psm::config` | 嵌入 | `cfg.stealth.ech` 路径 |
+| `anytls::scheme` → `ech::config` | 读取 | ECH 检测时使用 |
+| `ech::decrypt` → `ech::config` | 依赖 | 解密使用 ech_key |
 
 ## 概述
 

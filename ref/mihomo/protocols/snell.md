@@ -333,4 +333,4 @@ UDP 数据包封装：
 ## 相关文档
 
 - [[ref/mihomo/protocols/overview|protocols]] - 代理协议概述
-- [[../transport/snell]] - Snell 传输层
+- [[ref/mihomo/transport/snell]] - Snell 传输层

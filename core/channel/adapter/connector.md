@@ -1,250 +1,87 @@
 ---
+tags: [channel, adapter, connector]
 layer: core
+module: channel
 source: I:/code/Prism/include/prism/transport/adapter/connector.hpp
 title: connector
 ---
 
 # connector
 
-Socket 异步 IO 适配器，统一 TCP 和 UDP 的异步读写接口。
+Socket 异步 IO 适配器，将 `transmission` 适配为 Boost.Asio 的 `AsyncReadStream`/`AsyncWriteStream` 概念。支持预读数据注入，避免协议检测阶段数据丢失。
 
-## 概述
+## 核心接口
 
-`connector` 将 `transmission` 接口适配为 Boost.Asio 的 `AsyncReadStream`/`AsyncWriteStream` 概念。核心功能：
+| 方法 | 说明 |
+|------|------|
+| `connector(trans, preread)` | 构造，可选注入预读数据 |
+| `async_read_some(buffers, token)` | 读取——优先返回预读数据，消费完后委托给 transmission |
+| `async_write_some(buffers, token)` | 写入——直接委托给 transmission |
+| `async_write(buffer, ec)` | 完整写入 |
+| `async_read(buffer, ec)` | 完整读取 |
+| `get_executor()` / `executor()` | 返回 io_context executor |
+| `release()` | 释放 transmission 所有权 |
 
-- **接口适配**：将 transmission 适配为 Asio 流概念
-- **预读数据注入**：避免协议检测时丢失数据
-- **所有权管理**：使用 `shared_ptr` 持有 transmission
+## 设计决策
 
-## 类定义
+### 为什么需要预读数据注入？
 
-```cpp
-class connector
-{
-public:
-    using executor_type = net::any_io_executor;
-    using transmission_ptr = transport::shared_transmission;
+协议检测阶段（probe）已从 socket 读取了前 24 字节。这些数据被 `probe_result` 保存，但 socket 缓冲区中已不存在。后续协议握手需要这些数据（如 HTTP 请求行、SOCKS5 握手帧）。`connector` 在首次 `async_read_some` 时先返回预读数据，然后再委托给实际 socket。
 
-    explicit connector(transmission_ptr trans, std::span<const std::byte> preread = {});
+**后果**: 预读数据必须在构造时注入，不能延迟。构造后无法追加。
 
-    connector(connector &&other) noexcept;
-    connector &operator=(connector &&other) noexcept;
+### 为什么用 shared_ptr 持有 transmission？
 
-    // 禁止拷贝
-    connector(const connector &) = delete;
-    connector &operator=(const connector &) = delete;
+`connector` 可能被 `co_spawn` 的独立协程持有。如果用裸指针，transmission 可能在协程挂起期间被析构。`shared_ptr` 保证异步操作期间传输对象存活。
 
-    // AsyncStream 接口
-    executor_type get_executor();
-    executor_type executor();
+**后果**: `release()` 将 shared_ptr 移出，之后 connector 不可再使用。
 
-    template <typename MutableBufferSequence, typename CompletionToken>
-    auto async_read_some(const MutableBufferSequence &buffers, CompletionToken &&token);
+### 为什么 lowest_layer_type 是自身？
 
-    template <typename ConstBufferSequence, typename CompletionToken>
-    auto async_write_some(const ConstBufferSequence &buffers, CompletionToken &&token);
+BoringSSL 的 `ssl::stream` 模板要求底层流有 `lowest_layer_type` 定义。connector 作为最底层（直接包装 transmission），lowest_layer 就是自己。
 
-    // 完整读写
-    auto async_write(std::span<const std::byte> buffer, std::error_code &ec)
-        -> net::awaitable<std::size_t>;
-    auto async_read(std::span<std::byte> buffer, std::error_code &ec)
-        -> net::awaitable<std::size_t>;
+**后果**: ssl::stream\<connector\> 的 `lowest_layer()` 返回 connector 引用。
 
-    // 最低层访问
-    using lowest_layer_type = connector;
-    lowest_layer_type &lowest_layer();
-    const lowest_layer_type &lowest_layer() const;
+## 约束
 
-    // 传输层访问
-    auto &transmission() const;
-    transmission_ptr release();
+### 预读数据注入时机
 
-private:
-    transmission_ptr trans_;                   // 传输层对象的共享指针
-    memory::vector<std::byte> preread_buffer_;  // 预读数据缓冲区
-    std::size_t preread_offset_ = 0;           // 预读数据当前消费偏移量
-};
-```
+**类型**: 调用顺序
 
-## 核心功能
+**规则**: 预读数据必须在协议握手前注入（构造时传入）。握手开始后无法追加。
 
-### 预读数据注入
+**违反后果**: 协议解析读到不完整数据，握手失败。
 
-在协议检测阶段，可能已经读取了部分数据。`connector` 支持注入预读数据，在首次 `async_read_some` 时优先返回，避免数据丢失。
+**源码依据**: `connector.hpp` 构造函数
 
-**构造时注入：**
+### async_read_some 的预读数据一次性
+
+**类型**: 状态前置
+
+**规则**: 预读数据消费完后（`preread_offset_ >= preread_buffer_.size()`），后续调用直接委托给 transmission。预读数据不会重复返回。
+
+**源码依据**: `connector.hpp` async_read_some 实现
+
+## 使用场景
 
 ```cpp
-// 协议检测阶段已读取的数据
-std::vector<std::byte> detected_data = ...;
+// 协议检测阶段已读取数据
+auto result = co_await probe(transport, 24);
 
-// 构造 connector 时注入预读数据
-connector conn(transmission, std::span{detected_data});
+// 注入预读数据，创建 connector
+connector conn(transport, result.preload_bytes());
 
-// 首次读取会先返回预读数据
-auto n = co_await net::async_read_some(conn, buffer, net::use_awaitable);
+// 协议握手——首次读取自动返回预读数据
+co_await ssl_handshake(conn, ...);
 ```
 
-### async_read_some 详解
+## 引用关系
 
-```cpp
-template <typename MutableBufferSequence, typename CompletionToken>
-auto async_read_some(const MutableBufferSequence &buffers, CompletionToken &&token);
-```
+### 依赖
 
-**执行流程：**
+- [[core/channel/transport/transmission|transmission]]：底层传输抽象
 
-```
-async_read_some 调用
-        │
-        ▼
-┌───────────────────┐
-│ 预读缓冲区有数据？ │
-└────────┬──────────┘
-         │
-    ┌────┴────┐
-    │         │
-   Yes       No
-    │         │
-    ▼         ▼
-┌────────┐ ┌────────────────┐
-│从预读  │ │委托给传输层    │
-│缓冲区  │ │async_read_some │
-│拷贝数据│ └────────────────┘
-└────────┘
-    │
-    ▼
-更新偏移量
-同步返回
-```
+### 被引用
 
-**逐行解析：**
-
-```cpp
-if (preread_offset_ < preread_buffer_.size())
-{
-    // 计算预读缓冲区剩余字节数
-    std::size_t bytes_available = preread_buffer_.size() - preread_offset_;
-    std::size_t bytes_to_copy = 0;
-
-    // 遍历用户提供的缓冲区序列
-    auto buf_it = net::buffer_sequence_begin(buffers);
-    auto buf_end = net::buffer_sequence_end(buffers);
-    for (; buf_it != buf_end && bytes_to_copy < bytes_available; ++buf_it)
-    {
-        auto buf = *buf_it;
-        std::size_t buf_size = buf.size();
-        // 计算当前缓冲区可拷贝的字节数
-        std::size_t copy_size = std::min(buf_size, bytes_available - bytes_to_copy);
-        // 执行内存拷贝
-        std::memcpy(buf.data(), preread_buffer_.data() + preread_offset_ + bytes_to_copy, copy_size);
-        bytes_to_copy += copy_size;
-    }
-    // 更新偏移量
-    preread_offset_ += bytes_to_copy;
-
-    // 同步返回结果（不发起异步操作）
-    auto handler = [bytes_to_copy]<typename Callback>(Callback &&handler)
-    {
-        boost::system::error_code ec;
-        std::forward<Callback>(handler)(ec, bytes_to_copy);
-    };
-    return net::async_initiate<CompletionToken, void(boost::system::error_code, std::size_t)>(handler, token);
-}
-
-// 预读数据消费完毕，委托给传输层
-return transport::async_read_some(trans_, buffers, std::forward<CompletionToken>(token));
-```
-
-### async_write_some
-
-```cpp
-template <typename ConstBufferSequence, typename CompletionToken>
-auto async_write_some(const ConstBufferSequence &buffers, CompletionToken &&token);
-```
-
-直接委托给传输层的 `async_write_some`，无预读逻辑。
-
-### 完整读写操作
-
-```cpp
-// 完整写入
-auto async_write(std::span<const std::byte> buffer, std::error_code &ec)
-    -> net::awaitable<std::size_t>;
-
-// 完整读取
-auto async_read(std::span<std::byte> buffer, std::error_code &ec)
-    -> net::awaitable<std::size_t>;
-```
-
-委托给 `transmission` 的虚函数，允许子类（如 UDP）自定义完整读写行为。
-
-## 调用链
-
-```mermaid
-graph TD
-    A[protocol layer] --> B[connector]
-    B --> C[transport/transmission]
-    C --> D[TCP/UDP socket]
-```
-
-被协议层使用，作为传输层的统一接口：
-
-```
-protocol → connector → transmission → socket
-```
-
-## 使用示例
-
-### 基本用法
-
-```cpp
-// 获取传输层
-auto trans = co_await establish_connection(...);
-
-// 创建适配器
-connector conn(std::move(trans));
-
-// 使用 Asio 异步操作
-std::array<char, 1024> buffer;
-auto n = co_await net::async_read_some(conn, net::buffer(buffer), net::use_awaitable);
-```
-
-### 协议检测场景
-
-```cpp
-// 步骤 1: 读取前几个字节检测协议
-std::array<std::byte, 256> peek_buffer;
-auto n = co_await trans->async_read_some(net::buffer(peek_buffer), net::use_awaitable);
-
-// 步骤 2: 根据数据判断协议
-auto protocol = detect_protocol(std::span{peek_buffer.data(), n});
-
-// 步骤 3: 创建 connector，注入预读数据
-connector conn(std::move(trans), std::span{peek_buffer.data(), n});
-
-// 步骤 4: 协议握手（首次读取会先返回预读数据）
-auto handler = create_protocol_handler(protocol);
-co_await handler->handshake(conn);
-```
-
-## 与 Asio 概念的对应
-
-| Asio 概念 | connector 实现 |
-|-----------|----------------|
-| `AsyncReadStream` | `async_read_some()` |
-| `AsyncWriteStream` | `async_write_some()` |
-| `get_executor()` | 委托给 transmission |
-| `lowest_layer_type` | 自身 |
-
-## 注意事项
-
-1. **预读时机**：预读数据注入必须在协议握手之前完成
-2. **数据丢失**：预读数据注入时机不当可能导致协议解析失败
-3. **内存管理**：内部使用 `shared_ptr` 持有 transmission，确保异步操作期间传输对象不会被提前释放
-4. **线程安全**：遵循 transmission 的线程安全保证
-
-## 相关类型
-
-- [[core/transport/transmission]] - 底层传输抽象
-- [[core/transport/overview]] - 通道层
+- [[core/instance/worker/tls|worker/tls]]：创建 ssl::stream\<connector\>
+- [[core/stealth/scheme|stealth::scheme]]：伪装方案握手使用

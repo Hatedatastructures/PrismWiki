@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/protocol/common/address.hpp
 title: 共享地址类型
+tags: [protocol, common, address, ipv4, ipv6, domain, variant]
 ---
 
 # 共享地址类型

@@ -35,25 +35,25 @@ updated: 2026-05-23
 ## 函数签名
 
 ```cpp
-auto forward(context::session &ctx,
-             std::string_view label,
-             const protocol::target &target,
-             shared_transmission inbound)
-    -> net::awaitable<void>;
+auto forward(context::session &ctx, forward_options opts) -> net::awaitable<void>;
 ```
 
-### 参数
+### forward_options
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `ctx` | `context::session &` | 会话上下文（非 const，tunnel 需要写统计） |
-| `label` | `std::string_view` | 协议标签（如 "Trojan"、"SOCKS5"），用于日志 |
-| `target` | `const protocol::target &` | 目标地址信息 |
-| `inbound` | `shared_transmission` | 入站传输对象（客户端连接） |
+```cpp
+struct forward_options
+{
+    std::string_view label;               // 协议标签，用于日志
+    const protocol::target &target;       // 目标地址信息
+    shared_transmission inbound;          // 入站传输对象
+};
+```
 
-### 返回值
-
-`net::awaitable<void>`：隧道结束后完成
+| 字段 | 说明 |
+|------|------|
+| `label` | 协议标签（如 "Trojan"、"SOCKS5"），用于日志 |
+| `target` | 目标地址信息，路由决策的输入 |
+| `inbound` | 入站传输对象（客户端连接） |
 
 ## 执行流程
 
@@ -82,21 +82,6 @@ forward(ctx, label, target, inbound)
 
 ### 出站代理路径
 
-```cpp
-if (ctx.outbound_proxy)
-{
-    auto [ec, outbound] = co_await dial(*ctx.outbound_proxy, target,
-                                         ctx.worker_ctx.io_context.get_executor());
-    if (fault::failed(ec) || !outbound)
-    {
-        // 错误日志
-        co_return;
-    }
-    co_await tunnel(std::move(inbound), std::move(outbound), ctx);
-    co_return;
-}
-```
-
 当会话配置了出站代理时（`ctx.outbound_proxy != nullptr`），使用 `outbound::proxy` 版本的 `dial()` 进行连接。出站代理可以是 SOCKS5、HTTP 等协议的上游代理。
 
 **关键行为：**
@@ -106,22 +91,51 @@ if (ctx.outbound_proxy)
 
 ### 直连路径
 
-```cpp
-auto [ec, outbound] = co_await dial(ctx.worker_ctx.router, label, target);
-if (fault::failed(ec) || !outbound)
-{
-    // 错误日志
-    co_return;
-}
-co_await tunnel(std::move(inbound), std::move(outbound), ctx);
-```
-
 无出站代理时，使用 `router` 版本的 `dial()` 进行连接。路由器根据 `target` 的配置选择反向路由或正向 DNS 解析路由。
 
-**关键行为：**
-- `ctx.worker_ctx.router` 是当前 worker 的路由器实例
-- `label` 传入 `dial()` 用于日志区分不同协议
-- `dial()` 内部处理路由选择、DNS 解析和竞速连接
+## 设计决策
+
+### 为什么是自由函数而非成员方法？
+
+`forward()` 不持有任何状态，只需参数传入的上下文。自由函数避免不必要的类层次和对象生命周期管理，也天然适合协程（不需要 `shared_from_this()`）。
+
+### 为什么 ctx 是非 const 引用？
+
+`tunnel()` 需要写统计信息（`flush_traffic()` 和 `accumulate_uplink/downlink()`），因此 `ctx` 为非 const 引用。
+
+### 为什么出站代理路径先 co_return？
+
+使用提前返回模式（early return），避免 `if-else` 嵌套。两个路径的 `tunnel()` 调用完全独立，不存在共享状态。
+
+## 约束
+
+### forward_options 引用生命周期
+
+**类型**: 生命周期
+
+**规则**: `forward_options` 持有 `target` 的 `const` 引用，`target` 必须在 `co_await forward()` 完成前有效。
+
+**违反后果**: 悬挂引用，协程恢复后访问已释放内存。
+
+**源码依据**: `forward.hpp:30`
+
+### 出站代理生命周期
+
+**类型**: 生命周期
+
+**规则**: `ctx.outbound_proxy` 指针由 `context::worker` 持有，`forward()` 不拥有。worker 必须在会话期间保持 outbound_proxy 有效。
+
+**违反后果**: 通过悬挂指针访问已销毁的出站代理，崩溃。
+
+**源码依据**: `forward.hpp:41`
+
+### inbound 所有权转移
+
+**类型**: 资源管理
+
+**规则**: `inbound` 通过值传递（`shared_transmission`），`tunnel()` 内部 `std::move()` 获取所有权。调用 `forward()` 后不应再使用 `inbound`。
+
+**违反后果**: 使用已 move 的 `shared_transmission`，`get()` 返回 nullptr。
 
 ## 错误处理
 
@@ -289,8 +303,7 @@ if (ctx.outbound_proxy)
 
 ## 注意事项
 
-1. **所有权转移**：`inbound` 通过值传递（`shared_transmission`），`tunnel()` 内部通过 `std::move()` 获取所有权。调用 `forward()` 后调用方不应再使用 `inbound`。
-2. **日志标签**：使用 `[Connect.Forward]` 前缀，与 [[core/connect/tunnel/tunnel|tunnel]] 的 `[Connect.Tunnel]` 区分。
-3. **错误静默**：拨号失败时只输出日志，不抛异常。调用方通过 `co_await` 的完成判断转发是否成功。
-4. **出站代理生命周期**：`ctx.outbound_proxy` 指针由 `context::worker` 持有，`forward()` 不拥有该指针。
-5. **会话结束**：`forward()` 返回后，会话生命周期由上层（`session` 模块）管理，负责最终清理。
+1. **所有权转移**：`inbound` 通过值传递，`tunnel()` 内部 `std::move()` 获取所有权
+2. **日志标签**：使用 `[Connect.Forward]` 前缀
+3. **错误静默**：拨号失败时只输出日志，不抛异常
+4. **会话结束**：`forward()` 返回后，会话生命周期由上层管理

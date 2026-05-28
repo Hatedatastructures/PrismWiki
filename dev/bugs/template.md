@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: Bug 报告模板
+tags: [dev, bugs, template]
 ---
 
 # Bug 报告模板

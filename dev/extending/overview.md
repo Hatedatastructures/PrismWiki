@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: Prism 扩展开发概览
+tags: [dev, extending, overview]
 ---
 
 # Prism 扩展开发概览
@@ -144,6 +146,6 @@ public:
 ## 相关架构
 
 - [[dispatch/table]] — Handler 注册表
-- [[modules]] — 模块系统架构
-- [[cpp23-coroutines]] — 协程编程规范
-- [[pmr-memory-pool]] — PMR 内存管理
+- [[dev/modules|modules]] — 模块系统架构
+- [[ref/programming/c++23-coroutines|cpp23-coroutines]] — 协程编程规范
+- [[ref/programming/pmr-concepts|pmr-memory-pool]] — PMR 内存管理

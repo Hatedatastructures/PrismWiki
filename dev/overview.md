@@ -31,7 +31,7 @@ Dev 层包含开发规范、排障方法、Bug 记录等开发相关内容。
 | [[testing/overview|testing]] | 测试体系 | 测试框架、命令、基准测试、压力测试 |
 | [[debugging/overview|debugging]] | 排障方法 | 连接/协议/内存/性能/TLS 排障、日志分析 |
 | [[building/overview|building]] | 构建系统 | CMake 结构、依赖管理、构建命令、构建选项 |
-| [[performance/overview|performance]] | 性能优化 | 调优方法、性能分析、性能报告 |
+| [[dev/performance/overview|performance]] | 性能优化 | 调优方法、性能分析、性能报告 |
 | [[extending/overview|extending]] | 扩展开发 | 新协议集成、新伪装方案、新模块开发 |
 | [[bugs/template|bugs]] | Bug 记录 | Bug 报告模板、归档 |
 

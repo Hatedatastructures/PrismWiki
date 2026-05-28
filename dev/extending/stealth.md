@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: 新伪装方案开发
+tags: [dev, extending, stealth]
 ---
 
 # 新伪装方案开发

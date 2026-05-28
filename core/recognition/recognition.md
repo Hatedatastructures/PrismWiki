@@ -1,5 +1,7 @@
 ---
+tags: [recognition, recognition]
 layer: core
+module: recognition
 source: I:/code/Prism/include/prism/recognition/recognition.hpp
 title: recognition.hpp
 ---
@@ -8,138 +10,97 @@ title: recognition.hpp
 
 Recognition 模块聚合头文件，提供统一的协议识别入口。
 
-## 源码位置
-
-`I:/code/Prism/include/prism/recognition/recognition.hpp`
-
 ## 核心类型
 
 ### recognize_context
 
 完整识别流程输入上下文。
 
-```cpp
-struct recognize_context
-{
-    transport::shared_transmission transport;  // 传输层
-    const psm::config *cfg;                              // 全局配置
-    resolve::router *router;                             // 路由器
-    agent::session_context *session;                      // 会话上下文
-    memory::frame_arena *frame_arena;                    // 帧内存池
-};
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `transport` | `shared_transmission` | 传输层 |
+| `cfg` | `const psm::config *` | 全局配置 |
+| `router` | `connect::router *` | 路由器（fallback 用） |
+| `session` | `context::session *` | 会话上下文 |
+| `frame_arena` | `memory::frame_arena *` | 帧内存池 |
 
 ### recognize_result
 
 完整识别流程输出结果。
 
-```cpp
-struct recognize_result
-{
-    transport::shared_transmission transport;  // 最终传输层
-    protocol::protocol_type detected;                    // 检测到的协议类型
-    memory::vector<std::byte> preread;                  // 预读数据
-    fault::code error;                                  // 错误码
-    memory::string executed_scheme;                      // 成功执行的方案名称
-    bool success;                                       // 是否成功识别
-};
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `transport` | `shared_transmission` | 最终传输层 |
+| `detected` | `protocol::protocol_type` | 检测到的协议类型 |
+| `preread` | `memory::vector<std::byte>` | 预读数据 |
+| `error` | `fault::code` | 错误码 |
+| `executed_scheme` | `memory::string` | 成功执行的方案名称 |
+| `success` | `bool` | 是否成功识别 |
 
-### identify_context
+### identify_context / identify_result
 
-TLS 协议识别上下文。
-
-```cpp
-struct identify_context
-{
-    transport::shared_transmission transport;   // 传输层
-    const psm::config *cfg;                               // 全局配置
-    std::span<const std::byte> preread;                  // 预读数据
-    resolve::router *router;                             // 路由器
-    agent::session_context *session;                      // 会话上下文
-    memory::frame_arena *frame_arena;                    // 帧内存池
-};
-```
-
-### identify_result
-
-协议识别结果。
-
-```cpp
-struct identify_result
-{
-    transport::shared_transmission transport;  // 最终传输层
-    protocol::protocol_type detected;                   // 检测到的协议类型
-    memory::vector<std::byte> preread;                  // 内层预读数据
-    fault::code error;                                  // 错误码
-    memory::string executed_scheme;                      // 成功执行的方案名称
-    bool success;                                       // 是否成功
-};
-```
+TLS 识别的输入/输出结构，字段类似 `recognize_context/result`，但增加了 `preread`（`std::span<const std::byte>`）用于传递 Probe 阶段的预读数据。
 
 ## 核心函数
 
 ### recognize()
 
-执行完整协议识别流程。
-
 ```cpp
 auto recognize(recognize_context ctx) -> net::awaitable<recognize_result>;
 ```
 
-**流程**：
-
-1. **Phase 1: Probe（外层探测）**
-   - 预读 24 字节
-   - 检测 HTTP/SOCKS5/TLS/Shadowsocks
-
-2. **Phase 2: Identify（仅当 TLS）**
-   - 读取完整 ClientHello
-   - 特征分析
-   - 方案执行
+执行完整协议识别流程（Probe → Identify）。
 
 ### identify()
-
-执行 TLS 伪装方案识别。
 
 ```cpp
 auto identify(identify_context ctx) -> net::awaitable<identify_result>;
 ```
 
-**流程**：
+执行 TLS 伪装方案识别（Read → Parse → Detect → Execute）。
 
-1. **Read**：从传输层读取完整 TLS ClientHello
-2. **Parse**：解析 ClientHello 结构，提取特征
-3. **Detect**：遍历所有 scheme 的 detect()，收集候选方案
-4. **Execute**：按候选顺序执行 scheme
+## 设计决策
 
-## 调用链
+### 为什么 recognize() 和 identify() 是独立函数而非类方法？
 
-```mermaid
-graph TD
-    A[agent/session/session] -->|入口| B[recognize]
-    B -->|预读24字节| C[probe::probe]
-    C -->|检测协议| D[probe::detect]
-    B -->|TLS时| E[identify]
-    E -->|分层检测| F[layered_detection_pipeline]
-    F -->|方案检测| G[stealth::scheme::detect]
-    F -->|方案执行| H[stealth::scheme::execute]
-```
+`recognize()` 是无状态的顶层协调函数，所有状态通过 `recognize_context` 传入。这避免了类实例生命周期管理（特别是在协程中的 `shared_from_this()` 问题），也使得调用方（session）无需持有识别器对象。
+
+**后果**: 两次 `recognize()` 调用之间不共享状态，每次调用独立处理。
+
+## 约束
+
+### 指针成员非空保证
+
+**类型**: 状态前置
+
+**规则**: `recognize_context` 中的 `cfg`、`session`、`frame_arena` 必须非空。`router` 在需要 fallback 时必须非空。
+
+**违反后果**: 空指针解引用，崩溃。
+
+**源码依据**: `recognition.hpp:65-74`
+
+### transport 所有权
+
+**类型**: 生命周期
+
+**规则**: `recognize_context::transport` 通过值传递（`shared_transmission` 即 `shared_ptr`），引用计数保证传输层在识别期间存活。
+
+**违反后果**: 无直接风险（`shared_ptr` 保护）。
 
 ## 引用关系
 
 ### 被引用
 
-- [[../agent/session/session|agent::session]]：调用 recognize() 入口
+- [[core/instance/worker/launch|launch]]：调用 `recognize()` 入口
 
 ### 依赖
 
-- [[confidence]]：置信度枚举
-- [[result]]：分析结果
-- [[layered_pipeline]]：分层检测管道
-- [[scheme-route-table]]：SNI 路由表
-- [[probe/probe]]：外层协议探测
-- [[probe/analyzer]]：协议类型检测
-- [[../stealth/scheme|stealth::scheme]]：伪装方案
-- [[../channel/transport/transmission|transport]]：传输层
-- [[../protocol/analysis|protocol::protocol_type]]：协议类型枚举
+- [[core/recognition/confidence|confidence]]：置信度枚举
+- [[core/recognition/result|result]]：分析结果
+- [[core/recognition/layered_pipeline|layered_pipeline]]：分层检测管道
+- [[core/recognition/scheme-route-table|scheme-route-table]]：SNI 路由表
+- [[core/recognition/probe/probe|probe]]：外层协议探测
+- [[core/recognition/probe/analyzer|analyzer]]：协议类型检测
+- [[core/stealth/scheme|stealth::scheme]]：伪装方案
+- [[core/transport/transmission|transport]]：传输层
+- [[core/protocol/types|protocol::protocol_type]]：协议类型枚举

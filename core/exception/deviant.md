@@ -1,106 +1,62 @@
 ---
+tags: [exception, deviant]
 layer: core
-source: prism/exception/deviant.hpp
-title: Exception Deviant
+module: exception
+source: I:/code/Prism/include/prism/exception/deviant.hpp
+title: exception::deviant
 ---
 
-# Exception Deviant
+# exception::deviant
 
-项目异常基类，所有自定义异常的抽象基类。
+项目异常基类（抽象），所有自定义异常的根。核心存储 `std::error_code`，自动捕获源码位置。
 
-## 源码位置
+## 接口
 
-`I:/code/Prism/include/prism/exception/deviant.hpp`
+| 方法 | 说明 |
+|------|------|
+| `error_code()` | 返回 `const std::error_code&` |
+| `location()` | 返回 `const std::source_location&` |
+| `filename()` | 返回文件名（不含路径） |
+| `dump()` | 格式化输出 `[file:line] [TYPE:value] desc` |
+| `type_name()` | 纯虚函数，子类实现（如 `"SECURITY"`） |
 
-## 设计目标
+## 设计决策
 
-- **错误码集成**: 核心存储 `std::error_code`
-- **源位置捕获**: 自动捕获抛出点位置
-- **格式化消息**: 支持 `std::format` 格式化
-- **类型分类**: 子类必须实现 `type_name()`
+### 为什么 deviant 用 error_code 而非 fault::code 枚举成员？
 
-## 类定义
+`std::error_code` 是标准库通用错误表示，`deviant` 继承 `std::runtime_error`，`what()` 消息由 `ec.message()` 生成。使用 `error_code` 可与标准库 `catch` 和日志系统集成，同时通过 `fault::category()` 保留自定义错误分类。
 
-```cpp
-class deviant : public std::runtime_error {
-public:
-    // 主构造函数（错误码 + 可选描述）
-    explicit deviant(std::error_code ec, std::string_view desc = {},
-                     const std::source_location &loc = std::source_location::current());
-    
-    // 向后兼容构造函数
-    explicit deviant(const std::string &msg,
-                     const std::source_location &loc = std::source_location::current());
-    
-    // 格式化构造函数
-    template <typename... Args>
-    explicit deviant(const std::source_location &loc,
-                     std::format_string<Args...> fmt, Args &&...args);
-    
-    // 访问器
-    const std::error_code &error_code() const noexcept;
-    const std::source_location &location() const noexcept;
-    std::string filename() const;
-    
-    // 格式化输出
-    virtual std::string dump() const;
-    
-protected:
-    // 子类必须实现
-    virtual std::string_view type_name() const noexcept = 0;
-    
-private:
-    std::error_code ec_;
-    std::source_location location_;
-};
-```
+**后果**: 构造时需调用 `fault::make_error_code()` 将枚举转为 `error_code`。
 
-## 构造函数
+### 为什么有向后兼容的字符串构造函数？
 
-### 推荐：错误码构造
+历史遗留。早期版本直接用字符串构造异常。字符串构造自动映射为 `generic_error` 错误码，不推荐使用——新代码应始终传 `fault::code`。
 
-```cpp
-throw deviant(
-    fault::make_error_code(fault::code::parse_error),
-    "额外的上下文信息"
-);
-```
+**后果**: 字符串构造的异常在 `dump()` 中显示 `[TYPE:1]`（generic_error），丢失具体错误分类。
 
-### 向后兼容：字符串构造
+## 约束
 
-```cpp
-throw deviant("错误消息");  // 转换为 generic_error
-```
+### 仅冷路径使用
 
-建议迁移到错误码构造函数以保留分类信息。
+**类型**: 编码规范
 
-### 格式化构造
+**规则**: `deviant` 及其子类仅在启动阶段和致命错误路径使用。热路径（网络 I/O、协议解析、TLS 握手）禁止抛异常。
 
-```cpp
-throw deviant(
-    std::source_location::current(),
-    "配置项 {} 无效: {}",
-    name, value
-);
-```
+**违反后果**: 异常栈展开开销不可预测，破坏热路径延迟保证。异常对象构造涉及 `std::string` 堆分配。
 
-## 访问器
+**源码依据**: `deviant.hpp:7-8`
 
-| 方法 | 返回 | 说明 |
-|------|------|------|
-| `error_code()` | `std::error_code&` | 错误码对象 |
-| `location()` | `source_location&` | 源码位置 |
-| `filename()` | `std::string` | 文件名(不含路径) |
-| `dump()` | `std::string` | 格式化信息 |
+### 异常对象较大
 
-## dump 输出格式
+**类型**: 资源上限
 
-```cpp
-// [filename:line] [TYPE:value] description
-// 示例: [loader.cpp:38] [SECURITY:29] file open failed: /etc/prism/config.json
-```
+**规则**: `deviant` 包含 `std::error_code` + `std::source_location` + `std::runtime_error`（内含 `std::string`），总大小约 80-120 字节。
 
-## 子类实现
+**违反后果**: 在内存紧张时频繁构造可能导致分配失败。
+
+**源码依据**: `deviant.hpp:144-146`
+
+## 子类实现模式
 
 ```cpp
 class security : public deviant {
@@ -108,29 +64,20 @@ public:
     explicit security(fault::code err,
                       const std::source_location &loc = std::source_location::current())
         : deviant(fault::make_error_code(err), {}, loc) {}
-    
 protected:
-    std::string_view type_name() const noexcept override { return "SECURITY"; }
+    auto type_name() const noexcept -> std::string_view override { return "SECURITY"; }
 };
 ```
 
-## 调用链
+## 引用关系
 
-```mermaid
-graph TD
-    A[throw security] --> B[security构造]
-    B --> C[deviant构造]
-    C --> D[std::error_code]
-    C --> E[std::source_location]
-    
-    D --> F[fault::make_error_code]
-    F --> G[fault::category]
-    
-    E --> H[current]
-```
+### 依赖
 
-## 相关页面
+- [[core/fault/code|fault::code]]：错误码枚举
+- [[core/fault/compatible|fault::compatible]]：`make_error_code()` 和 `category()`
 
-- [[core/exception/overview]] - Exception模块总览
-- [[core/fault/code]] - 错误码枚举
-- [[core/fault/compatible]] - 错误码兼容性
+### 被引用
+
+- [[core/exception/network|network]]：继承
+- [[core/exception/protocol|protocol]]：继承
+- [[core/exception/security|security]]：继承

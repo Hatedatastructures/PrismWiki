@@ -2,6 +2,7 @@
 layer: core
 source: "I:/code/Prism/include/prism/protocol/vless/relay.hpp"
 title: VLESS 协议中继器
+tags: [protocol, vless, relay, handshake, uuid, mux, udp]
 ---
 
 # VLESS 协议中继器
@@ -124,4 +125,4 @@ inline shared_relay make_relay(shared_transmission next_layer, const config &cfg
 - [[core/protocol/vless/config|Config]] - 配置结构
 - [[core/transport/transmission|Transmission]] - 底层传输层接口
 - [[core/fault/code|Fault Code]] - 错误码处理
-- [[core/instance/account/directory|Account Directory]] - UUID 认证对接
+- [[core/account/directory|Account Directory]] - UUID 认证对接

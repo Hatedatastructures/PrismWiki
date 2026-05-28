@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: Prism 性能分析方法
+tags: [dev, performance, profiling]
 ---
 
 # Prism 性能分析方法
@@ -128,10 +130,10 @@ AES-NI 启用与否差异巨大（67x）。每次编译后验证 CryptoBench 输
 
 ## 相关页面
 
-- [[performance/overview]] — 性能架构概览
-- [[performance/tuning]] — 性能调优指南
-- [[performance/report]] — 完整基准报告
-- [[stress]] — 压力测试方法
+- [[dev/performance/overview|performance/overview]] — 性能架构概览
+- [[dev/performance/tuning|performance/tuning]] — 性能调优指南
+- [[dev/performance/report|performance/report]] — 完整基准报告
+- [[dev/testing/stress|stress]] — 压力测试方法
 
 ## 参考资源
 

@@ -2,12 +2,65 @@
 layer: core
 source:
   - I:/code/Prism/include/prism/crypto/base64.hpp
+tags: [crypto, base64, encoding]
 title: Base64 编解码
 ---
 
 # Base64 编解码
 
-Base64 是一种二进制到文本的编码方案，将二进制数据转换为可打印 ASCII 字符。本模块提供轻量级 Base64 编解码实现，用于 HTTP Basic 认证等场景。
+Base64 是一种二进制到文本的编码方案，将二进制数据转换为可打印 ASCII 字符。本模块提供轻量级 Base64 编解码实现，用于 HTTP Basic 认证、SOCKS5 认证等场景。
+
+## 设计决策
+
+### 为什么手写 Base64 而非用 BoringSSL EVP_Base64？
+
+BoringSSL 的 `EVP_EncodeBlock`/`EVP_DecodeBase64` 是较重的 API，引入额外 EVP 上下文开销。Base64 编解码逻辑简单且稳定（RFC 4648），手写 inline 实现可被编译器完全优化，零函数调用开销。同时可精确控制 URL-safe 变体和空白字符处理行为。
+
+**后果**: 模块为 header-only，包含 `<prism/crypto/base64.hpp>` 即可使用，无链接依赖。
+
+### 为什么返回 `memory::string` 而非 `std::string`？
+
+遵循 Prism 的 PMR 内存策略，使用全局池分配器。`memory::string` 是 `std::pmr::string` 的别名，避免在热路径上触发默认堆分配。
+
+**后果**: 返回值可直接参与 PMR 容器操作，但不可直接赋值给 `std::string`（需显式转换）。
+
+### 为什么解码支持 URL-safe 变体？
+
+Prism 的 Base64 主要用于 HTTP Basic Auth 和配置文件，但某些上游组件（如 SOCKS5 或外部 API）可能使用 URL-safe Base64。自动转换 `-`/`_` 到 `+`/`/` 避免调用方需要预处理输入。
+
+**后果**: 解码函数对两种变体透明，但编码函数始终输出标准 Base64（使用 `+`/`/`）。
+
+## 约束
+
+### 解码输入长度必须是 4 的倍数
+
+**类型**: 调用顺序
+
+**规则**: `base64_decode` 的输入字符数（含 padding，不含空白）必须是 4 的倍数
+
+**违反后果**: 返回空字符串
+
+**源码依据**: `base64.hpp:96-99`
+
+### 无效字符检测
+
+**类型**: 调用顺序
+
+**规则**: 输入中的非 Base64 字符（除空白和 padding `=`）导致解码失败
+
+**违反后果**: 返回空字符串
+
+**源码依据**: `base64.hpp:150-153`
+
+### padding 数量上限
+
+**类型**: 资源上限
+
+**规则**: padding 字符 `=` 最多 2 个
+
+**违反后果**: 返回空字符串
+
+**源码依据**: `base64.hpp:90-93`
 
 ## 源码位置
 
@@ -238,6 +291,57 @@ graph TD
     G --> H[查表解码]
     H --> I[处理 padding]
 ```
+
+## 故障场景
+
+### 解码返回空字符串
+
+**触发条件**: 输入不是合法 Base64（长度非 4 倍数、含无效字符、padding 超过 2 个）
+
+**传播路径**: `base64_decode` 返回空字符串 -> 调用方将空字符串作为凭据 -> 认证失败
+
+**外部表现**: HTTP Basic Auth 或 SOCKS5 认证被拒绝
+
+**恢复机制**: 客户端使用正确格式的凭据重试
+
+**日志关键字**: 无直接日志（空字符串返回）
+
+### 编码二进制数据时内存不足
+
+**触发条件**: 输入数据极大导致 `memory::string::reserve` 抛出 `std::bad_alloc`
+
+**传播路径**: 异常向上传播，被 Prism 的异常处理层捕获
+
+**外部表现**: 连接处理中断
+
+**恢复机制**: 内存压力释放后新连接可正常处理
+
+**日志关键字**: 无（异常传播）
+
+### 跨模块契约
+
+| 模块 A | 模块 B | 契约内容 |
+|--------|--------|---------|
+| [[core/protocol/http/parser\|HTTP parser]] | [[core/crypto/base64\|base64]] | HTTP Basic Auth 解码使用 `base64_decode`，解析 `Authorization: Basic <encoded>` 头 |
+| [[core/protocol/socks5/conn\|SOCKS5]] | [[core/crypto/base64\|base64]] | SOCKS5 用户名/密码认证中使用 Base64 编解码 |
+| [[core/stealth/reality/handshake\|Reality]] | [[core/crypto/base64\|base64]] | Reality 从配置文件中 Base64 解码私钥字符串 |
+
+## 变更敏感度
+
+### 对外影响
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| 修改返回类型（`memory::string` -> `std::string`） | 全部调用方 | 编译失败或 PMR 策略失效 |
+| 修改解码表（`decode_tbl`） | 全部解码调用方 | 解码结果错误 |
+| 移除 URL-safe 变体支持 | 使用 URL-safe Base64 的上游组件 | 解码失败 |
+
+### 对内影响
+
+| 上游变更 | 本模块受影响 | 需要检查 |
+|---------|------------|---------|
+| PMR 内存策略变更 | `memory::string` 定义 | 全部返回值使用方 |
+| 新增编解码场景 | 需要支持 Base64URL 编码（无 padding） | 可能需要新增 `base64url_encode` 函数 |
 
 ## 相关文档
 

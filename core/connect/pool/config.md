@@ -294,7 +294,7 @@ worker 初始化
 - [[core/connect/dial/router]]：通过连接池间接使用 config
 - [[core/connect/dial/dial]]：拨号函数通过路由器间接使用 config
 - [[core/connect/tunnel/tunnel]]：隧道使用 buffer_size 配置
-- [[core/loader]]：配置加载器，从 JSON 解析 config
+- [[core/loader/overview]]：配置加载器，从 JSON 解析 config
 
 ## 注意事项
 

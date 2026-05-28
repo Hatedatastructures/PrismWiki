@@ -230,7 +230,7 @@ SNI 绕过方法：
 方法 4: ShadowTLS
 - 使用真实 TLS 握手作为掩护
 - 秘密传递代理认证
-- 详见 [[core/stealth/shadowtls|shadowtls]]
+- 详见 [[core/stealth/shadowtls/overview|shadowtls]]
 ```
 
 ## DPI 检测
@@ -441,7 +441,7 @@ DPI 规避：
 ## 参见
 
 - [[core/stealth/reality/handshake|Reality]] — Reality TLS 伪装
-- [[core/stealth/shadowtls|ShadowTLS]] — ShadowTLS 伪装
+- [[core/stealth/shadowtls/overview|ShadowTLS]] — ShadowTLS 伪装
 - [[ref/anti-censorship/dpi|DPI]] — 深度包检测
 - [[ref/anti-censorship/tls-fingerprint|TLS 指纹]] — TLS 指纹检测
 - [[ref/anti-censorship/traffic-analysis|流量分析]] — 流量分析

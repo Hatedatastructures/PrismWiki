@@ -1,69 +1,35 @@
 ---
-title: "Pipeline 层 — 协议管道处理"
+title: "Pipeline 层 -- 协议管道处理"
 layer: core
-source: "I:/code/Prism/include/prism/pipeline/"
+module: pipeline
+source: I:/code/Prism/include/prism/pipeline/
 created: 2026-05-17
-updated: 2026-05-17
+updated: 2026-05-27
+tags: [pipeline, overview, protocol-handler, dispatch, tunnel]
 ---
 
 # Pipeline 层 — 协议管道处理
 
-> 源码目录: `include/prism/pipeline/`
-> 模块职责: 协议解析、帧编解码、双向转发
+Pipeline 层是 Prism 六阶段架构的第四阶段，位于 Dispatch 层和 Channel 层之间。核心职责：预读重放、协议握手、目标解析、上游拨号、双向转发。
 
-## 模块定位
+## 设计决策
 
-Pipeline 层是 Prism 六阶段架构的第四阶段，位于 Dispatch 层和 Channel 层之间。
+### 为什么每个协议是独立函数而非继承基类？
 
-```
-Dispatch 层 (处理器分发) -> Pipeline 层 (协议处理) -> Channel 层 (传输层)
-```
+协议处理器的逻辑差异大（HTTP 解析请求行 vs SOCKS5 解析握手帧 vs Trojan 读 hex 密码），无法抽象为统一接口。独立函数 + `switch` 分发更直接，编译器可内联优化。Dispatch 层通过 `protocol_type` 枚举选择对应函数。
 
-## 核心职责
+**后果**: 新增协议只需添加新函数和 switch case，不涉及继承层次。
 
-| 职责 | 描述 | 关键组件 |
-|------|------|----------|
-| 预读重放 | 包装预读数据，避免重复读取 | `preview` transport |
-| 协议握手 | 执行协议级握手和认证 | `protocol::*::relay::handshake` |
-| 目标解析 | 解析目标地址（域名/IP/端口） | `protocol::analysis::target` |
-| 上游拨号 | 通过路由器或出站代理连接上游 | `dial()` |
-| 隧道转发 | 建立双向数据流转发 | `tunnel()` |
-| 多路复用 | 引导 mux 会话（smux/yamux） | `multiplex::bootstrap` |
+## 模块组成
 
-## 目录结构
-
-```
-include/prism/pipeline/
-├── primitives.hpp              # 管道原语定义（核心共享组件）
-├── protocols.hpp               # 协议处理器聚合头文件
-└── protocols/
-    ├── http.hpp                # HTTP 代理处理
-    ├── socks5.hpp              # SOCKS5 代理处理
-    ├── trojan.hpp              # Trojan 协议处理
-    ├── vless.hpp               # VLESS 协议处理
-    └── shadowsocks.hpp         # SS2022 协议处理
-```
-
-## 组件详解
-
-### primitives.hpp
-
-管道原语定义，为所有协议处理器提供统一的基础功能。详见 [[core/pipeline/primitives|管道原语]]。
-
-主要原语函数：
-- `shut_close()` — 安全关闭传输层
-- `dial()` — 上游拨号（路由器/出站代理两种路径）
-- `ssl_handshake()` — TLS 服务端握手
-- `preview` — 预读数据回放包装器
-- `tunnel()` — 双向隧道转发
-- `forward()` — 拨号 + 隧道组合
-
-### 协议处理器
-
-每种协议有独立的处理函数，由 Dispatch 层调用：
-
-| 处理器 | 函数 | TLS 层 | 认证方式 |
-|--------|------|--------|----------|
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| [[core/pipeline/primitives\|primitives]] | `primitives.hpp` | 管道原语（shut_close/dial/tunnel/forward） |
+| [[core/pipeline/protocols/http\|http]] | `protocols/http.hpp` | HTTP 代理处理 |
+| [[core/pipeline/protocols/socks5\|socks5]] | `protocols/socks5.hpp` | SOCKS5 代理处理 |
+| [[core/pipeline/protocols/trojan\|trojan]] | `protocols/trojan.hpp` | Trojan 协议处理 |
+| [[core/pipeline/protocols/vless\|vless]] | `protocols/vless.hpp` | VLESS 协议处理 |
+| [[core/pipeline/protocols/shadowsocks\|shadowsocks]] | `protocols/shadowsocks.hpp` | SS2022 协议处理 |
 | [[core/pipeline/protocols/http|HTTP]] | `http()` | 外层可选 | Basic Auth 或无 |
 | [[core/pipeline/protocols/socks5|SOCKS5]] | `socks5()` | 无 | 方法协商 |
 | [[core/pipeline/protocols/trojan|Trojan]] | `trojan()` | Session 层 | SHA224 密码哈希 |

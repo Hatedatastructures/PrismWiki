@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/protocol/socks5/config.hpp
 title: SOCKS5 协议配置
+tags: [protocol, socks5, config, tcp, udp, auth]
 ---
 
 # SOCKS5 协议配置

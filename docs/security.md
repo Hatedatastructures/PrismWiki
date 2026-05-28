@@ -312,6 +312,6 @@ A: 是的，定期检查 [GitHub Releases](https://github.com/Hatedatastructures
 
 - [[docs/deployment|部署指南]]
 - [[core/stealth/reality/handshake|Reality 伪装]]
-- [[core/stealth/shadowtls|ShadowTLS 伪装]]
+- [[core/stealth/shadowtls/overview|ShadowTLS 伪装]]
 - [[log|日志系统]]
 - [[docs/upgrade|升级指南]]

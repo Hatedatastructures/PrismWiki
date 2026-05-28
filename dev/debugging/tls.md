@@ -1,4 +1,5 @@
 ---
+layer: dev
 title: TLS 协议参考与问题排查指南
 source:
   - I:/code/Prism/include/prism/stealth/
@@ -15,7 +16,7 @@ related:
   - "[[core/crypto/overview|crypto]]"
   - "[[dev/debugging/tcp|tcp]]"
   - "[[dev/gfw]]"
-  - "[[configuration]]"
+  - "[[docs/configuration|configuration]]"
   - "[[core/crypto/aead]]"
   - "[[core/crypto/x25519]]"
 layer: dev
@@ -1208,10 +1209,10 @@ python jarm.py www.example.com
 - [[dev/debugging/overview]] -- 排障体系概述
 - [[core/stealth/overview|stealth]] -- Stealth TLS 伪装模块
 - [[core/crypto/overview|crypto]] -- 加密模块
-- [[core/stealth/reality|stealth/reality]] -- Reality TLS 详解
-- [[core/stealth/shadowtls|stealth/shadowtls]] -- ShadowTLS 详解
+- [[core/stealth/reality/overview|stealth/reality]] -- Reality TLS 详解
+- [[core/stealth/shadowtls/overview|stealth/shadowtls]] -- ShadowTLS 详解
 - [[dev/debugging/tcp|tcp]] -- TCP 协议基础
 - [[dev/gfw]] -- GFW 封锁原理
-- [[configuration]] -- TLS 配置参数
+- [[docs/configuration|configuration]] -- TLS 配置参数
 - [[core/crypto/aead]] -- AEAD 加密实现
 - [[core/crypto/x25519]] -- X25519 密钥交换

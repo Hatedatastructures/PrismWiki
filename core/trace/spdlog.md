@@ -1,155 +1,83 @@
 ---
+tags: [trace, spdlog]
 layer: core
-source: prism/trace/spdlog.cpp
+source: src/prism/trace/spdlog.cpp
 title: Trace Spdlog
+module: trace
+updated: 2026-05-27
 ---
 
 # Trace Spdlog
 
-spdlog 日志系统的集成实现。
+spdlog 日志系统的集成实现。核心设计：双层指针 + 异步队列 + overrun_oldest。
 
-## 源码位置
+## 核心机制
 
-`I:/code/Prism/src/prism/trace/spdlog.cpp`
+### 双层指针策略
 
-## 实现细节
+| 层级 | 类型 | 用途 |
+|------|------|------|
+| `shared_system_logger` | `shared_ptr<logger>` | 管理 logger 生命周期 |
+| `atomic_logger_ptr` | `atomic<logger*>` | 热路径无锁读取 |
 
-### 全局状态
+`recorder()` 热路径先读原子指针（acquire load），避免 `shared_ptr` 引用计数的原子操作。只有 init/shutdown 时才访问 `shared_ptr`。
 
-```cpp
-namespace {
-    std::shared_mutex trace_mutex;              // 保护init/shutdown
-    config last_config{};                       // 缓存最后配置
-    std::shared_ptr<spdlog::logger> shared_system_logger;
-    std::atomic<spdlog::logger *> atomic_logger_ptr{nullptr};
-}
-```
-
-### recorder - 获取日志器
+### 异步策略
 
 ```cpp
-auto recorder() noexcept -> std::shared_ptr<spdlog::logger>;
+spdlog::async_logger(name, sinks, thread_pool, overrun_oldest)
 ```
 
-热路径使用原子指针，减少锁开销：
+`overrun_oldest`：队列满时丢弃最旧日志而非阻塞。日志不应阻塞网络 I/O 协程。
 
-```cpp
-auto *ptr = atomic_logger_ptr.load(std::memory_order_acquire);
-if (!ptr) return nullptr;
-return spdlog::default_logger();
-```
+### Sink 组合
 
-### init - 初始化
+| Sink | 条件 | 说明 |
+|------|------|------|
+| `rotating_file_sink_mt` | `enable_file` | 按大小轮转，最多 `max_files` 个 |
+| `stdout_color_sink_mt` | `enable_console` | 彩色控制台输出 |
 
-```cpp
-void init(const config &cfg);
-```
+## 核心函数
 
-执行流程：
-1. 创建日志目录
-2. 初始化线程池
-3. 创建sink列表
-4. 配置异步logger
-5. 设置默认logger
-
-### shutdown - 关闭
-
-```cpp
-void shutdown();
-```
-
-执行流程：
-1. 清空原子指针
-2. flush日志
-3. 释放logger
-4. 调用 `spdlog::shutdown()`
-
-## 日志级别解析
-
-```cpp
-spdlog::level::level_enum parse_spdlog_level(std::string_view level_str);
-```
-
-| 输入 | 输出 |
+| 函数 | 说明 |
 |------|------|
+| `init(cfg)` | 创建目录 → 初始化线程池 → 创建 sinks → 配置 async logger |
+| `shutdown()` | 清空原子指针 → flush → 释放 logger → `spdlog::shutdown()` |
+| `recorder()` | 热路径：原子指针 load → `spdlog::default_logger()` |
+
+## 约束
+
+### init/shutdown 必须单线程调用
+
+**类型**: 线程安全
+
+**规则**: `init()` 和 `shutdown()` 使用 `shared_mutex` 保护，但设计上仅在 main 线程启动/关闭时调用。
+
+**违反后果**: 并发调用 init/shutdown 可能导致 logger 指针状态不一致。
+
+### recorder() 可多线程调用
+
+**类型**: 线程安全
+
+**规则**: `recorder()` 仅做 `atomic load`，无锁，可在任何线程安全调用。spdlog 的 `logger::log()` 内部线程安全。
+
+## 日志级别映射
+
+| 配置字符串 | spdlog 级别 |
+|-----------|------------|
 | `trace` | `trace` |
 | `debug` | `debug` |
 | `info` | `info` |
-| `warn`, `warning` | `warn` |
-| `error`, `err` | `err` |
-| `critical`, `fatal` | `critical` |
+| `warn`/`warning` | `warn` |
+| `error`/`err` | `err` |
+| `critical`/`fatal` | `critical` |
 | `off` | `off` |
 
-大小写不敏感，默认返回 `info`。
+大小写不敏感，默认 `info`。
 
-## Sink 创建
+## 引用关系
 
-### rotating_file_sink
+### 被引用
 
-```cpp
-sinks.emplace_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-    log_path.string(),
-    max_size,
-    max_files,
-    true  // 自动轮转
-));
-```
-
-### stdout_color_sink
-
-```cpp
-sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-```
-
-## 异步策略
-
-```cpp
-auto logger = std::make_shared<spdlog::async_logger>(
-    logger_name,
-    sinks,
-    spdlog::thread_pool(),
-    spdlog::async_overflow_policy::overrun_oldest  // 队列满时丢弃最旧
-);
-```
-
-## 使用示例
-
-```cpp
-// 初始化
-trace::config cfg;
-cfg.file_name = "server.log";
-cfg.log_level = "debug";
-trace::init(cfg);
-
-// 日志记录
-trace::info("服务器启动，端口: {}", port);
-trace::error("连接失败: {}", fault::describe(err));
-
-// 关闭
-trace::shutdown();
-```
-
-## 调用链
-
-```mermaid
-graph TD
-    A[trace::init] --> B[创建日志目录]
-    A --> C[初始化线程池]
-    A --> D[创建sinks]
-    D --> E[rotating_file_sink_mt]
-    D --> F[stdout_color_sink_mt]
-    A --> G[创建async_logger]
-    G --> H[设置atomic_logger_ptr]
-    
-    I[trace::recorder] --> J[atomic_logger_ptr.load]
-    J --> K[spdlog::default_logger]
-    
-    L[trace::shutdown] --> M[清空atomic_logger_ptr]
-    M --> N[flush并释放logger]
-    N --> O[spdlog::shutdown]
-```
-
-## 相关页面
-
-- [[core/trace/overview]] - Trace模块总览
-- [[core/trace/config]] - 日志配置参数
+- [[core/trace/overview|overview]]：模块入口
+- [[core/trace/config|config]]：配置参数

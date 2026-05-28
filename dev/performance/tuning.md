@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: Prism 性能调优指南
+tags: [dev, performance, tuning]
 ---
 
 # Prism 性能调优指南
@@ -145,9 +147,9 @@ build_release/benchmarks/RegressionBench.exe --json
 
 ## 相关页面
 
-- [[performance/overview]] — 性能架构概览
-- [[performance/profiling]] — 性能分析方法
-- [[performance/report]] — 完整基准报告
+- [[dev/performance/overview|performance/overview]] — 性能架构概览
+- [[dev/performance/profiling|performance/profiling]] — 性能分析方法
+- [[dev/performance/report|performance/report]] — 完整基准报告
 - [[pmr-memory-pool]] — PMR 内存池详解
 
 ## 参考资源

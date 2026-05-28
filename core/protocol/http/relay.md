@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/protocol/http/relay.hpp
 title: HTTP 代理中继器
+tags: [protocol, http, relay, connect, forward]
 ---
 
 # HTTP 代理中继器
@@ -99,5 +100,5 @@ relay::release -> transport::shared_transmission
 
 - [[core/protocol/http/parser]] - 请求解析器
 - [[core/transport/transmission]] - 传输层接口
-- [[core/instance/account/directory|directory]] - 账户目录
-- [[core/instance/account/entry|entry]] - 连接租约
+- [[core/account/directory|directory]] - 账户目录
+- [[core/account/entry|entry]] - 连接租约

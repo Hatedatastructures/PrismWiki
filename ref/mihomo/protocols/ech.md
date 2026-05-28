@@ -326,6 +326,6 @@ proxies:
 ## 相关文档
 
 - [[reality]] - Reality TLS 隐蔽
-- [[core/stealth/ech|ech]] - ECH 技术详解
+- [[core/stealth/ech/config|ech]] - ECH 技术详解
 - [[core/crypto/x25519|x25519]] - X25519 密钥交换
 - [[core/crypto/hkdf|hkdf]] - HKDF 密钥派生

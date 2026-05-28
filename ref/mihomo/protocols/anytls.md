@@ -298,5 +298,5 @@ proxies:
 
 - [[reality]] - Reality TLS 隐蔽
 - [[ech]] - ECH 加密 Client Hello
-- [[core/stealth/anytls|anytls]] - AnyTLS 隐蔽技术
+- [[core/stealth/anytls/scheme|anytls]] - AnyTLS 隐蔽技术
 - [[ref/mihomo/protocols/overview|protocols]] - 代理协议概述

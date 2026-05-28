@@ -1,359 +1,100 @@
 ---
+tags: [transport, encrypted]
 layer: core
 source: I:/code/Prism/include/prism/transport/encrypted.hpp
-title: encrypted
+title: encrypted — TLS 加密传输层
+module: transport
+updated: 2026-05-27
 ---
 
-# encrypted
+# encrypted — TLS 加密传输层
 
-加密传输层实现，将 `ssl::stream` 适配为 [[core/transport/transmission|transmission]] 接口，供协议装饰器使用。
+将 `ssl::stream<connector>` 适配为 [[core/channel/transport/transmission|transmission]] 接口。持有 TLS 流的共享所有权，使协议装饰器能透明操作加密连接。
 
-## 概述
+## 核心接口
 
-`encrypted` 类继承自 [[core/transport/transmission|transmission]]，封装 TLS 流，使协议装饰器（如 trojan::stream）能够装饰 TLS 加密流。该类持有 `ssl::stream` 的共享所有权，确保在协议处理期间流对象有效。
+| 方法 | 说明 |
+|------|------|
+| `encrypted(shared_stream)` | 从已握手的 TLS 流构造 |
+| `transport_type()` | 返回 `type::tcp` |
+| `next_layer()` | 返回 nullptr（叶子节点，connector 非 transmission） |
+| `executor()` | TLS 流的执行器 |
+| `async_read_some(buf, ec)` | TLS 异步读取 |
+| `async_write_some(buf, ec)` | TLS 异步写入 |
+| `close()` | 跳过 SSL_shutdown，直接关闭底层 socket |
+| `cancel()` | 取消底层传输的挂起操作 |
+| `stream()` | TLS 流引用，用于直接操作 |
+| `release()` | 释放 TLS 流所有权 |
+| `ssl_handshake(inbound, ctx)` | 静态工厂：握手成功返回 TLS 流，失败恢复原始传输 |
 
-### 核心特性
+### 类型
 
-- **传输抽象**: 继承 `transmission` 接口实现 TLS 传输层
-- **协程设计**: 所有异步操作返回 `net::awaitable` 简化调用
-- **错误码映射**: 自动映射 Boost.System 错误码到项目错误码
-- **TLS 优化**: `async_write_scatter` 将帧头和载荷合并为单次 TLS 记录
+| 类型 | 说明 |
+|------|------|
+| `connector_type` | `transport::connector`，封装 socket + transmission |
+| `stream_type` | `ssl::stream<connector_type>` |
+| `shared_stream` | `shared_ptr<stream_type>` |
 
-## 类定义
+## 设计决策
 
-```cpp
-class encrypted : public transmission
-{
-public:
-    using connector_type = psm::connect::connector;
-    using stream_type = ssl::stream<connector_type>;
-    using shared_stream = std::shared_ptr<stream_type>;
+### 为什么 close() 跳过 SSL_shutdown？
 
-    // 构造函数
-    explicit encrypted(shared_stream ssl_stream);
+SSL_shutdown 在非阻塞模式下可能阻塞等待对端 close_notify 响应，增加关闭延迟。代理场景中快速释放资源比优雅关闭更重要——对端收到 TCP RST 而非 close_notify 是可接受的。
 
-    // 接口实现
-    [[nodiscard]] bool is_reliable() const noexcept override;
-    [[nodiscard]] executor_type executor() const override;
-    auto async_read_some(std::span<std::byte> buffer, std::error_code &ec)
-        -> net::awaitable<std::size_t> override;
-    auto async_write_some(std::span<const std::byte> buffer, std::error_code &ec)
-        -> net::awaitable<std::size_t> override;
-    auto async_write_scatter(const std::span<const std::byte> *buffers, std::size_t count, std::error_code &ec)
-        -> net::awaitable<std::size_t> override;
-    void close() override;
-    void cancel() override;
+**后果**: 对端日志可能出现 "unexpected EOF" 或 "connection reset" 警告。
 
-    // TLS 流访问
-    [[nodiscard]] stream_type &stream() noexcept;
-    [[nodiscard]] const stream_type &stream() const noexcept;
-    shared_stream release();
+**源码依据**: `encrypted.hpp:141-144`
 
-private:
-    shared_stream ssl_stream_;  // TLS 流的共享指针
-};
-```
+### 为什么 ssl_handshake 是静态工厂方法返回三元组？
 
-## 类型定义
+TLS 握手可能失败（客户端不支持、证书错误），此时需要从 connector 中恢复原始 transmission 的所有权。返回 `(fault::code, shared_stream, shared_transmission)`：成功时 stream 有效、transmission 为 nullptr；失败时 stream 为 nullptr、transmission 从 connector 的 release() 恢复。
 
-### connector_type
+**后果**: 调用方在握手失败时不丢失传输层，可尝试其他方案（如降级到明文协议）。
 
-```cpp
-using connector_type = psm::connect::connector;
-```
+**源码依据**: `encrypted.hpp:200-201`
 
-底层连接器类型，封装 socket 和传输层。
+### 为什么 encrypted 的 next_layer() 返回 nullptr？
 
-### stream_type
+encrypted 内部持有 `ssl::stream<connector>`，而 connector 不是 transmission 子类。encrypted 在装饰器链中是叶子节点，`lowest_layer<>()` 无法穿透它获取底层 TCP socket。
 
-```cpp
-using stream_type = ssl::stream<connector_type>;
-```
+**后果**: 需要访问底层 TCP socket 时必须通过 `stream().lowest_layer().transmission()` 显式穿透 ssl::stream 和 connector。
 
-TLS 流类型，基于 OpenSSL 的 SSL 流。
+**源码依据**: `encrypted.hpp:78-86`
 
-### shared_stream
+## 约束
 
-```cpp
-using shared_stream = std::shared_ptr<stream_type>;
-```
+### TLS 流必须在构造前完成握手
 
-TLS 流的共享指针，持有流的所有权。
+**类型**: 状态前置
 
-## 构造函数详解
+**规则**: 构造函数接收的 shared_stream 必须已完成 TLS 握手。未握手的流会导致后续读写失败。
 
-```cpp
-explicit encrypted(shared_stream ssl_stream)
-    : ssl_stream_(std::move(ssl_stream))
-{
-}
-```
-
-使用已建立的 TLS 流创建加密传输层。TLS 流必须已完成握手。
-
-**参数**:
-- `ssl_stream`: TLS 流的共享指针
-
-## 主要方法详解
-
-### is_reliable()
-
-```cpp
-[[nodiscard]] bool is_reliable() const noexcept override
-{
-    return true;
-}
-```
-
-TLS 基于 TCP，始终返回 `true`，表示可靠传输。
-
----
-
-### executor()
-
-```cpp
-[[nodiscard]] executor_type executor() const override
-{
-    return const_cast<stream_type &>(*ssl_stream_).get_executor();
-}
-```
-
-返回底层 TLS 流关联的执行器，用于调度异步操作。
-
----
-
-### async_read_some() 逐行解析
-
-```cpp
-auto async_read_some(std::span<std::byte> buffer, std::error_code &ec)
-    -> net::awaitable<std::size_t> override
-{
-    boost::system::error_code sys_ec;                       // 1. 创建 Boost 错误码
-    auto token = net::redirect_error(net::use_awaitable, sys_ec); // 2. 创建协程令牌
-    const auto n = co_await ssl_stream_->async_read_some(
-        net::buffer(buffer.data(), buffer.size()), token);  // 3. 调用 TLS 流异步读取
-    ec = psm::fault::make_error_code(psm::fault::to_code(sys_ec)); // 4. 转换错误码
-    co_return n;                                            // 5. 返回读取字节数
-}
-```
-
-**设计要点**:
-- 调用底层 TLS 流的 `async_read_some` 实现异步读取
-- 返回实际读取的字节数，错误通过 `ec` 返回
-- 错误码映射：Boost.System → 项目错误码
-
----
-
-### async_write_some() 逐行解析
-
-```cpp
-auto async_write_some(std::span<const std::byte> buffer, std::error_code &ec)
-    -> net::awaitable<std::size_t> override
-{
-    boost::system::error_code sys_ec;                       // 1. 创建 Boost 错误码
-    auto token = net::redirect_error(net::use_awaitable, sys_ec); // 2. 创建协程令牌
-    const auto n = co_await ssl_stream_->async_write_some(
-        net::buffer(buffer.data(), buffer.size()), token);  // 3. 调用 TLS 流异步写入
-    ec = psm::fault::make_error_code(psm::fault::to_code(sys_ec)); // 4. 转换错误码
-    co_return n;                                            // 5. 返回写入字节数
-}
-```
-
----
-
-### async_write_scatter() 逐行解析
-
-```cpp
-auto async_write_scatter(const std::span<const std::byte> *buffers, std::size_t count, std::error_code &ec)
-    -> net::awaitable<std::size_t> override
-{
-    if (count == 0)                                         // 1. 空缓冲区快速返回
-    {
-        ec.clear();
-        co_return 0;
-    }
-
-    boost::system::error_code sys_ec;
-    auto token = net::redirect_error(net::use_awaitable, sys_ec);
-    std::size_t total = 0;
-
-    if (count == 2) [[likely]]                              // 2. 两个缓冲区（帧头+载荷）优化
-    {
-        const std::array<net::const_buffer, 2> bufs{{       // 3. 构造 buffer 序列
-            net::const_buffer(buffers[0].data(), buffers[0].size()),
-            net::const_buffer(buffers[1].data(), buffers[1].size())
-        }};
-        total = co_await net::async_write(*ssl_stream_, bufs, token); // 4. 单次 TLS 写入
-    }
-    else
-    {
-        for (std::size_t i = 0; i < count; ++i)             // 5. 多个缓冲区逐个写入
-        {
-            const auto n = co_await async_write(buffers[i], ec);
-            total += n;
-            if (ec)
-            {
-                co_return total;
-            }
-        }
-        co_return total;
-    }
-
-    ec = psm::fault::make_error_code(psm::fault::to_code(sys_ec));
-    co_return total;
-}
-```
-
-**TLS 优化设计**:
-- 将多个缓冲区合并为单次 `async_write` 写入
-- 底层 `SSL_write` 将帧头和载荷合并为一条 TLS 记录
-- 避免两次加密操作和额外的 TLS 帧头开销
-- `[[likely]]` 优化帧头+载荷场景
-
----
-
-### close() 逐行解析
-
-```cpp
-void close() override
-{
-    // best-effort SSL_shutdown：发送 close_notify 通知对端
-    // 非阻塞模式下立即返回，不等待对端响应
-    ::SSL_shutdown(ssl_stream_->native_handle());           // 1. 发送 TLS close_notify
-    ssl_stream_->lowest_layer().transmission().close();    // 2. 关闭底层传输层
-}
-```
-
-**关闭流程**:
-1. 调用 `SSL_shutdown` 发送 TLS `close_notify` 通知对端
-2. 关闭底层传输层（TCP socket）
-
-**注意事项**:
-- `SSL_shutdown` 在非阻塞模式下立即返回，不等待对端响应
-- 这是 best-effort 行为，不保证对端收到通知
-
----
-
-### cancel()
-
-```cpp
-void cancel() override
-{
-    ssl_stream_->lowest_layer().transmission().cancel();
-}
-```
-
-取消底层传输层当前所有挂起的异步读写操作。被取消的操作将返回 `operation_canceled` 错误。
-
----
-
-### stream()
-
-```cpp
-[[nodiscard]] stream_type &stream() noexcept
-{
-    return *ssl_stream_;
-}
-
-[[nodiscard]] const stream_type &stream() const noexcept
-{
-    return *ssl_stream_;
-}
-```
-
-返回内部 TLS 流的引用，用于直接操作 TLS 层。
-
----
-
-### release()
-
-```cpp
-shared_stream release()
-{
-    return std::move(ssl_stream_);
-}
-```
-
-将内部持有的 TLS 流共享指针移动返回，调用后对象不再持有流。
-
-## 工厂函数
-
-```cpp
-inline shared_transmission make_encrypted(encrypted::shared_stream ssl_stream)
-{
-    return std::make_shared<encrypted>(std::move(ssl_stream));
-}
-```
-
-使用已建立的 TLS 流创建加密传输层实例。TLS 流必须已完成握手。
-
-**参数**:
-- `ssl_stream`: TLS 流的共享指针
-
-**返回值**: 传输层指针
-
-## 调用链
-
-```mermaid
-graph TD
-    A[调用方] --> B[encrypted]
-    B --> C[ssl_stream_]
-    C --> D[OpenSSL SSL_read/SSL_write]
-    
-    B --> E[async_read_some]
-    E --> F[ssl_stream_.async_read_some]
-    
-    B --> G[async_write_some]
-    G --> H[ssl_stream_.async_write_some]
-    
-    B --> I[async_write_scatter]
-    I --> J[net::async_write]
-    J --> K[SSL_write 合并 TLS 记录]
-    
-    B --> L[close]
-    L --> M[SSL_shutdown close_notify]
-    L --> N[底层传输层 close]
-```
-
-## 继承关系
-
-- 继承自 [[core/transport/transmission|transmission]] 传输层抽象接口
-- 底层使用 [[core/transport/reliable|reliable]] TCP 传输
-
-## 使用示例
-
-```cpp
-// 创建 TLS 上下文
-net::ssl::context ctx(net::ssl::context::tlsv13);
-ctx.use_certificate_chain_file("server.crt");
-ctx.use_private_key_file("server.key", net::ssl::context::pem);
-
-// 创建 TLS 流
-auto ssl_stream = std::make_shared<ssl::stream<connector>>(std::move(sock), ctx);
-ssl_stream->handshake(ssl::stream_base::server);
-
-// 创建加密传输层
-auto trans = make_encrypted(ssl_stream);
-
-// 异步读取
-std::array<std::byte, 1024> buffer;
-std::error_code ec;
-auto n = co_await trans->async_read_some(buffer, ec);
-
-// Scatter-gather 写入（优化 TLS 记录）
-std::array<std::span<const std::byte>, 2> bufs{{header, payload}};
-auto written = co_await trans->async_write_scatter(bufs.data(), 2, ec);
-
-// 关闭连接
-trans->close();
-
-// 获取底层 TLS 流
-auto &ssl = trans->stream();
-```
-
-## 设计原则
-
-1. **传输抽象**: 继承 `transmission` 接口实现 TLS 传输层
-2. **协程设计**: 异步操作返回协程，简化调用
-3. **共享所有权**: 持有 TLS 流的共享指针，确保协议处理期间流对象有效
-4. **TLS 优化**: `async_write_scatter` 合并帧头和载荷为单条 TLS 记录
+**违反后果**: async_read_some/async_write_some 返回 TLS 协议错误。
+
+**源码依据**: `encrypted.hpp:57` `@details`
+
+### 关闭后不可再调用任何方法
+
+**类型**: 状态前置
+
+**规则**: close() 或 release() 后对象不再持有有效流，后续调用是未定义行为。
+
+**违反后果**: 解引用空指针，崩溃。
+
+**源码依据**: `encrypted.hpp:43` `@warning`
+
+## 引用关系
+
+### 依赖
+
+| 模块 | 用途 |
+|------|------|
+| [[core/channel/transport/transmission|transmission]] | 抽象基类 |
+| [[core/transport/adapter/connector|connector]] | 底层连接器 |
+
+### 被引用
+
+| 模块 | 使用方式 |
+|------|----------|
+| recognition 方案执行器 | 握手后用 `ssl_handshake` 创建 encrypted |
+| protocol 处理器 | 通过 transmission 接口透明读写 TLS 数据 |

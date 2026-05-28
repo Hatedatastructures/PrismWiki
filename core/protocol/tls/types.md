@@ -2,6 +2,7 @@
 layer: core
 source: "I:/code/Prism/include/prism/protocol/tls/types.hpp"
 title: TLS 协议共享类型
+tags: [protocol, tls, types, constants, clienthello, record, handshake]
 ---
 
 # TLS 协议共享类型

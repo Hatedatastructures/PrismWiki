@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: Prism 性能基准测试报告
+tags: [dev, performance, report, benchmark]
 ---
 
 # Prism 性能基准测试报告
@@ -141,10 +143,10 @@ build_release/benchmarks/RegressionBench.exe
 
 ## 相关页面
 
-- [[performance/overview]] — 性能架构概览
-- [[performance/tuning]] — 性能调优指南
-- [[performance/profiling]] — 性能分析方法
-- [[benchmark]] — 基准测试设计
+- [[dev/performance/overview|performance/overview]] — 性能架构概览
+- [[dev/performance/tuning|performance/tuning]] — 性能调优指南
+- [[dev/performance/profiling|performance/profiling]] — 性能分析方法
+- [[dev/testing/benchmark|benchmark]] — 基准测试设计
 
 ## 参考资源
 

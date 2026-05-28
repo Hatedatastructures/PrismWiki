@@ -3,12 +3,75 @@ layer: core
 source:
   - I:/code/Prism/include/prism/crypto/aead.hpp
   - I:/code/Prism/src/prism/crypto/aead.cpp
+tags: [crypto, aead, encryption]
 title: AEAD 认证加密
 ---
 
 # AEAD 认证加密
 
 AEAD（Authenticated Encryption with Associated Data）提供同时保证机密性和完整性的加密方式。本模块封装 BoringSSL 的 EVP_AEAD API，支持四种主流 AEAD 算法。
+
+## 设计决策
+
+### 为什么自动递增 nonce？
+
+SS2022 (SIP022) TCP 流量加密要求连续数据包使用递增 nonce。将 nonce 递增内置于 `seal`/`open`（无显式 nonce 的重载），调用方无需手动管理计数器状态，降低 nonce 碰撞风险。
+
+**后果**: 隐式 nonce 版本不是线程安全的——并发 `seal`/`open` 会导致 nonce 竞态。SS2022 连接中 `aead_context` 由单连接单线程使用，不构成问题。
+
+### 为什么提供隐式/显式两个版本？
+
+隐式版本（无显式 nonce 参数）适用于 TCP 流量——按序递增，简单可靠。显式版本（接受 `seal_input`/`open_input` 结构体）适用于 UDP 逐包加密——每个包携带独立 nonce，无序到达，不能依赖内部状态。
+
+**后果**: 显式版本不修改内部 nonce 状态，适合无状态场景；隐式版本每次调用后 nonce 递增，适合有序流场景。
+
+### 为什么用 unique_ptr + 函数指针删除器管理 BoringSSL 上下文？
+
+`EVP_AEAD_CTX` 是 BoringSSL 的不透明结构体，析构需调用 `EVP_AEAD_CTX_cleanup` 再 `delete`。`std::unique_ptr<evp_aead_ctx_st, void(*)(evp_aead_ctx_st*)>` 避免手写析构函数，同时保持异常安全的资源释放。
+
+**后果**: 构造函数中 `new EVP_AEAD_CTX` 是唯一堆分配点，之后所有 `seal`/`open` 调用零堆分配。
+
+## 约束
+
+### nonce 溢出
+
+**类型**: 资源上限
+
+**规则**: nonce 最大值为 `2^(nonce_len*8) - 1`，AES-GCM/ChaCha20 为 `2^96 - 1`，XChaCha20 为 `2^192 - 1`
+
+**违反后果**: `increment_nonce()` 返回 `false`，`seal`/`open` 返回 `fault::code::crypto_error`，日志输出 `"seal nonce 溢出"` 或 `"open nonce 溢出"`
+
+**源码依据**: `aead.cpp:115-119`，`aead.cpp:145-149`
+
+### 输出缓冲区大小
+
+**类型**: 状态前置
+
+**规则**: `seal` 的 `out` 必须 >= `plaintext.size() + 16`，`open` 的 `out` 必须 >= `ciphertext.size() - 16`
+
+**违反后果**: BoringSSL 内部写入越界，未定义行为
+
+**源码依据**: `aead.hpp:134`，`aead.hpp:146`
+
+### 密钥长度匹配
+
+**类型**: 调用顺序
+
+**规则**: 构造时 `key` 长度必须与 `aead_cipher` 枚举匹配（AES-128=16, AES-256=32, ChaCha20=32, XChaCha20=32）
+
+**违反后果**: `EVP_AEAD_CTX_init` 失败，`ctx_` 为 nullptr，后续所有 `seal`/`open` 返回 `crypto_error`
+
+**源码依据**: `aead.cpp:58`
+
+### 非线程安全
+
+**类型**: 线程安全
+
+**规则**: 同一个 `aead_context` 实例的隐式 nonce 版本 `seal`/`open` 不可并发调用
+
+**违反后果**: nonce 竞态导致 nonce 碰撞，产生可被重放的密文
+
+**源码依据**: `aead.hpp:76-77`
 
 ## 源码位置
 
@@ -258,6 +321,70 @@ ctx.seal(ciphertext, plaintext, packet_nonce, {});  // 不修改内部 nonce
 | TLS 1.3 | AES-256-GCM / ChaCha20-Poly1305 | 硬件加速或纯软件优化 |
 | SS2022 TCP | AES-256-GCM | 12 字节 nonce 足够 |
 | SS2022 UDP | XChaCha20-Poly1305 | 24 字节 nonce 避免重放 |
+
+## 故障场景
+
+### nonce 碰撞
+
+**触发条件**: 同一 `aead_context` 实例上 seal/open 调用次数超过 `2^(nonce_len*8)` 次，或并发调用隐式 nonce 版本导致竞态
+
+**传播路径**: `increment_nonce()` 返回 `false` -> `seal`/`open` 返回 `fault::code::crypto_error` -> 调用方看到 `crypto_error` -> 连接层断开
+
+**外部表现**: 客户端连接突然断开，无数据传输
+
+**恢复机制**: 关闭并重建连接，新连接使用新密钥和从零开始的 nonce
+
+**日志关键字**: `"seal nonce 溢出"` 或 `"open nonce 溢出"`
+
+### tag 验证失败
+
+**触发条件**: 密文被篡改、密钥错误、或 nonce 不匹配
+
+**传播路径**: `EVP_AEAD_CTX_open` 返回 0 -> `open` 返回 `fault::code::crypto_error` -> 协议层检测到解密失败 -> 连接断开
+
+**外部表现**: 客户端连接断开，服务端日志出现 `crypto_error`
+
+**恢复机制**: 无法恢复，必须使用正确密钥重建连接
+
+**日志关键字**: `"[Crypto.AEAD]"` + `crypto_error`
+
+### 上下文构造失败
+
+**触发条件**: 传入未知 `aead_cipher` 枚举值，或密钥长度不匹配，或 BoringSSL 内部初始化失败
+
+**传播路径**: `ctx_` 保持 nullptr -> 后续所有 `seal`/`open` 立即返回 `crypto_error`
+
+**外部表现**: 连接建立后立即断开，所有数据无法加解密
+
+**恢复机制**: 检查配置文件中的加密方法名称和密钥格式
+
+**日志关键字**: `"未知加密算法"` 或 `"EVP_AEAD_CTX_init 失败"`
+
+### 跨模块契约
+
+| 模块 A | 模块 B | 契约内容 |
+|--------|--------|---------|
+| [[core/protocol/shadowsocks/format\|SS2022 TCP]] | [[core/crypto/aead\|aead]] | 使用隐式 nonce 版本 seal/open，每连接一个 `aead_context`，密钥由 BLAKE3 derive_key 派生 |
+| [[core/protocol/shadowsocks/datagram\|SS2022 UDP]] | [[core/crypto/aead\|aead]] | 使用显式 nonce 版本（`seal_input`/`open_input`），nonce 从数据包头解析 |
+| [[core/stealth/reality/handshake\|Reality]] | [[core/crypto/aead\|aead]] | 使用 AES-128-GCM，密钥由 HKDF expand_label 派生 |
+| [[core/crypto/hkdf\|hkdf]] | [[core/crypto/aead\|aead]] | hkdf 输出的密钥长度必须与 aead_cipher 的密钥长度匹配 |
+
+## 变更敏感度
+
+### 对外影响
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| 修改 `increment_nonce` 递增方向 | 全部隐式 nonce 调用方 | SS2022 TCP 两端 nonce 失同步，连接断开 |
+| 修改 `tag_length()` 返回值 | 全部 seal/open 调用方 | 输出缓冲区大小计算错误，内存越界 |
+| 修改 `seal_input`/`open_input` 字段 | SS2022 UDP、所有显式 nonce 调用方 | 编译失败 |
+
+### 对内影响
+
+| 上游变更 | 本模块受影响 | 需要检查 |
+|---------|------------|---------|
+| BoringSSL 升级 | `EVP_AEAD_*` API 签名 | `aead.cpp` 全部 EVP 调用 |
+| 新增 AEAD 算法（如 AES-256-SIV） | `aead_cipher` 枚举和构造函数 switch | `aead.cpp:27-48` 的 switch 分支 |
 
 ## 调用链
 

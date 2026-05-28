@@ -1,133 +1,88 @@
 ---
+tags: [loader, load]
 layer: core
-source: prism/loader/load.hpp
+source: include/prism/loader/load.hpp
 title: Loader Load
+module: loader
+updated: 2026-05-27
 ---
 
 # Loader Load
 
-配置加载适配器，将外部配置转换为内部结构。
+配置加载适配器，将外部 JSON 配置转换为内部 `config` 结构，并将认证配置构建为运行时 `account::directory`。是外部世界与核心配置之间的防腐层。
 
-## 源码位置
+## 核心接口
 
-`I:/code/Prism/include/prism/loader/load.hpp`
+| 函数 | 说明 |
+|------|------|
+| `load(path)` | 加载 JSON 配置文件，返回 `config`。失败抛异常 |
+| `build_dir(auth)` | 从认证配置构建 `shared_ptr<account::directory>` |
 
-## load - 加载配置
+## 设计决策
 
-```cpp
-inline auto load(const std::string_view path) -> config;
-```
+### 为什么 load() 用异常而非错误码？
 
-### 执行流程
+配置加载失败是致命错误，程序无法继续运行。异常自动展开调用栈，`main()` 的 `try/catch` 统一处理，不需要逐层检查错误码。这与热路径的双轨策略一致：启动路径用异常，运行路径用 `fault::code`。
 
-1. 打开文件（失败抛 `exception::security`）
-2. 读取全部内容
-3. JSON反序列化
-4. 返回配置对象
+**后果**: 调用方必须用 `try/catch` 包裹 `load()` 调用。
 
-### 异常处理
+### 为什么用 `memory::string` 读取文件内容？
 
-| 情况 | 异常类型 |
-|------|----------|
-| 文件打开失败 | `exception::security` |
-| JSON解析失败 | `exception::network(fault::code::parse_error)` |
+文件内容是一次性消费的临时字符串，用 PMR 分配避免全局堆锁。读取后通过 `string_view` 传递给反序列化器，零拷贝。
 
-```cpp
-std::ifstream file(path.data(), std::ios::binary);
-if (!file.is_open()) {
-    throw exception::security("system error: {}", "file open failed");
-}
-```
+**后果**: `memory::string` 的分配器来自全局池，读取期间零堆分配。
 
-### 使用示例
+### 为什么 password 要 SHA224 规范化？
 
-```cpp
-try {
-    auto cfg = loader::load("/etc/prism/config.json");
-    trace::info("配置加载成功，端口: {}", cfg.port);
-} catch (const exception::security &e) {
-    trace::error("配置加载失败: {}", e.dump());
-}
-```
+代理协议（Trojan）传输的凭证是 SHA224 哈希值。`build_dir()` 将配置中的明文密码预先规范化为 SHA224，运行时认证时直接比较哈希值，避免每次连接都计算哈希。
 
-## build_account_directory - 构建账户目录
+**后果**: 目录中存储的是 SHA224 哈希字符串，非明文密码。
 
-```cpp
-inline auto build_account_directory(const agent::authentication &auth)
-    -> std::shared_ptr<agent::account::directory>;
-```
+### 为什么 password 和 uuid 共享同一个 entry？
 
-### 设计思路
+同一用户可能通过不同协议连接（Trojan 用 UUID，SOCKS5 用密码）。共享 entry 确保连接数限制跨协议生效，否则同一用户可绕过配额。
 
-统一用户表：`password` 和 `uuid` 共享同一个 `entry`，从而共享连接数配额。
+**后果**: entry 的 `shared_ptr` 被多个 map key 引用，直到所有 key 移除且所有 lease 释放才销毁。
 
-### 执行流程
+## 约束
 
-1. 创建 `account::directory`
-2. 预估条目数并预留空间
-3. 遍历用户：
-   - `password` → SHA224规范化 → 注册
-   - `uuid` → 直接注册
-   - 两者共享 `shared_entry`
+### load() 必须在 worker 创建前调用
 
-### SHA224规范化
+**类型**: 调用顺序
 
-```cpp
-const auto normalized = crypto::normalize_credential(std::string_view(user.password));
-dir->insert(normalized, shared_entry);
-```
+**规则**: `loader::load()` 必须在创建 worker 线程池之前完成（`main.cpp` 启动流程保证）。
 
-### 使用示例
+**违反后果**: worker 使用未初始化的配置，行为不可预测。
 
-```cpp
-auto cfg = loader::load(path);
-auto account_dir = loader::build_account_directory(cfg.authentication);
+**源码依据**: `load.hpp:36-69`
 
-// 查询账户
-if (account_dir->lookup(password)) {
-    // 认证成功
-}
-```
+### build_dir() 中的 reserve() 减少重新哈希
 
-## 调用链
+**类型**: 性能
 
-```mermaid
-graph TD
-    A[loader::load] --> B[ifstream打开文件]
-    B --> C{is_open?}
-    C -->|No| D[throw exception::security]
-    C -->|Yes| E[读取内容]
-    E --> F[memory::string]
-    F --> G[json::deserialize]
-    G --> H{成功?}
-    H -->|No| I[trace::error]
-    I --> J[throw exception::network]
-    H -->|Yes| K[return config]
-    
-    L[loader::build_account_directory] --> M[authentication.users]
-    M --> N[创建shared_entry]
-    N --> O{password非空?}
-    O -->|Yes| P[SHA224规范化]
-    P --> Q[directory::insert]
-    O -->|No| R{uuid非空?}
-    R -->|Yes| S[directory::insert]
-    R -->|No| T[继续下一用户]
-```
+**规则**: `build_dir()` 预估总条目数（每个用户的 password + uuid），先 `reserve()` 再插入。
 
-## 依赖关系
+**违反后果**: 不调用 `reserve()` 时每次插入可能触发 `unordered_map` 重新哈希，COW 复制开销增大。
 
-```cpp
-#include <prism/config.hpp>
-#include <prism/exception.hpp>
-#include <prism/transformer.hpp>
-#include <prism/trace.hpp>
-#include <prism/agent/account/directory.hpp>
-#include <prism/crypto/sha224.hpp>
-```
+**源码依据**: `load.hpp:85-97`
 
-## 相关页面
+## 异常映射
 
-- [[core/loader/overview]] - Loader模块总览
-- [[core/transformer/json]] - JSON反序列化
-- [[core/exception/security]] - 安全异常
-- [[core/instance/account/directory]] - 账户目录
+| 阶段 | 异常类型 | 触发条件 |
+|------|----------|----------|
+| 文件打开 | `exception::security` | `ifstream::is_open()` 为 false |
+| JSON 解析 | `exception::network(fault::code::parse_error)` | `deserialize()` 失败或抛 `std::exception` |
+| JSON 解析 | `exception::network(fault::code::parse_error)` | 未知异常 |
+
+## 引用关系
+
+### 依赖
+
+- [[core/transformer/overview|transformer]]：JSON 反序列化
+- [[core/exception/overview|exception]]：启动阶段异常
+- [[core/account/directory|account::directory]]：账户目录构建
+- [[core/crypto/sha224|crypto::sha224]]：凭证规范化
+
+### 被引用
+
+- `main.cpp`：启动流程调用

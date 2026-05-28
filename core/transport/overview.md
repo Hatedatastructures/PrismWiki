@@ -257,6 +257,80 @@ transport/
 | Boost.Asio | `udp::socket::async_receive_from()` | UDP 数据报收发 |
 | [[core/connect/pool/pool|Connection Pool]] | `pooled_connection` | 连接池复用管理 |
 
+## 设计决策
+
+### 为什么使用 transmission 基类 + 装饰器链而非继承体系？
+
+**问题**: 传输层有多种变体（TCP、TLS、UDP）和多种功能横切（预读回放、可回滚、协议装饰），如果用继承体系会组合爆炸。
+
+**选择**: transmission 基类定义最小流接口（async_read_some、async_write_some、executor、close），装饰器（preview、snapshot、protocol conn）通过组合包装任意 transmission。叶子节点（reliable、encrypted、unreliable）实现具体传输。
+
+**后果**: 任意传输都可以被任意装饰器包装，如 `preview(snapshot(reliable))` 或 `encrypted(connector(preview(reliable)))`。代价是 `next_layer()` 链式导航需要 O(N) 遍历，但装饰层通常不超过 4 层，开销可忽略。
+
+**替代方案**: 为每种组合定义类型（如 `TLSOverTCPWithPreview`）会导致笛卡尔积爆炸。
+
+**源码依据**: `transport/transmission.hpp:57-237`
+
+### 为什么组合操作是自由函数而非虚函数？
+
+**问题**: async_write（完整写入）和 async_read（完整读取）是循环调用 async_write_some/read_some 的组合操作，如果作为虚函数则每个子类都要覆写。
+
+**选择**: 作为自由函数 `transport::async_write()` / `transport::async_read()` 定义在 transmission.hpp 中，所有传输类型共享同一实现。
+
+**后果**: 减少虚函数数量，子类只需实现 `async_read_some` 和 `async_write_some`。UDP 的 `async_write` 行为与 TCP 不同时，由 unreliable 自身在虚函数覆写中处理（UDP 数据报一次发送完成无需循环）。
+
+**源码依据**: `transport/transmission.hpp:255-296`
+
+### 为什么 reliable 和 unreliable 都继承 enable_shared_from_this？
+
+**问题**: 连接池归还和异步操作生命周期需要 shared_ptr 管理，但构造函数中无法获取自身的 shared_ptr。
+
+**选择**: reliable 和 unreliable 都继承 `std::enable_shared_from_this`，允许在成员函数中安全获取 `shared_from_this()`。
+
+**后果**: 对象必须通过 `std::make_shared` 创建（工厂函数保证）。栈上创建或 `std::unique_ptr` 管理的对象调用 `shared_from_this()` 是未定义行为。
+
+**源码依据**: `transport/reliable.hpp:52`, `transport/unreliable.hpp:41`
+
+## 约束
+
+### 装饰器链顺序固定
+
+**类型**: 架构约束
+**规则**: 装饰器链顺序由外到内为: protocol conn -> encrypted -> connector -> preview -> snapshot -> reliable。snapshot 必须在 preview 之下（更接近 reliable），否则 rewind 无法回放 preview 已消费的预读数据。
+**违反后果**: rewind 后丢失预读数据，协议处理读到残缺数据流
+
+### 所有异步操作必须返回 net::awaitable
+
+**类型**: 协程纯度
+**规则**: transmission 的虚函数 async_read_some/async_write_some 返回 `net::awaitable<size_t>`，错误通过 `std::error_code&` 参数返回，不抛异常。
+**违反后果**: 在协程中抛异常会违反热路径无异常保证
+
+### close() 后禁止继续使用
+
+**类型**: 生命周期
+**规则**: close() 关闭底层资源后，传输层对象不再可用。调用方不应在 close() 后调用任何方法。
+
+## 失败场景
+
+| 场景 | 处理 |
+|------|------|
+| TCP 连接断开 | async_read_some 返回 ec=connection_reset 或 n=0 |
+| TLS 握手失败 | encrypted::ssl_handshake 返回 fault::code，从 connector 恢复 transport |
+| UDP 数据报来源不匹配 | unreliable 丢弃数据报，循环等待匹配来源 |
+| snapshot rewind 后写入 | can_rewind() 返回 false，调用方应检查 |
+| preview 预读数据耗尽 | 透明委托给 inner_->async_read_some，无额外开销 |
+| 连接池连接不健康 | healthy_fast() 检测后自动销毁而非复用 |
+
+## 跨模块契约
+
+| 上游模块 | 对 transport 的调用 | 契约 |
+|----------|---------------------|------|
+| recognition | wrap_with_preview(inbound, probe_data) | probe 阶段预读数据必须在协议处理前包装回传输 |
+| stealth | make_snapshot(inbound) + rewind() | rewind 仅在纯读取阶段有效 |
+| connect/tunnel | async_write(t, buffer, ec) | 完整写入保证所有数据发送或返回错误 |
+| multiplex | transport->async_read_some() | 传输层作为 mux frame_loop 的数据源 |
+| connect/pool | make_reliable(pooled_connection) | 池连接的 close() 归还而非关闭 |
+
 ## 参见
 
 - [[core/transport/transmission|transmission]] -- 传输层抽象接口

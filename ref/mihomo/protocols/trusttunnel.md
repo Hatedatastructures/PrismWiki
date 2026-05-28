@@ -381,5 +381,5 @@ proxies:
 
 - [[anytls]] - AnyTLS 协议
 - [[ech]] - ECH 加密
-- [[core/stealth/trusttunnel|trusttunnel]] - TrustTunnel 详细文档
+- [[core/stealth/trusttunnel/overview|trusttunnel]] - TrustTunnel 详细文档
 - [[ref/mihomo/protocols/overview|protocols]] - 代理协议概述

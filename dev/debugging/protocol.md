@@ -501,7 +501,7 @@ esac
 ## 相关链接
 
 - [[dev/debugging/overview]] — 排障体系概述
-- [[protocol]] — Protocol 协议模块
-- [[pipeline]] — Pipeline 管道模块
-- [[recognition]] — Recognition 识别模块
+- [[dev/modules|protocol]] — Protocol 协议模块
+- [[dev/modules|pipeline]] — Pipeline 管道模块
+- [[dev/modules|recognition]] — Recognition 识别模块
 - [[dev/debugging/tls]] — TLS 问题排查

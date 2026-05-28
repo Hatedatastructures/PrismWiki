@@ -2,6 +2,7 @@
 layer: core
 source: "I:/code/Prism/include/prism/protocol/analysis.hpp"
 title: 协议分析与识别
+tags: [protocol, analysis, detect, resolve, target, protocol-type]
 ---
 
 # 协议分析与识别

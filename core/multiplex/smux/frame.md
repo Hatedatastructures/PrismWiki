@@ -2,6 +2,8 @@
 layer: core
 source: I:/code/Prism/include/prism/multiplex/smux/frame.hpp
 title: smux::frame - smux 帧协议定义
+tags: [multiplex, smux, frame, protocol, encoding]
+updated: 2026-05-28
 ---
 
 # smux::frame - smux 帧协议定义
@@ -12,132 +14,103 @@ title: smux::frame - smux 帧协议定义
 
 ## 概述
 
-定义 smux 多路复用协议的帧格式、命令类型和编解码函数。兼容 Mihomo/xtaci/smux v1。
+定义 smux 多路复用协议的帧格式、命令类型和编解码函数。兼容 Mihomo/xtaci/smux v1。smux 采用 8 字节定长帧头，Length 和 StreamID 使用小端字节序。
 
 ## 协议常量
 
-```cpp
-constexpr std::uint8_t protocol_version = 0x01;
-constexpr std::size_t frame_header_size = 8;
-constexpr std::size_t max_frame_length = 65535;
+| 常量 | 值 | 说明 |
+|------|----|------|
+| `protocol_version` | 0x01 | 协议版本号 |
+| `frame_hdrsize` | 8 | 帧头大小（字节） |
+| `max_frame_length` | 65535 | 最大帧数据大小（64KB） |
+
+## 帧头字节布局
+
+8 字节定长帧头，Length 和 StreamID 使用小端字节序：
+
+```
+[Version 1B][Cmd 1B][Length 2B LE][StreamID 4B LE]
 ```
 
-## 帧头结构
+## 命令类型 (command)
 
-```cpp
-struct frame_header
-{
-    std::uint8_t version = protocol_version;  // 协议版本号
-    command cmd = command::push;              // 命令类型
-    std::uint16_t length = 0;                 // 负载长度（小端序）
-    std::uint32_t stream_id = 0;              // 流标识符（小端序）
-};
-```
+| 值 | 名称 | 说明 |
+|----|------|------|
+| 0 | syn | 新建流 |
+| 1 | fin | 半关闭流 |
+| 2 | push | 数据推送 |
+| 3 | nop | 心跳（不回复） |
 
-帧格式：`[Version 1B][Cmd 1B][Length 2B LE][StreamID 4B LE]`
+## frame_header 结构
 
-## 命令类型
-
-```cpp
-enum class command : std::uint8_t
-{
-    syn = 0,   // 新建流
-    fin = 1,   // 半关闭流
-    push = 2,  // 数据推送
-    nop = 3    // 心跳（不回复）
-};
-```
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| version | uint8_t | protocol_version | 协议版本号 |
+| cmd | command | push | 命令类型 |
+| length | uint16_t | 0 | 负载长度（小端序） |
+| stream_id | uint32_t | 0 | 流标识符（小端序），0 表示会话级帧 |
 
 ## 地址解析结构
 
 ### parsed_address
 
-从 mux 首个 PSH 帧解析的目标地址：
+从 mux 首个 PSH 帧解析的目标地址。sing-mux StreamRequest 格式：`[Flags 2B][ATYP 1B][Addr(var)][Port 2B]`。
 
-```cpp
-struct parsed_address
-{
-    memory::string host;      // 目标主机
-    std::uint16_t port = 0;   // 目标端口
-    std::size_t offset = 0;   // 地址结束位置
-    bool is_udp = false;      // 是否为 UDP 流
-    bool packet_addr = false; // 是否为 PacketAddr 模式
-};
-```
+Flags 含义：bit0 = UDP 流标识，bit1 = PacketAddr 模式。
 
-sing-mux StreamRequest 格式：`[Flags 2B][ATYP 1B][Addr(var)][Port 2B]`
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| host | memory::string | 目标主机 |
+| port | uint16_t | 目标端口 |
+| offset | size_t | 地址结束位置（相对于原始 buffer） |
+| is_udp | bool | 是否为 UDP 流（Flags bit0） |
+| addr | addr_mode | 地址编码模式（Flags bit1） |
 
-Flags 含义：
-- bit0：UDP 流标识
-- bit1：PacketAddr 模式
+### udp_dgram
 
-### udp_datagram
+UDP 数据报解析结果，格式：`[ATYP 1B][Addr(var)][Port 2B][Data]`。
 
-UDP 数据报解析结果：
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| host | memory::string | 目标主机 |
+| port | uint16_t | 目标端口 |
+| payload | span\<const byte\> | 数据部分（不含 UDP 头部） |
+| consumed | size_t | 解析消耗的总字节数 |
 
-```cpp
-struct udp_datagram
-{
-    memory::string host;                // 目标主机
-    std::uint16_t port = 0;             // 目标端口
-    std::span<const std::byte> payload; // 数据部分
-    std::size_t consumed = 0;           // 解析消耗字节数
-};
-```
+### udp_prefixed
 
-格式：`[ATYP 1B][Addr(var)][Port 2B][Data]`
+Length-prefixed UDP 数据报，格式：`[Length 2B BE][Payload]`。目标地址在 SYN 时已确定，不包含在数据帧中。
 
-### udp_length_prefixed
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| payload | span\<const byte\> | 数据部分 |
+| consumed | size_t | 解析消耗的总字节数 |
 
-Length-prefixed UDP 数据报：
+## 接口表
 
-```cpp
-struct udp_length_prefixed
-{
-    std::span<const std::byte> payload; // 数据部分
-    std::size_t consumed = 0;           // 解析消耗字节数
-};
-```
+### 解析函数
 
-格式：`[Length 2B BE][Payload]`
+| 函数 | 输入 | 返回 | 说明 |
+|------|------|------|------|
+| `parse_dgram` | span\<const byte\>, mr | optional\<udp_dgram\> | 解析 UDP 数据报（SOCKS5 地址格式） |
+| `parse_prefixed` | span\<const byte\> | optional\<udp_prefixed\> | 解析 length-prefixed UDP 数据报 |
+| `parse_address` | span\<const byte\>, mr | optional\<parsed_address\> | 解析 mux 首个 PSH 中的 Flags+地址 |
+| `deserialization` | span\<const byte\> | optional\<frame_header\> | 解析帧头（至少 8 字节） |
 
-## 解析函数
+### 构建函数
 
-```cpp
-// 解析 UDP 数据报（SOCKS5 地址格式）
-auto parse_udp_datagram(std::span<const std::byte> data,
-                        memory::resource_pointer mr)
-    -> std::optional<udp_datagram>;
+| 函数 | 输入 | 返回 | 说明 |
+|------|------|------|------|
+| `build_dgram` | datagram_params, mr | memory::vector\<byte\> | 构建 UDP 数据报 |
+| `build_prefixed` | span\<const byte\>, mr | memory::vector\<byte\> | 构建 length-prefixed UDP 数据报 |
 
-// 解析 length-prefixed UDP 数据报
-auto parse_udp_length_prefixed(std::span<const std::byte> data)
-    -> std::optional<udp_length_prefixed>;
+### datagram_params 结构
 
-// 解析 mux 首个 PSH 中的 Flags+地址
-auto parse_mux_address(std::span<const std::byte> data,
-                       memory::resource_pointer mr)
-    -> std::optional<parsed_address>;
-
-// 解析帧头
-auto deserialization(std::span<const std::byte> data)
-    -> std::optional<frame_header>;
-```
-
-## 构建函数
-
-```cpp
-// 构建 UDP 数据报
-auto build_udp_datagram(std::string_view host,
-                        std::uint16_t port,
-                        std::span<const std::byte> payload,
-                        memory::resource_pointer mr)
-    -> memory::vector<std::byte>;
-
-// 构建 length-prefixed UDP 数据报
-auto build_udp_length_prefixed(std::span<const std::byte> payload,
-                               memory::resource_pointer mr)
-    -> memory::vector<std::byte>;
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| host | string_view | 目标主机 |
+| port | uint16_t | 目标端口 |
+| payload | span\<const byte\> | 数据负载 |
 
 ## 地址类型支持
 

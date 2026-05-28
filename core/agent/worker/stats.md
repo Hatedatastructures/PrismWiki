@@ -1,4 +1,5 @@
 ---
+tags: [agent, worker, stats]
 layer: core
 source: I:/code/Prism/include/prism/instance/worker/stats.hpp
 title: stats 模块
@@ -156,9 +157,9 @@ graph TD
 
 ## 相关文档
 
-- [[core/instance/worker/worker|Worker 模块]]
-- [[core/instance/worker/launch|启动模块]]
-- [[core/instance/front/balancer|负载均衡器]]
+- [[core/agent/worker/worker|Worker 模块]]
+- [[core/agent/worker/launch|启动模块]]
+- [[core/agent/front/balancer|负载均衡器]]
 
 ---
 

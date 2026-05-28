@@ -1,4 +1,5 @@
 ---
+layer: dev
 title: CMake 构建结构
 created: 2026-05-17
 updated: 2026-05-17
@@ -232,4 +233,4 @@ target_link_libraries(MemoryStress PRIVATE prism_static_library)
 - [[dev/building/commands|构建命令]] — 常用构建命令
 - [[dev/building/options|构建选项]] — 可配置构建选项
 - [[dev/testing|测试指南]] — 测试详情
-- [[performance/benchmark|性能基准]] — 基准测试结果
+- [[dev/performance/report|性能基准]] — 基准测试结果

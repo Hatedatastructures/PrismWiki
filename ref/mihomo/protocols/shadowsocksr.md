@@ -311,4 +311,4 @@ Chain 系列协议进一步优化了性能和安全性：
 
 - [[shadowsocks]] - Shadowsocks 协议
 - [[ref/protocol/shadowsocks-spec|shadowsocks-spec]] - Shadowsocks 协议规范
-- [[../transport/ssr]] - SSR 传输层
+- [[ref/mihomo/transport/ssr]] - SSR 传输层

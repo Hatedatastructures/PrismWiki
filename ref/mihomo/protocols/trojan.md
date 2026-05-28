@@ -428,4 +428,4 @@ Prism 使用六阶段流水线架构处理 Trojan 协议：
 
 - [[ref/protocol/trojan-spec|trojan-spec]] - Trojan 协议规范
 - [[reality]] - Reality TLS 隐蔽
-- [[../transport/gun]] - gRPC 传输
+- [[ref/mihomo/transport/gun]] - gRPC 传输

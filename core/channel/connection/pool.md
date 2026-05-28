@@ -1,4 +1,5 @@
 ---
+tags: [channel, connection, pool]
 layer: core
 source: I:/code/Prism/include/prism/connect/pool/pool.hpp
 title: connection_pool

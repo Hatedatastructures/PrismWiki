@@ -78,6 +78,6 @@ mihomo（原 Clash Meta）是一个功能强大的代理核心，支持多种代
 
 ## 相关文档
 
-- [[../transport/overview|传输层概述]]
-- [[../config|配置参考]]
+- [[ref/mihomo/transport/overview|传输层概述]]
+- [[ref/mihomo/config|配置参考]]
 - [[core/crypto/overview|overview]]

@@ -1,4 +1,5 @@
 ---
+tags: [connect, pool]
 layer: core
 source: I:/code/Prism/include/prism/connect/pool/pool.hpp
 title: connection_pool
@@ -50,36 +51,17 @@ struct endpoint_key
 
 ### pooled_connection
 
-连接池连接的 RAII 包装器。内联存储 pool 指针、socket 指针和 endpoint，零堆分配。析构时自动归还连接到连接池。
+连接池连接的 RAII 包装器。析构时自动调用 `reset()` 归还或关闭连接。移动语义转移所有权后源对象无效。禁止拷贝。
 
-```cpp
-class pooled_connection
-{
-public:
-    pooled_connection() = default;
-    pooled_connection(connection_pool *pool, tcp::socket *socket, tcp::endpoint endpoint);
-    ~pooled_connection();  // 自动调用 reset() 归还或关闭连接
+| 方法 | 说明 |
+|------|------|
+| `valid()` / `operator bool()` | socket 指针非空 |
+| `get()` / `operator*()` / `operator->()` | 访问 socket |
+| `release()` | 释放所有权，不归还池（调用方负责关闭 socket） |
+| `reset()` | 归还到池或关闭连接 |
 
-    // 移动语义
-    pooled_connection(pooled_connection &&other) noexcept;
-    pooled_connection &operator=(pooled_connection &&other) noexcept;
-
-    // 禁止拷贝
-    pooled_connection(const pooled_connection &) = delete;
-    pooled_connection &operator=(const pooled_connection &) = delete;
-
-    // 访问器
-    [[nodiscard]] tcp::socket *get() const noexcept;
-    [[nodiscard]] tcp::socket &operator*() const noexcept;
-    [[nodiscard]] tcp::socket *operator->() const noexcept;
-    [[nodiscard]] bool valid() const noexcept;
-    [[nodiscard]] explicit operator bool() const noexcept;
-
-    // 所有权操作
-    [[nodiscard]] tcp::socket *release() noexcept;  // 释放所有权，不归还池
-    void reset();  // 归还或关闭连接
-};
-```
+> [!warning]
+> `release()` 后调用方必须关闭返回的 socket，否则连接泄漏。`reset()` 内部调用 `recycle()` 执行健康检测和容量检查。
 
 ### pool_stats
 
@@ -185,9 +167,84 @@ graph TD
 
 被 [[core/resolve/router]] 使用，用于管理到上游服务器的 TCP 连接复用。
 
-## 注意事项
+## 约束
 
-1. **线程安全**：连接池设计为线程局部使用，不支持跨线程共享
-2. **生命周期**：必须确保 `io_context` 在连接池生命周期内保持运行
-3. **内存管理**：设置过大的 `max_cache_per_endpoint` 可能导致内存压力
-4. **RAII 模式**：`pooled_connection` 必须在 socket 不再需要前析构或显式 `reset/release`，否则连接不会被归还到池中
+### start() 必须在 io_context 运行前调用
+
+**类型**: 调用顺序
+
+**规则**: `start()` 必须在 `io_context::run()` 之前调用，否则后台清理协程不会启动。
+
+**违反后果**: 过期连接永远不会被清理，池无限增长。最终可能耗尽文件描述符。
+
+**源码依据**: `pool.hpp:288-289`
+
+### pooled_connection 必须析构或 reset
+
+**类型**: 资源管理
+
+**规则**: `pooled_connection` 必须在 socket 不再需要前析构或显式 `reset()`/`release()`。
+
+**违反后果**: 连接泄漏。池中可用连接逐渐耗尽，后续请求被迫新建连接。
+
+**源码依据**: `pool.hpp:269-270`
+
+### 单线程使用
+
+**类型**: 线程安全
+
+**规则**: 连接池设计为线程局部使用，每个 worker 拥有独立的 pool 实例。不支持跨线程共享。
+
+**违反后果**: `cache_` 并发读写导致数据竞争，未定义行为。
+
+**源码依据**: `pool.hpp:222`
+
+### io_context 生命周期
+
+**类型**: 生命周期
+
+**规则**: `io_context` 必须在连接池生命周期内保持运行。
+
+**违反后果**: 后台清理协程和异步连接操作引用已停止的 `io_context`，未定义行为。
+
+**源码依据**: `pool.hpp:223`
+
+## 设计决策
+
+### 为什么使用 LIFO 栈式缓存？
+
+LIFO 保证最近归还的连接最先被复用。最近使用的连接最可能仍处于健康状态（对端未关闭），减少僵尸连接命中概率。同时 LIFO 使得长时间空闲的连接自然沉底，在 cleanup 时优先被淘汰。
+
+**后果**: 高并发场景下，同一连接可能被反复复用，而较早归还的连接可能过期。
+
+### 为什么 pooled_connection 内联存储而非 shared_ptr？
+
+`pooled_connection` 只有 3 个成员（pool 指针、socket 指针、endpoint），总计约 40 字节。使用 `shared_ptr` 需要额外的控制块分配（16 字节），对每个连接增加一次堆分配。内联存储配合移动语义，零堆分配传递连接。
+
+**后果**: `pooled_connection` 不可拷贝，只能移动。
+
+## 故障场景
+
+### 连接池耗尽
+
+**触发条件**: 上游服务器响应慢，所有连接被占用且未归还。或 `max_cache_per_endpoint` 设过小。
+
+**传播路径**: `async_acquire()` 缓存未命中 → 新建连接 → 达到系统 fd 上限或超时 → 返回 `timeout`/`bad_gateway` → `dial()` 返回错误 → 客户端连接失败。
+
+**外部表现**: 批量客户端连接超时。统计中 `total_creates` 持续增长但 `total_hits` 不增。
+
+**恢复机制**: 自动。活跃连接关闭后通过 `recycle()` 归还池中。可调高 `max_cache_per_endpoint` 缓解。
+
+**日志关键字**: `timeout` + `bad_gateway`
+
+### 缓存中僵尸连接
+
+**触发条件**: 上游服务器关闭 TCP 连接（发送 FIN），但客户端尚未检测到。`socket.is_open()` 返回 true（socket 本地端仍"打开"），但实际已不可用。
+
+**传播路径**: `async_acquire()` 命中缓存 → 复用僵尸连接 → 写入时发现 RST → 协议处理器报错 → 重新拨号。
+
+**外部表现**: 间歇性连接失败，通常在第一次 I/O 时暴露。后续重试通常成功（使用新建连接）。
+
+**恢复机制**: 部分自动。`recycle()` 检查 `is_open()` 但无法检测 FIN。[[core/connect/pool/health]] 的 `check()` 通过 `peek` 检测 FIN，但仅在连接归还时可选执行。
+
+**日志关键字**: 连接断开后重试成功

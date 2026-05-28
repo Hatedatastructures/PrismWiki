@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/protocol/socks5/constants.hpp
 title: SOCKS5 协议常量
+tags: [protocol, socks5, constants, command, address-type, auth, reply]
 ---
 
 # SOCKS5 协议常量

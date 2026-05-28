@@ -1,117 +1,60 @@
 ---
+tags: [recognition, scheme-route-table]
 layer: core
-source: I:/code/Prism/include/prism/recognition/scheme_route_table.hpp
-title: scheme_route_table.hpp
+module: recognition
+source: I:/code/Prism/include/prism/recognition/routes.hpp
+title: route_table
 ---
 
-# scheme_route_table.hpp
+# route_table
 
 SNI 路由表，根据 ClientHello SNI 快速路由到对应伪装方案。
 
-## 源码位置
+## 设计决策
 
-`I:/code/Prism/include/prism/recognition/scheme_route_table.hpp`
+### 为什么用独立路由表而非在每个 scheme 中检查 SNI？
 
-## 设计理念
+分层检测管道的 Tier 2 需要一次查找匹配所有方案的 SNI。如果每个 scheme 独立检查，需要遍历所有 scheme 实例逐一调用 `snis()` 方法，O(n) 复杂度。路由表预构建 SNI → 方案映射，查找 O(log n)。同时路由表支持多方案共享同一 SNI，返回候选列表。
 
-从配置构建 SNI → 方案名称的映射表，启动时初始化，实现 O(log n) 查找。
+**后果**: 配置热加载时需重建路由表（`build()` 是静态工厂方法）。
 
-支持多方案共享同一 SNI，返回多个候选方案。
+## 核心方法
 
-## scheme_route_table
+| 方法 | 说明 |
+|------|------|
+| `build(cfg)` | 从配置构建路由表（静态工厂） |
+| `lookup(sni)` | 根据 SNI 查找匹配方案，返回候选列表 |
+| `matches_any(sni)` | 检查 SNI 是否匹配任意方案 |
+| `registered_snis()` | 获取所有已注册的 SNI 列表（调试用） |
+| `empty()` | 检查路由表是否为空 |
 
-### build()
+## 约束
 
-从配置构建路由表。
+### SNI 精确匹配
 
-```cpp
-static auto build(const psm::config &cfg) -> scheme_route_table;
-```
+**类型**: 调用顺序
 
-遍历所有 stealth 方案的 `server_names` 配置，构建映射。
+**规则**: `lookup()` 使用精确匹配（`memory::map` 的 `find()`），不支持通配符（如 `*.example.com`）。
 
-### lookup()
+**违反后果**: 通配符 SNI 配置不会匹配任何请求。必须在配置中列出每个具体域名。
 
-根据 SNI 查找匹配方案。
+**源码依据**: `routes.hpp:87`
 
-```cpp
-[[nodiscard]] auto lookup(std::string_view sni) const
-    -> memory::vector<memory::string>;
-```
+### 空 SNI 返回空列表
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `sni` | `string_view` | ClientHello 中的 SNI |
+**类型**: 状态前置
 
-**返回**：匹配的方案名称列表（通常只有一个）
+**规则**: 空 `string_view` 的 SNI 查找返回空列表，不会匹配任何方案。
 
-### matches_any()
-
-检查 SNI 是否匹配任意方案。
-
-```cpp
-[[nodiscard]] auto matches_any(std::string_view sni) const -> bool;
-```
-
-### all_registered_snis()
-
-获取所有已注册的 SNI 列表（调试用）。
-
-```cpp
-[[nodiscard]] auto all_registered_snis() const
-    -> memory::vector<memory::string>;
-```
-
-### empty()
-
-检查路由表是否为空。
-
-```cpp
-[[nodiscard]] auto empty() const noexcept -> bool;
-```
-
-## 路由规则
-
-| 方案 | 配置字段 | SNI 示例 |
-|------|----------|----------|
-| Reality | `server_names` | `"example.com"` |
-| ShadowTLS | `server_names` | `"example.org"` |
-| Restls | `server_names` | `"example.net"` |
-| 未匹配 | - | 返回空列表 → fallback native |
-
-## 多方案共享 SNI
-
-同一 SNI 可配置在多个方案中：
-
-```yaml
-# 配置示例
-reality:
-  server_names: ["example.com"]
-
-shadowtls:
-  server_names: ["example.com"]  # 共享 SNI
-
-# lookup("example.com") → ["reality", "shadowtls"]
-```
-
-执行时按优先级顺序尝试。
-
-## 调用链
-
-```mermaid
-graph TD
-    A[identify] -->|Tier 2| B[layered_detection_pipeline]
-    B -->|SNI匹配| C[scheme_route_table::lookup]
-    C -->|返回候选| D[方案执行]
-```
+**源码依据**: `routes.hpp:60`
 
 ## 引用关系
 
 ### 依赖
 
-- [[../config|psm::config]]：全局配置
+- [[core/instance/config|psm::config]]：全局配置
 
 ### 被引用
 
-- [[layered_pipeline]]：Tier 2 检测使用
-- [[../recognition]]：识别入口引用
+- [[core/recognition/layered_pipeline|layered_pipeline]]：Tier 2 检测使用
+- [[core/recognition/recognition|recognition]]：识别入口引用

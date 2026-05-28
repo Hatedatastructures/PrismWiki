@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/multiplex/smux/craft.hpp, I:/code/Prism/include/prism/multiplex/smux/frame.hpp, I:/code/Prism/include/prism/multiplex/smux/config.hpp, I:/code/Prism/include/prism/multiplex/core.hpp, I:/code/Prism/include/prism/multiplex/bootstrap.hpp, I:/code/Prism/include/prism/multiplex/duct.hpp, I:/code/Prism/include/prism/multiplex/parcel.hpp, I:/code/Prism/include/prism/multiplex/yamux/craft.hpp, I:/code/Prism/include/prism/multiplex/yamux/frame.hpp, I:/code/Prism/include/prism/multiplex/yamux/config.hpp
 title: multiplex - 多路复用模块
+tags: [multiplex, smux, yamux, h2mux, core, duct, parcel, bootstrap]
 ---
 
 # multiplex - 多路复用模块
@@ -156,8 +157,104 @@ yamux 有 30s 的 pending 超时（`stream_open_timeout_ms`），比 smux 更健
 
 详见 [[dev/debugging/deep-dive/multiplex-boundaries|多路复用边界条件分析]]
 
+## 设计决策
+
+### 为什么三协议共存？
+
+Prism 的 multiplex 模块同时实现了 smux、yamux 和 h2mux 三种多路复用协议，而非只选一种。
+
+**问题**: 不同的代理客户端生态使用不同的多路复用协议。sing-box 生态使用 smux 或 yamux（通过 sing-mux 协商选择），TrustTunnel 方案使用 HTTP/2 CONNECT stream 多路复用。服务端必须兼容所有客户端。
+
+**选择**: 实现三协议共存，通过统一入口分流：
+- `bootstrap()` 处理 smux/yamux 的 sing-mux 协商头 `[Version][Protocol]` 自动分流
+- `h2mux` 由 TrustTunnel scheme 直接创建，不走 bootstrap 协商
+- 三者共享 `core` 抽象基类，`duct`/`parcel` 管道完全协议无关
+
+**后果**: 维护成本增加（三套帧编解码），但 duct/parcel 层零重复代码。新增协议只需继承 `core` 实现四个纯虚函数。
+
+### 为什么 duct/parcel 使用 weak_ptr<core>？
+
+**问题**: duct/parcel 被 core 的 `ducts_`/`parcels_` 映射持有 `shared_ptr`，如果它们又通过 `shared_ptr` 持有 core，则形成循环引用导致内存泄漏。
+
+**选择**: duct/parcel 的 `owner_` 使用 `weak_ptr<core>`。每次需要调用 core 方法时通过 `lock()` 获取临时 `shared_ptr`，core 销毁后 `lock()` 返回空指针，安全退出。
+
+**后果**: 每次访问 core 需要一次 `lock()` 开销（原子操作），但彻底消除循环引用。源码依据：`duct.hpp:182`, `parcel.hpp:229`。
+
+### 为什么发送路径使用 concurrent_channel 串行化？
+
+**问题**: 多个 duct 的 `target_readloop` 可能同时调用 `core::send_data`，底层 transport 不支持并发写入，帧边界必须保持完整（不能交错）。
+
+**选择**: 每个协议实现（craft）持有 `concurrent_channel<outbound_frame>`，所有发送操作推入通道，由独立的 `send_loop` 协程串行消费写入 transport。
+
+**后果**: 发送操作被异步化（`async_send` 不阻塞帧循环），但引入一帧延迟。通道容量与 `max_streams` 对齐，满时反压到上游。
+
+## 约束
+
+### 单实例单线程约束
+
+**类型**: 线程安全
+**规则**: core 及其子对象（duct/parcel/craft）均非线程安全，必须在同一 executor 上串行使用
+**违反后果**: 数据竞争导致帧交错、内存损坏或崩溃
+**源码依据**: `core.hpp:12` 注释 "应在 transport executor 上串行使用"
+
+### close() 幂等性
+
+**类型**: 调用顺序
+**规则**: `core::close()`、`duct::close()`、`parcel::close()` 均为幂等操作，可安全多次调用
+**违反后果**: 无（设计上允许多次调用）
+**源码依据**: `core.cpp:83` `active_.exchange(false, std::memory_order_acq_rel)` 首次返回 true 后立即返回
+
+### duct 构造后必须调用 start()
+
+**类型**: 调用顺序
+**规则**: `make_duct()` 返回后必须调用 `duct->start()` 才会启动双向转发
+**违反后果**: duct 存在于 `ducts_` 映射中但无数据流动，客户端请求挂起
+**源码依据**: `duct.cpp:42` start() 才 co_spawn 两个循环
+
+## 故障场景
+
+### 底层传输断开
+
+**触发条件**: TLS 连接中断、TCP RST、网络超时
+**传播路径**: `transport->async_read_some` 返回错误 → `frame_loop` 退出 → `run()` 结束 → `on_exception` 回调 → `core::close()`
+**外部表现**: 所有活跃 duct/parcel 同时关闭，客户端连接全部中断
+**恢复机制**: 客户端需重新建立传输层连接并重新协商
+**日志关键字**: `[Smux.Craft] read header failed`、`[Yamux.Craft] read header failed`、`[Mux.Core] session exception`
+
+### 单流 target 连接失败
+
+**触发条件**: 目标服务不可达、DNS 解析失败、连接超时
+**传播路径**: `activate_stream` → `connect::async_forward` 返回错误 → 发送 0x01 错误状态 → `send_fin` → 从 `pending_` 移除
+**外部表现**: 该流无法建立，其他流不受影响
+**恢复机制**: 客户端收到 FIN 后可重试新建流
+**日志关键字**: `[Smux.Craft] connect to` `failed`、`address parse failed`
+
+### yamux pending 流超时
+
+**触发条件**: 客户端发送 SYN 后 30 秒内未发送携带地址的 Data 帧
+**传播路径**: `pending_timeout` → 检查流仍在 pending → 清理状态 → 发送 WindowUpdate(RST)
+**外部表现**: 该流被服务端主动重置
+**恢复机制**: 客户端收到 RST 后可重新打开流
+**日志关键字**: `[Yamux.Craft] stream` `open timeout, resetting`
+
+## 跨模块契约
+
+| multiplex | connect | 契约内容 |
+|-----------|---------|---------|
+| core::activate_stream | connect::async_forward | activate_stream 调用 async_forward 获取目标连接，失败时发送错误状态 |
+| duct | transport::transmission | duct 通过 shared_transmission 接口与 target 交互，不感知 TCP/TLS |
+| parcel | connect::resolve_dgram | parcel 通过 resolve_dgram 做 DNS 解析，resolve_dgram 返回 {code, endpoint} |
+| bootstrap | transport::shared_transmission | bootstrap 接收已建立的传输层连接，读取协商头后移交 craft |
+| craft::send_loop | transport::async_write | send_loop 通过 transport::async_write 自由函数写入帧数据 |
+
+| multiplex | stats | 契约内容 |
+|-----------|-------|---------|
+| core | stats::traffic::traffic_state | core 持有 per-worker 流量统计指针，close() 时 flush 累计流量 |
+
 ## 关联模块
 
 - [[core/connect|connect]] - 连接层抽象
 - [[core/resolve|resolve]] - DNS 解析和路由
 - [[core/memory|memory]] - PMR 内存管理
+- [[core/transport|transport]] - 传输层抽象
+- [[core/stats|stats]] - 运行时统计

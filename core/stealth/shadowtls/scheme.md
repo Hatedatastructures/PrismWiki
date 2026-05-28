@@ -2,6 +2,12 @@
 layer: core
 source: I:/code/Prism/include/prism/stealth/shadowtls/scheme.hpp
 title: ShadowTLS v3 伪装方案
+tags:
+  - stealth
+  - shadowtls
+  - tier1
+  - HMAC
+  - scheme
 ---
 
 # ShadowTLS v3 伪装方案
@@ -62,6 +68,48 @@ protected:
         -> std::uint16_t override { return 100; }
 };
 ```
+
+## 设计决策（WHY）
+
+### 为什么 ShadowTLS 是 Tier 1 而非 Tier 0
+
+ShadowTLS 的 SessionID HMAC 是确定性特征——如果密码正确，HMAC 匹配是确定性的。但 HMAC-SHA1 计算是有成本的（相对于零成本的字节比较），因此归为 Tier 1。Reality 的 `[01:08:02]` 标记是纯字节比较，不需要任何计算，归为 Tier 0。
+
+### 为什么 `verify()` 需要原始 ClientHello 字节
+
+HMAC 计算需要 ClientHello 的原始字节（不是解析后的结构），因为 HMAC 输入包含 `ClientHello[10:hmac_index] + 00000000 + ClientHello[hmac_index+4:]`。如果只传解析后的结构，原始字节中的精确偏移信息会丢失。
+
+### 为什么 ShadowTLS 需要连接后端服务器
+
+ShadowTLS 的伪装原理是**代理真实 TLS 握手**。服务端将客户端的 ClientHello 转发给真实 TLS 服务器，获得真实的 ServerHello，再返回给客户端。这样在中间人看来，连接完全是一个到后端服务器的正常 TLS 握手。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| SessionID 必须恰好 32 字节 | ShadowTLS 协议 | 过短或过长都无法嵌入 HMAC |
+| `verify()` 需要 `raw` 完整 ClientHello | HMAC 偏移计算 | 缺少 TLS 记录头导致偏移错误 |
+| 后端服务器必须支持 TLS 1.3（strict_mode） | 配置选项 | TLS 1.2 后端在 strict_mode 下被拒绝 |
+| HMAC 标签仅 4 字节 | ShadowTLS v3 设计 | 碰撞概率 1/2^32，安全但非极高 |
+
+## 失败场景
+
+| 场景 | 触发条件 | 行为 |
+|------|----------|------|
+| SessionID 长度不等于 32 | `sniff()` 阶段 | `hit=false`，不进入 verify |
+| HMAC 不匹配 | 密码错误 | `score=0`，不作为候选 |
+| 后端服务器不可达 | `handshake_dest` 无效 | `handshake()` 失败 |
+| 后端返回 TLS 1.2 | strict_mode=true | 握手拒绝 |
+| 写入 ClientHello 到后端后失败 | 已向网络写入 | `polluted=true`，不可 rewind |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `scheme` → `config` | 依赖 | `active()` 检查 `enabled()`，`snis()` 读取 `server_names` |
+| `scheme` → `auth` | 调用 | `verify()` 调用 `verify_client_hello()` |
+| `scheme` → `handshake` | 调用 | `handshake()` 委托给 shadowtls::handshake |
+| `scheme` → `recognition::tls` | 依赖 | `sniff()` 检查 session_id 长度特征 |
 
 ## 方案层级
 

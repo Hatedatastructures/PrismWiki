@@ -1,18 +1,18 @@
 ---
-title: "message — DNS 报文编解码"
+title: "message -- DNS 报文编解码"
 layer: core
 source: "I:/code/Prism/include/prism/resolve/dns/detail/format.hpp"
 module: "resolve/dns/detail"
 type: component
 tags: [dns, format, wire, encode, decode, rfc1035]
 created: 2026-05-17
-updated: 2026-05-17
+updated: 2026-05-28
 related:
   - core/resolve/dns/upstream
   - core/resolve/dns/detail/cache
 ---
 
-# message — DNS 报文编解码
+# message -- DNS 报文编解码
 
 > 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/format.hpp`
 > 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
@@ -23,306 +23,133 @@ related:
 
 ## qtype 枚举
 
-```cpp
-enum class qtype : std::uint16_t {
-    a = 1,      // IPv4 地址记录
-    ns = 2,     // 权威名称服务器
-    cname = 5,  // 规范名称（别名）
-    soa = 6,    // 区域起始授权
-    mx = 15,    // 邮件交换
-    txt = 16,   // 文本记录
-    aaaa = 28,  // IPv6 地址记录
-    opt = 41,   // EDNS0 选项
-};
-```
+| 值 | 名称 | 说明 |
+|------|------|------|
+| 1 | `a` | IPv4 地址记录 |
+| 2 | `ns` | 权威名称服务器 |
+| 5 | `cname` | 规范名称（别名） |
+| 6 | `soa` | 区域起始授权 |
+| 15 | `mx` | 邮件交换 |
+| 16 | `txt` | 文本记录 |
+| 28 | `aaaa` | IPv6 地址记录 |
+| 41 | `opt` | EDNS0 选项 |
 
-仅列出本项目实际使用的类型。
+## 数据结构
 
-## question 结构
+### question -- DNS 查询段
 
-```cpp
-struct question {
-    memory::string name;      // 域名，小写无末尾点号
-    qtype query_type{};       // 查询类型
-    std::uint16_t qclass{1};  // 查询类，默认 IN（Internet）
-};
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | `memory::string` | 域名，小写无末尾点号 |
+| `query_type` | `qtype` | 查询类型 |
+| `qclass` | `uint16_t` | 查询类，默认 IN(1) |
 
-表示 DNS 查询段（Question Section）中的一个条目。
+### record -- DNS 资源记录
 
-## record 结构
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | `memory::string` | 拥有者名称 |
+| `type` | `qtype` | 记录类型 |
+| `rclass` | `uint16_t` | 记录类 |
+| `ttl` | `uint32_t` | 生存时间（秒） |
+| `rdata` | `memory::vector<uint8_t>` | 原始 RDATA |
 
-```cpp
-struct record {
-    memory::string name;                 // 拥有者名称
-    qtype type{};                        // 记录类型
-    std::uint16_t rclass{1};             // 记录类
-    std::uint32_t ttl{0};                // 生存时间（秒）
-    memory::vector<std::uint8_t> rdata;  // 原始 RDATA
-};
-```
+### 辅助函数
 
-表示 DNS 资源记录（Resource Record）。`rdata` 保存未解码的二进制数据。
-
-## 辅助函数
-
-### extract_ipv4
-
-```cpp
-auto extract_ipv4(const record &rec) -> std::optional<net::ip::address_v4>;
-```
-
-从 A 记录中提取 IPv4 地址：
-- 检查 `rdata.size() == 4`
-- 构造 `address_v4`
-
-### extract_ipv6
-
-```cpp
-auto extract_ipv6(const record &rec) -> std::optional<net::ip::address_v6>;
-```
-
-从 AAAA 记录中提取 IPv6 地址：
-- 检查 `rdata.size() == 16`
-- 构造 `address_v6`
+| 函数 | 说明 |
+|------|------|
+| `extract_ipv4(record) -> optional<address_v4>` | 从 A 记录提取 IPv4（rdata 需恰好 4 字节） |
+| `extract_ipv6(record) -> optional<address_v6>` | 从 AAAA 记录提取 IPv6（rdata 需恰好 16 字节） |
 
 ## message 类
 
-### 报文结构
+### Header 字段
 
-```cpp
-class message {
-public:
-    // Header
-    std::uint16_t id{0};    // 报文标识
-    bool qr{false};         // 0=查询, 1=响应
-    std::uint8_t opcode{0}; // 操作码（0=标准查询）
-    bool aa{false};         // 权威应答
-    bool tc{false};         // 截断标志
-    bool rd{false};         // 期望递归
-    bool ra{false};         // 可用递归
-    std::uint8_t rcode{0};  // 响应码
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | `uint16_t` | 报文标识（默认 0，调用方发送前设置） |
+| `qr` | `bool` | 0=查询, 1=响应 |
+| `opcode` | `uint8_t` | 操作码（0=标准查询） |
+| `aa` | `bool` | 权威应答 |
+| `tc` | `bool` | 截断标志 |
+| `rd` | `bool` | 期望递归 |
+| `ra` | `bool` | 可用递归 |
+| `rcode` | `uint8_t` | 响应码 |
 
-    // Sections
-    memory::vector<question> questions; // 查询段
-    memory::vector<record> answers;     // 应答段
-    memory::vector<record> authority;   // 权威段
-    memory::vector<record> additional;  // 附加段
-};
-```
+### 四段数据
+
+| 段 | 字段 | 说明 |
+|------|------|------|
+| Question | `questions` | 查询段列表 |
+| Answer | `answers` | 应答段列表 |
+| Authority | `authority` | 权威段列表 |
+| Additional | `additional` | 附加段列表 |
 
 ### 核心方法
 
-#### pack — 序列化
+| 方法 | 说明 |
+|------|------|
+| `pack() -> vector<uint8_t>` | 序列化：12 字节 Header -> Question -> Answer/Authority/Additional。域名编码采用压缩指针优化 |
+| `unpack(data, mr) -> optional<message>` | 反序列化：检查 `size>=12` -> 解析 Header -> 逐段解码 -> 处理域名压缩指针 -> 检测循环引用（跳转 >255 次返回 nullopt） |
+| `make_query(domain, qt, mr) -> message` | 构造标准递归查询：`id=0, rd=true, opcode=0`，域名自动转小写去末尾点号 |
+| `extract_ips() -> vector<address>` | 遍历 answers，A 记录提取 IPv4，AAAA 记录提取 IPv6 |
+| `min_ttl() -> uint32_t` | 遍历 answers/authority/additional 取最小 TTL |
 
-```cpp
-auto pack() const -> memory::vector<std::uint8_t>;
-```
+### TCP 帧格式
 
-编码顺序：
-1. **Header** — 12 字节固定头部
-2. **Question Section** — 查询段列表
-3. **Answer Section** — 应答段列表
-4. **Authority Section** — 权威段列表
-5. **Additional Section** — 附加段列表
+| 函数 | 说明 |
+|------|------|
+| `pack_tcp(msg) -> vector<uint8_t>` | 在 DNS 报文前添加 2 字节大端长度前缀 |
+| `unpack_tcp(data, mr) -> optional<message>` | 先读 2 字节长度，再解析报文主体 |
 
-**域名编码**: 采用压缩指针优化，重复域名使用指针引用。
-
-#### unpack — 反序列化
-
-```cpp
-static auto unpack(std::span<const std::uint8_t> data,
-                   memory::resource_pointer mr = memory::current_resource())
-    -> std::optional<message>;
-```
-
-流程：
-1. 检查 `data.size() >= 12`
-2. 解析 Header
-3. 逐段解码 Question/Answer/Authority/Additional
-4. 处理域名压缩指针
-5. 检测循环引用（跳转 > 255 次）
-
-**错误处理**: 解析失败返回 `std::nullopt`。
-
-#### make_query — 构造查询报文
-
-```cpp
-static auto make_query(std::string_view domain, qtype qt,
-                       memory::resource_pointer mr = memory::current_resource())
-    -> message;
-```
-
-设置：
-- `id=0`（调用方在发送前自行设置）
-- `rd=true`（期望递归）
-- `opcode=0`（标准查询）
-- 添加一个 Question
-
-**域名规范化**: 自动转小写并去除末尾点号。
-
-#### extract_ips — 提取 IP 地址
-
-```cpp
-auto extract_ips() const -> memory::vector<net::ip::address>;
-```
-
-遍历 `answers`：
-- A 记录 → `extract_ipv4()` → IPv4 地址
-- AAAA 记录 → `extract_ipv6()` → IPv6 地址
-- 其他类型 → 跳过
-
-#### min_ttl — 计算最小 TTL
-
-```cpp
-auto min_ttl() const -> std::uint32_t;
-```
-
-遍历 `answers`/`authority`/`additional`，返回最小 TTL 值。
-
-## TCP 帧格式
-
-### pack_tcp
-
-```cpp
-auto pack_tcp(const message &msg) -> memory::vector<std::uint8_t>;
-```
-
-在 DNS 报文前添加 2 字节大端长度前缀：
-
-```
-[2 bytes length (big-endian)] [DNS message bytes]
-```
-
-### unpack_tcp
-
-```cpp
-auto unpack_tcp(std::span<const std::uint8_t> data,
-                memory::resource_pointer mr = memory::current_resource())
-    -> std::optional<message>;
-```
-
-先读 2 字节长度，再解析报文主体。
-
-## DNS Wire Format 详解
-
-### Header 格式（12 字节）
-
-```
-+---------------------+
-| ID (2 bytes)        |
-+---------------------+
-| FLAGS (2 bytes)     |  QR(1) OPCODE(4) AA(1) TC(1) RD(1) RA(1) Z(3) RCODE(4)
-+---------------------+
-| QDCOUNT (2 bytes)   |  Question 段条目数
-+---------------------+
-| ANCOUNT (2 bytes)   |  Answer 段条目数
-+---------------------+
-| NSCOUNT (2 bytes)   |  Authority 段条目数
-+---------------------+
-| ARCOUNT (2 bytes)   |  Additional 段条目数
-+---------------------+
-```
+## DNS Wire Format 要点
 
 ### 域名编码
 
-**标签格式**:
-```
-[length byte (0-63)] [label bytes]
-```
+- 标签格式：`[length byte (0-63)] [label bytes]`，末尾 `[0]` 表示结束
+- 压缩指针：高 2 位为 `11` 表示指针，后 14 位为报文内偏移位置
+- 重复域名使用指针引用，例如 `"api.example.com"` 中的 `"example.com"` 部分可复用已编码位置
 
-**压缩指针**:
-```
-[11xx xxxx] [offset byte]
-```
-- 高 2 位为 `11` 表示指针
-- 后 14 位为报文内偏移位置
+### Header 布局（12 字节）
 
-**示例**:
-```
-"www.example.com" 编码:
-[3] "www" [7] "example" [3] "com" [0]  // 末尾 0 表示结束
+ID(2) + FLAGS(2: QR/OPCODE/AA/TC/RD/RA/Z/RCODE) + QDCOUNT(2) + ANCOUNT(2) + NSCOUNT(2) + ARCOUNT(2)
 
-若后续域名为 "api.example.com":
-[3] "api" [pointer to "example.com"]   // 压缩指针复用
-```
+### Record 布局
 
-### Record 格式
+NAME(compressed) + TYPE(2) + CLASS(2) + TTL(4) + RDLENGTH(2) + RDATA(variable)
 
-```
-+---------------------+
-| NAME (compressed)   |
-+---------------------+
-| TYPE (2 bytes)      |
-+---------------------+
-| CLASS (2 bytes)     |
-+---------------------+
-| TTL (4 bytes)       |
-+---------------------+
-| RDLENGTH (2 bytes)  |
-+---------------------+
-| RDATA (RDLENGTH)    |
-+---------------------+
-```
+## 关键设计决策
 
-## 使用示例
+### 为什么检测压缩指针循环引用
 
-```cpp
-// 构造查询
-auto query = message::make_query("www.example.com", qtype::a);
-query.id = 12345;  // 设置报文 ID
+**问题**: 恶意或损坏的 DNS 报文可能包含循环压缩指针，导致无限解析。
 
-// 序列化
-auto wire = query.pack();
+**选择**: `unpack` 中跟踪跳转次数，超过 255 次返回 `nullopt`。
 
-// 发送到上游服务器...
-// 接收响应...
+**后果**: 安全地防御畸形报文，但解析深度有限的极端合法报文会被拒绝（实践中 255 远超合法报文深度）。
 
-// 解析响应
-auto response = message::unpack(response_wire);
-if (response) {
-    auto ips = response->extract_ips();
-    auto ttl = response->min_ttl();
-}
-```
+### 为什么 id 默认为 0
+
+**选择**: `make_query` 设置 `id=0`，由调用方在发送前自行设置。这使得多个调用方可以复用查询模板后设置不同 ID。
 
 ## 调用链
 
 ```
 upstream::query_udp(server, query)
-  │
-  ├─→ message::make_query(domain, qtype::a)
-  │     → 设置 rd=true, opcode=0
-  │     → 添加 question
-  │
-  ├─→ message::pack()
-  │     → 编码 header (12 bytes)
-  │     → 编码 questions (域名压缩)
-  │     → 编码 answers/authority/additional
-  │
-  → 发送 UDP 报文
+  +-> message::make_query(domain, qtype::a) -> 设置 rd=true, opcode=0
+  +-> message::pack() -> 编码 header + questions（域名压缩）+ records
+  -> 发送 UDP 报文
 
 upstream::query_tcp(server, query)
-  │
-  ├─→ pack_tcp(query)
-  │     → [2 bytes length] + message::pack()
-  │
-  → 发送 TCP 帧
+  +-> pack_tcp(query) -> [2 bytes length] + message::pack()
+  -> 发送 TCP 帧
 
 接收响应后:
-  │
-  ├─→ message::unpack(data)
-  │     → 解析 header
-  │     → 解析 questions (处理压缩指针)
-  │     → 解析 records
-  │     → 检测循环引用
-  │
-  └→ message::extract_ips()
-        → 遍历 answers
-        → extract_ipv4 / extract_ipv6
+  +-> message::unpack(data) -> 解析 header + questions + records（处理压缩指针）
+  +-> message::extract_ips() -> 遍历 answers -> extract_ipv4/extract_ipv6
 ```
 
 ## 参见
 
-- [[core/resolve/dns/upstream|upstream]] — DNS 查询客户端
-- [[core/resolve/dns/detail/cache|cache]] — DNS 结果缓存（使用 qtype）
+- [[core/resolve/dns/upstream|upstream]] -- DNS 查询客户端
+- [[core/resolve/dns/detail/cache|cache]] -- DNS 结果缓存（使用 qtype）

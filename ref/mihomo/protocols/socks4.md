@@ -257,6 +257,6 @@ rules:
 ## 相关文档
 
 - [[socks5]] - SOCKS5 协议
-- [[../transport/socks4]] - SOCKS4 传输层
+- [[ref/mihomo/transport/socks4]] - SOCKS4 传输层
 - [[ref/protocol/socks5-spec|socks5-spec]] - SOCKS 协议家族
 - [[http]] - HTTP 代理协议

@@ -1,4 +1,5 @@
 ---
+tags: [stealth, restls, config]
 layer: core
 source: I:/code/Prism/include/prism/stealth/restls/config.hpp
 title: Restls 伪装方案配置
@@ -13,6 +14,43 @@ title: Restls 伪装方案配置
 Restls 是一种 TLS 伪装协议，通过模拟真实 TLS 流量来隐藏代理特征。服务端通过 TLS 应用数据中的认证信息验证客户端身份。
 
 协议参考: https://github.com/3andne/restls
+
+## 设计决策（WHY）
+
+### 为什么 `restls_script` 不参与 `enabled()` 检查
+
+Script 是可选的流量控制参数。即使没有 script，Restls 仍然可以工作（使用默认的传输模式）。将 script 作为必需字段会阻止不关心流量特征的部署场景。
+
+### 为什么 `version_hint` 不参与 `enabled()` 检查
+
+`version_hint` 有合理的默认值。如果用户不指定，Restls 会根据后端 ServerHello 的 supported_versions 扩展自动检测 TLS 版本。只有当自动检测不准确时才需要手动指定。
+
+### 为什么只有单密码而非多用户
+
+Restls 的认证在 TLS 应用数据中进行，不像 ShadowTLS 可以在 ClientHello 阶段就区分用户。单密码简化了认证逻辑——所有客户端共享同一密码派生的 BLAKE3 密钥。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| `host` 格式必须是 host:port | 解析器 | 后端连接使用 |
+| `password` 用于 BLAKE3 derive_key | 密钥派生 | 空密码产生弱密钥 |
+| `version_hint` 只接受 "tls12" 或 "tls13" | 枚举值 | 其他值导致 XOR 偏移错误 |
+
+## 失败场景
+
+| 场景 | 触发条件 | 后果 |
+|------|----------|------|
+| `host` 不可达 | 后端服务器宕机 | 握手失败 |
+| `password` 为空 | 配置缺失 | `enabled()` 返回 false |
+| `server_names` 为空 | 无 SNI 白名单 | `enabled()` 返回 false |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `restls::scheme` → `config` | 调用 | `active()`/`snis()`/`handshake()` |
+| `restls::handshake` → `config` | 依赖 | 使用 `host`、`password`、`version_hint`、`restls_script` |
 
 ## 命名空间
 

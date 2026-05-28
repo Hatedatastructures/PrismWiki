@@ -2,6 +2,7 @@
 title: 协程约定与原理
 description: Prism 协程编程规范、C++23 协程原理、使用示例、最佳实践与排障指南
 layer: dev
+tags: [dev, coding, coroutine]
 ---
 
 # 协程约定

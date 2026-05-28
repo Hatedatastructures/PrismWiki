@@ -2,11 +2,64 @@
 layer: core
 source: I:/code/Prism/include/prism/stealth/shadowtls/handshake.hpp
 title: ShadowTLS v3 服务端握手
+tags:
+  - stealth
+  - shadowtls
+  - handshake
+  - HMAC
+  - relay
 ---
 
 # ShadowTLS v3 服务端握手
 
 > 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/handshake.hpp`
+
+## 设计决策（WHY）
+
+### 为什么握手阶段需要 HMAC 上下文而非在传输阶段重新计算
+
+ShadowTLS v3 的 HMAC 是累积的——每一帧的 HMAC 输入包含之前所有帧的数据。传输阶段（`shadowtls_transport`）必须从握手阶段结束时的 HMAC 状态继续，否则客户端的累积 HMAC 验证会失败。`handshake_result` 中的 `hmac_write_ctx` 和 `hmac_read_ctx` 使用 `shared_ptr<HMAC_CTX>` 传递累积状态。
+
+### 为什么握手阶段 relay 使用 `co_spawn` 而非 `co_await`
+
+后端 → 客户端的 relay 和客户端 → 后端的认证读取需要同时进行。如果顺序执行，一方会阻塞另一方。`co_spawn` 启动独立协程处理 relay，主协程处理认证。两者通过 cancel 信号协调。
+
+### 为什么 relay 使用 XOR 加密而传输阶段不使用
+
+握手阶段 relay 的后端数据需要经过修改后转发给客户端（XOR 加密），这样在被动探测者看来数据是"加密的随机数据"。传输阶段已经完成了伪装（TLS 握手成功），后续数据直接传输即可——外层 TLS 连接提供加密保护。
+
+### 为什么 `handshake_result` 保存 `matched_password`
+
+后续的传输阶段需要 password 来计算累积 HMAC。如果不保存密码，`shadowtls_transport` 无法初始化 HMAC 上下文。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| HMAC 上下文必须跨握手/传输传递 | 累积 HMAC 设计 | 传输阶段不能重新初始化 |
+| 后端 socket 必须支持 TLS 1.3 | strict_mode | 非 TLS 1.3 后端被拒绝 |
+| relay 协程必须在握手结束后清理 | 资源管理 | 协程可能比握手活得更长 |
+| `client_first_frame` 必须保留 | 传输阶段 | 传输阶段的第一帧来自握手阶段 |
+
+## 失败场景
+
+| 场景 | 触发条件 | 后果 |
+|------|----------|------|
+| 后端连接失败 | `handshake_dest` 不可达 | 握手失败，`polluted=true`（已向客户端转发） |
+| HMAC 验证失败 | 密码不匹配 | 返回未认证 |
+| relay 协程 use-after-close | 500ms 超时后 socket 已关闭 | 潜在竞态条件 |
+| ServerRandom 读取失败 | 后端 ServerHello 格式异常 | 无法初始化 HMAC |
+| 累积 HMAC 性能退化 | 长连接 GB 级数据 | HMAC 输入线性增长 |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `handshake` → `auth` | 调用 | `verify_client_hello` 验证 ClientHello |
+| `handshake` → `config` | 依赖 | 使用 `handshake_dest`、`users`、`password` |
+| `handshake` → `constants` | 依赖 | 帧格式常量 |
+| `handshake` → `shadowtls_transport` | 创建 | 握手成功后创建 transport |
+| `handshake` → `stealth::common` | 调用 | `read_raw_tls_frame` 读取后端 TLS 帧 |
 
 ## 概述
 

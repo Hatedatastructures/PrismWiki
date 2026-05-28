@@ -2,6 +2,7 @@
 layer: core
 source: "I:/code/Prism/include/prism/protocol/trojan/relay.hpp"
 title: Trojan 协议中继器
+tags: [protocol, trojan, relay, handshake, credential, sha224, udp]
 ---
 
 # Trojan 协议中继器

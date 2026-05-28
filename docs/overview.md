@@ -35,6 +35,7 @@ A: 一款支持多协议和多路复用的高性能代理引擎。
 
 ## 相关页面
 
-- [[dev/configuration|配置详解]]
+- [[docs/configuration|配置详解]]
 - [[dev/modules|模块架构]]
-- [[performance/benchmark|性能基准]]
+- [[docs/performance-tips|性能优化]]
+- [[docs/faq|常见问题]]

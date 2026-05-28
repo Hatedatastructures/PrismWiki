@@ -1,132 +1,77 @@
 ---
+tags: [exception, security]
 layer: core
-source: prism/exception/security.hpp
-title: Exception Security
+module: exception
+source: I:/code/Prism/include/prism/exception/security.hpp
+title: exception::security
 ---
 
-# Exception Security
+# exception::security
 
-安全异常类，用于处理安全配置、认证初始化等安全层错误。
+安全配置异常，用于启动阶段的安全层错误。运行时认证/授权失败应使用 `fault::code`。
 
-## 源码位置
+## 构造函数
 
-`I:/code/Prism/include/prism/exception/security.hpp`
+| 构造方式 | 说明 |
+|----------|------|
+| `security(fault::code)` | 错误码构造（推荐） |
+| `security(fault::code, string_view desc)` | 错误码 + 额外描述 |
+| `security(const string&)` | 向后兼容，映射为 `generic_error` |
+| `security(format_string, Args...)` | 格式化构造，映射为 `generic_error` |
 
-## 适用场景
-
-- SSL证书加载失败
-- SSL密钥加载失败
-- 证书验证失败
-- 安全配置无效
-
-**运行时认证/授权失败应使用错误码而非异常。**
-
-## 类定义
-
-```cpp
-class security : public deviant {
-public:
-    // 错误码构造
-    explicit security(fault::code err,
-                      const std::source_location &loc = std::source_location::current());
-    
-    // 错误码 + 描述
-    explicit security(fault::code err, std::string_view desc,
-                      const std::source_location &loc = std::source_location::current());
-    
-    // 向后兼容字符串构造
-    explicit security(const std::string &msg,
-                      const std::source_location &loc = std::source_location::current());
-    
-    // 格式化构造
-    template <typename... Args>
-    explicit security(std::format_string<Args...> fmt, Args &&...args);
-    
-protected:
-    std::string_view type_name() const noexcept override { return "SECURITY"; }
-};
-```
+`type_name()` 返回 `"SECURITY"`。
 
 ## 相关错误码
 
 | 错误码 | 说明 |
 |--------|------|
-| `ssl_cert_load_failed` | SSL证书加载失败 |
-| `ssl_key_load_failed` | SSL密钥加载失败 |
-| `certificate_verification_failed` | 证书验证失败 |
-| `auth_failed` | 认证失败 |
-| `forbidden` | 禁止访问 |
-| `tls_handshake_failed` | TLS握手失败 |
+| `certfail` | SSL 证书加载失败 |
+| `keyfail` | SSL 密钥加载失败 |
+| `verifyfail` | 证书验证失败 |
+| `config_err` | 安全配置格式错误 |
+| `file_openfail` | 配置文件打开失败 |
 
-## 使用示例
+## 使用场景
 
-```cpp
-// 证书加载
-if (!load_certificate(cert_path)) {
-    throw exception::security(
-        fault::code::ssl_cert_load_failed,
-        std::format("证书文件不存在: {}", cert_path)
-    );
-}
+| 场景 | 代码 |
+|------|------|
+| 证书加载失败 | `throw exception::security(fault::code::certfail, "路径无效");` |
+| 密钥加载失败 | `throw exception::security(fault::code::keyfail);` |
+| 配置文件不存在 | `throw exception::security(fault::code::file_openfail, path);` |
 
-// 密钥加载
-if (!load_private_key(key_path)) {
-    throw exception::security(fault::code::ssl_key_load_failed);
-}
+## 约束
 
-// 证书验证
-if (!verify_certificate_chain()) {
-    throw exception::security(
-        fault::code::certificate_verification_failed,
-        "证书链不完整"
-    );
-}
+### 禁止在热路径使用
 
-// 配置解析(loader使用)
-std::ifstream file(path);
-if (!file.is_open()) {
-    throw exception::security("system error: {}", "file open failed");
-}
-```
+**类型**: 编码规范
 
-## 禁止用法
+**规则**: 运行时认证失败（如密码错误、token 过期）必须用 `fault::code::auth_failed`，不能用此异常。
 
-```cpp
-// 错误！运行时认证失败应使用错误码
-bool authenticate_user(const Credentials &cred) {
-    if (!validate(cred)) {
-        // throw exception::security(fault::code::auth_failed);  // 禁止
-        return false;  // 正确：通过返回值或错误码
-    }
-    return true;
-}
-```
+**违反后果**: 异常栈展开破坏协程执行流，且安全回调中构造异常可能导致二次分配失败。
 
-## dump 输出
+**源码依据**: `security.hpp:8-9`
 
-```cpp
-// [tls.cpp:128] [SECURITY:26] SSL证书加载失败: /etc/prism/server.crt
-```
+## 故障场景
 
-## 调用链
+### 安全异常触发链
 
-```mermaid
-graph TD
-    A[安全配置加载] --> B[throw security]
-    B --> C[security构造]
-    C --> D[deviant基类]
-    D --> E[fault::make_error_code]
-    
-    F[loader::load] --> G[文件打开失败]
-    G --> B
-    
-    H[运行时认证] --> I[禁止抛出security]
-    I --> J[应使用fault::code返回]
-```
+**触发条件**: TLS 证书路径无效、密钥格式错误、配置文件缺失。
 
-## 相关页面
+**传播路径**: `loader::load()` 解析配置 → 发现证书路径不存在 → `throw exception::security(certfail, path)` → `main()` 的 `try/catch` 捕获 → 打印 `dump()` → 进程退出。
 
-- [[core/exception/overview]] - Exception模块总览
-- [[core/exception/deviant]] - 异常基类
-- [[core/fault/code]] - 错误码枚举
-- [[core/loader/load]] - 配置加载器使用security异常
+**外部表现**: 启动失败，日志输出 `[loader.cpp:38] [SECURITY:26] certfail: /etc/prism/server.crt`。
+
+**恢复机制**: 需要人工修复配置后重启。
+
+**日志关键字**: `[SECURITY:` 前缀
+
+## 引用关系
+
+### 依赖
+
+- [[core/exception/deviant|deviant]]：基类
+
+### 被引用
+
+- [[core/loader/load|loader]]：配置加载验证
+- [[core/instance/worker/tls|worker/tls]]：TLS 初始化

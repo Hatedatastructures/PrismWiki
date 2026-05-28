@@ -365,6 +365,6 @@ proxies:
 ## 相关文档
 
 - [[ech]] - ECH 加密 Client Hello
-- [[core/stealth/reality|reality]] - Reality 隐蔽技术详解
+- [[core/stealth/reality/overview|reality]] - Reality 隐蔽技术详解
 - [[core/crypto/x25519|x25519]] - X25519 密钥交换
 - [[vless]] - VLESS 协议

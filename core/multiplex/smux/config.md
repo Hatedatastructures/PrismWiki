@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/multiplex/smux/config.hpp
 title: smux::config - smux 协议配置
+tags: [multiplex, smux, config, configuration]
 ---
 
 # smux::config - smux 协议配置
@@ -61,3 +62,35 @@ graph TD
 - [[core/multiplex/config|multiplex::config]] - 多路复用通用配置
 - [[core/multiplex/smux/craft|smux::craft]] - smux 协议实现
 - [[core/multiplex/smux/frame|smux::frame]] - smux 帧格式
+## 配置映射
+
+### 源码字段到使用方的追踪
+
+| 配置字段 | 使用位置 | 效果 |
+|----------|----------|------|
+| `max_streams` | `craft::handle_syn` 中的流数上限检查 | 阻止超过限制的并发流 |
+| `max_streams` | `craft` 构造函数中 `channel_` 容量 | 发送通道最大缓冲帧数 |
+| `buffer_size` | `activate_tcp` 中 `duct_options.opts.buffer_size` | duct 从 target 单次读取上限 |
+| `keepalive_interval` | `craft::run` 中决定是否启动 `keepalive_loop` | 0 时禁用心跳 |
+| `keepalive_interval` | `keepalive_loop` 中定时器间隔 | NOP 帧发送间隔 |
+| `idle_timeout` | `activate_udp` 中 `parcel_config.idle_timeout` | UDP 管道空闲超时 |
+| `max_dgram` | `activate_udp` 中 `parcel_config.max_dgram` | UDP 数据报最大长度 |
+
+### 与 multiplex::config 的映射
+
+```json
+{
+  "multiplex": {
+    "enabled": true,
+    "smux": {
+      "max_streams": 32,
+      "buffer_size": 4096,
+      "keepalive_interval": 30000,
+      "idle_timeout": 60000,
+      "max_dgram": 65535
+    }
+  }
+}
+```
+
+加载路径：JSON → glaze 反序列化 → `multiplex::config.smux` → `core::config_` 引用 → craft 通过 `config_.smux` 访问

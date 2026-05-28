@@ -2,6 +2,7 @@
 title: 命名规范
 description: Prism 项目的命名约定，包括命名空间、文件、类型、函数等命名规则
 layer: dev
+tags: [dev, coding, naming]
 ---
 
 # 命名规范
@@ -131,6 +132,36 @@ namespace psm::module_name {
 | 测试函数 | PascalCase | `TestBasicGetRequest()` |
 | 局部变量 | snake_case | `connection_count` |
 | 常量 | snake_case/UPPER | `max_buffer_size` |
+
+## 设计决策
+
+### 为什么使用 `psm::` 命名空间前缀
+
+`psm` 是 Prism 的缩写，作为根命名空间前缀有以下考量：
+
+1. **避免冲突**: 全局命名空间污染是 C++ 项目的常见问题，短前缀 `psm::` 能有效隔离 Prism 的所有符号
+2. **可读性**: 三字母前缀简短但可辨识，`psm::resolve`、`psm::stealth` 比 `prism::resolve` 更紧凑
+3. **一致性**: 所有模块统一使用 `psm::` 前缀，代码中一眼即可区分项目内代码和第三方库代码
+4. **嵌套清晰**: `psm::module::submodule` 的层级结构反映模块划分
+
+### 为什么生产代码用 snake_case 而测试用 PascalCase
+
+1. **生产代码 snake_case**: 遵循 C++ 标准库惯例（`std::unique_ptr`、`std::make_shared`），与标准库风格统一，降低认知负担
+2. **测试代码 PascalCase**: 测试函数使用 `TestXxxYyy` 命名便于在测试输出中快速识别测试用例，也符合 Google Test / Catch2 等测试框架的惯例。通过风格差异可立即区分测试代码和被测代码
+3. **双风格隔离**: 两种风格泾渭分明，避免了在代码审查时混淆测试函数和生产函数
+
+### 为什么文件名用 snake_case
+
+1. **跨平台兼容**: snake_case 文件名在所有操作系统（Windows、Linux、macOS）上大小写一致，避免因文件系统大小写敏感性差异导致的问题
+2. **与类型名对应**: 文件名直接反映内部主要类型名（`connection_pool.hpp` → `class connection_pool`），查找方便
+3. **C++ 生态惯例**: 大多数 C++ 项目（包括 Boost、LLVM）使用 snake_case 文件名
+
+### 为什么标识符不超过 2 个词
+
+1. **可读性**: 超过 2 个词的名称通常意味着功能不够聚焦，如 `process_inbound_tcp_packet_data` 应拆分为 `process_packet(data)`
+2. **抽象层级**: 名称过长往往是抽象不足的信号，应通过引入新类型或函数来简化
+3. **代码审查友好**: 短名称一行就能读完，减少代码审查的认知负担
+4. **例外**: 允许最多 1 个下划线（即最多 2 个词），如 `connection_pool` 是两个词的合理组合
 
 ## 相关文档
 

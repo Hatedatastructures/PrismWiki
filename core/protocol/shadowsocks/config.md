@@ -2,6 +2,7 @@
 layer: core
 source: "I:/code/Prism/include/prism/protocol/shadowsocks/config.hpp"
 title: SS2022 协议配置
+tags: [protocol, shadowsocks, config, psk, aead, method, timestamp]
 ---
 
 # SS2022 协议配置

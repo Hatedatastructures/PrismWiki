@@ -1,347 +1,119 @@
 ---
 layer: core
 source: I:/code/Prism/include/prism/multiplex/parcel.hpp
-title: multiplex::parcel - 多路复用 UDP 数据报管道
+title: multiplex::parcel — UDP 数据报中继管道
+module: multiplex
+tags: [multiplex, parcel, udp, datagram, relay]
+updated: 2026-05-27
 ---
 
-# multiplex::parcel - 多路复用 UDP 数据报管道
+# multiplex::parcel — UDP 数据报中继管道
 
-## 源码位置
+协议无关的 UDP 数据报中继管道。每个 mux 流中的 UDP 流对应一个 parcel 实例。与 [[core/multiplex/duct|duct]] 的面向连接模型不同，parcel 是无连接的请求-响应模型。
 
-`I:/code/Prism/include/prism/multiplex/parcel.hpp`
+## 核心接口
 
-## 概述
+| 方法 | 说明 |
+|------|------|
+| `parcel(config, owner, router)` | 从配置构造，owner 为 core 的 shared_ptr |
+| `start()` | co_spawn 启动空闲超时监控 |
+| `on_data(data)` | 接收 mux 数据报并转发到目标 |
+| `close()` | 幂等关闭，从 core 的 parcels_ 移除 |
+| `stream_id()` | 流标识符 |
+| `set_destination(host, port)` | 设置 length_prefixed 模式的固定目标 |
 
-`multiplex::parcel` 是协议无关的 UDP 数据报中继管道。每个 mux 流中的 UDP 流对应一个 parcel 实例。与 [[core/multiplex/duct|duct]] 的面向连接模型不同，parcel 是无连接的数据报中继。
+### parcel_config
 
-## 设计原则
+| 字段 | 默认值 | 说明 |
+|------|--------|------|
+| `stream_id` | 0 | SYN 帧分配的流 ID |
+| `idle_timeout` | 30000 | 空闲超时（毫秒） |
+| `max_dgram` | 4096 | 最大数据报长度（字节） |
+| `mode` | length_prefixed | 地址编码模式 |
 
-- parcel 是协议无关的，通过 [[core/multiplex/core|core]] 虚函数接口发送帧，不依赖具体协议
-- 单个实例非线程安全，应在同一 executor 上串行使用
-- 通过 `shared_from_this` 保活，协程持有 self 防止提前析构
-- `owner_` 持有 core 的 weak_ptr，不构成循环引用
+### addr_mode
 
-## UDP 数据格式
+| 模式 | 帧格式 | 说明 |
+|------|--------|------|
+| `length_prefixed` | `[Length 2B BE][Payload]` | 目标地址在 SYN 时确定 |
+| `packet_addr` | `[ATYP 1B][Addr(var)][Port 2B][Data]` | 每帧携带 SOCKS5 地址 |
 
-### PacketAddr 模式（packet_addr=true）
+## 设计决策
 
-每帧携带 SOCKS5 UDP relay 格式：
+### 为什么 mux_buffer_ 需要累积缓冲？
 
-```
-[ATYP 1B][Addr(var)][Port 2B][Data]
-```
+sing-mux 客户端可能将一个 UDP 数据报拆成多个 PSH 帧发送（地址、Length、Payload 各一帧）。`on_data` 每次收到一帧，不能假设一帧就是一个完整数据报。`mux_buffer_` 累积数据后循环解析完整数据报。`processing_` 原子标志防止并发处理。
 
-### Length-prefixed 模式（packet_addr=false）
+**后果**: 增加缓冲区管理复杂度，但保证数据报完整性。
 
-目标地址在 SYN 时已确定：
+### 为什么 egress_socket_ 延迟创建？
 
-```
-[Length 2B BE][Payload]
-```
+UDP socket 需要按目标地址的协议族（IPv4/IPv6）创建。SYN 阶段只知道主机名，不知道解析后的协议族。首次 `do_send` 时通过 `ensure_socket()` 按解析结果创建。目标协议族变化时自动重建 socket。
 
-## 成员变量
+**后果**: 首次发送有额外 socket 创建开销。
 
-```cpp
-std::uint32_t id_;                   // 流标识符
-std::weak_ptr<core> owner_;          // 所属 core 的弱引用
-resolve::router &router_;            // 路由器引用
-net::steady_timer idle_timer_;       // 空闲超时计时器
-std::optional<net::ip::udp::socket> egress_socket_;  // 出站 UDP socket
-bool packet_addr_ = false;           // PacketAddr 模式标志
-memory::string destination_host_;    // 无 PacketAddr 模式时的目标主机
-std::uint16_t destination_port_ = 0; // 无 PacketAddr 模式时的目标端口
-memory::vector<std::byte> mux_buffer_; // mux 数据累积缓冲区
-```
+### 为什么 owner_ 用 weak_ptr 而非 shared_ptr？
 
-## 公开接口
+core 的 `parcels_` 持有 parcel 的 shared_ptr。如果 parcel 再持有 core 的 shared_ptr，形成循环引用，导致两者永不释放。weak_ptr 打破循环：core 析构后 `lock()` 返回空，parcel 安全退出。
 
-```cpp
-parcel(std::uint32_t stream_id,
-       std::shared_ptr<core> owner,
-       resolve::router &router,
-       std::uint32_t udp_idle_timeout,
-       std::uint32_t udp_max_dg,
-       memory::resource_pointer mr,
-       bool packet_addr = false);
+**后果**: 每次 `send_data` 前需要 `owner_.lock()` 检查 core 是否存活。
 
-void start();                                          // 启动空闲超时监控
-auto on_mux_data(std::span<const std::byte> data) -> net::awaitable<void>;  // 接收 mux 数据报
-void close();                                          // 关闭管道（幂等）
-std::uint32_t stream_id() const noexcept;              // 获取流标识符
-void set_destination(std::string_view host, std::uint16_t port);  // 设置固定目标地址
-```
+### 为什么 downlink_loop 在首次发送时才启动？
 
-## 工厂函数
+UDP 响应需要目标先发数据后才产生。首次 `do_send` 时启动 `downlink_loop` 异步读取响应。如果目标不响应，不会有下行数据，不需要启动接收循环。
 
-```cpp
-[[nodiscard]] inline auto make_parcel(
-    std::uint32_t stream_id,
-    std::shared_ptr<core> owner,
-    resolve::router &router,
-    std::uint32_t udp_idle_timeout,
-    std::uint32_t udp_max_dg,
-    memory::resource_pointer mr = {},
-    bool packet_addr = false
-) -> std::shared_ptr<parcel>;
-```
+**后果**: downlink_loop 的生命周期与 egress_socket_ 绑定。
 
-## 数据处理流程
+## 约束
 
-### 入站数据报处理
+### 单处理循环保证
 
-```
-mux PSH 帧 → on_mux_data → 解析 SOCKS5 地址 → relay_datagram → UDP 发送
-```
+**类型**: 线程安全
 
-### 出站数据报回传
+**规则**: `processing_` 原子标志保证同一时刻只有一个 `process_buffer` 协程运行。
 
-```
-UDP 响应 → downlink_loop → 编码 SOCKS5 格式 → owner_->send_data → mux 客户端
-```
+**违反后果**: 同一 socket 上并发 `async_send_to` 可能交错。
 
-## 空闲超时机制
+**源码依据**: `parcel.cpp:153` `if (!processing_.exchange(true))`
 
-```
-parcel 创建 → start() → uplink_loop 协程
-                ↓
-        idle_timer_ 超时等待
-                ↓
-每次 on_mux_data → touch_idle_timer() 重置
-                ↓
-超时 → close() 自动关闭
-```
+### UDP 数据报最大长度
 
-## 协程模型
+**类型**: 资源上限
 
-```mermaid
-graph TD
-    A[parcel::start] --> B[co_spawn uplink_loop]
-    B --> C[idle_timer_.async_wait]
-    
-    D[mux PSH 帧] --> E[on_mux_data]
-    E --> F[解析 SOCKS5 地址]
-    F --> G[do_send]
-    G --> H[ensure_socket]
-    H --> I[UDP async_send_to]
-    
-    J[首次发送] --> K[co_spawn downlink_loop]
-    K --> L[UDP async_receive_from]
-    L --> M[编码 SOCKS5 格式]
-    M --> N[owner_->send_data]
-```
+**规则**: `mux_buffer_.size() > max_dgram_` 时调用 `close()` 关闭管道。
 
-## 调用链
+**违反后果**: 管道被关闭，后续数据报丢失。
 
-```mermaid
-graph TD
-    A[core::activate_stream] --> B[检测 UDP 流]
-    B --> C[发送 0x00 成功状态]
-    C --> D[make_parcel]
-    D --> E[parcel::start]
-    
-    F[子类::dispatch_push] --> G[co_spawn parcel::on_mux_data]
-    G --> H[解析数据报]
-    H --> I[relay_datagram]
-    I --> J[owner_->send_data]
-```
+### 不可路由地址过滤
 
-## 关联文档
+**类型**: 状态前置
 
-- [[core/multiplex/core|core]] - 多路复用核心抽象基类
-- [[core/multiplex/duct|duct]] - TCP 流管道
-- [[core/multiplex/smux/frame|smux::frame]] - smux 帧格式（UDP 数据报解析）
-- [[core/multiplex/smux/craft|smux::craft]] - smux 协议实现
-- [[core/multiplex/yamux/craft|yamux::craft]] - yamux 协议实现
+**规则**: 目标地址以 0 开头的 IPv4 地址（如 sing-mux 占位地址 0.0.0.1）被跳过。
 
----
+**违反后果**: 尝试连接不可路由地址导致 DNS 解析失败。
 
-## UDP 数据报管道机制
+**源码依据**: `parcel.cpp:263-265`
 
-### 与 duct 的关键区别
+## 故障场景
 
-| 特性 | duct (TCP) | parcel (UDP) |
-|------|------------|--------------|
-| 模型 | 面向连接 | 无连接 |
-| 数据单元 | 字节流 | 独立数据报 |
-| 目标地址 | SYN 时确定，固定 | 可能每帧携带 (PacketAddr 模式) |
-| 出站 socket | target_transmission | egress_socket_ (动态创建) |
-| 空闲超时 | 无 (TCP 连接保持) | 有 (idle_timer_) |
-| 数据缓冲 | write_channel_ (有序队列) | mux_buffer_ (累积缓冲区) |
+| 场景 | 触发条件 | 处理 | 恢复 |
+|------|----------|------|------|
+| Socket 创建失败 | fd 耗尽/权限不足 | `ensure_socket` 返回 false，静默丢弃 | 下次 do_send 重试 |
+| 空闲超时 | 无数据活动超过 idle_timeout | uplink_loop 超时 → close() | 客户端新建流 |
+| DNS 解析失败 | 主机名无法解析 | 静默丢弃数据报 | 客户端重试 |
 
-### 架构设计
+## 引用关系
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                          parcel                               │
-│                                                              │
-│  入站方向 (mux → UDP):                                       │
-│    mux PSH 帧 → on_mux_data → 解析地址 → relay_datagram      │
-│                                    ↓                         │
-│                          ┌───────────────┐                   │
-│                          │ egress_socket │ → UDP async_send  │
-│                          └───────────────┘                   │
-│                                                              │
-│  出站方向 (UDP → mux):                                       │
-│    UDP recv ← downlink_loop ← 编码格式 ← owner_->send_data   │
-│                                                              │
-│  空闲监控:                                                    │
-│    uplink_loop → idle_timer_ → 超时 → close()                │
-└──────────────────────────────────────────────────────────────┘
-```
+### 依赖
 
-## 数据报封装/解封装流程
+| 模块 | 用途 |
+|------|------|
+| [[core/multiplex/core\|core]] | owner_ 弱引用，send_data 发帧 |
+| [[core/connect/dial/router\|router]] | DNS 解析目标主机名 |
 
-### 入站：mux 数据报解封装
+### 被引用
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│              on_mux_data(span<const byte>)                   │
-│                                                              │
-│  输入: mux PSH 帧载荷                                        │
-│                                                              │
-│  PacketAddr 模式 (packet_addr=true):                         │
-│  ┌───────────────────────────────────────────┐              │
-│  │ [ATYP 1B][Addr(var)][Port 2B][Data]       │              │
-│  │                                           │              │
-│  │ ATYP:                                     │              │
-│  │   0x01 → IPv4 (Addr=4B)                  │              │
-│  │   0x03 → 域名 (Addr=Len+域名)             │              │
-│  │   0x04 → IPv6 (Addr=16B)                 │              │
-│  │                                           │              │
-│  │ 解析流程:                                 │              │
-│  │   1. 读取 ATYP                           │              │
-│  │   2. 根据 ATYP 读取地址                   │              │
-│  │   3. 读取端口 (2B 大端)                   │              │
-│  │   4. 剩余部分为 UDP 载荷                   │              │
-│  │   5. 构造 udp::endpoint                   │              │
-│  │   6. relay_datagram(endpoint, payload)    │              │
-│  └───────────────────────────────────────────┘              │
-│                                                              │
-│  Length-prefixed 模式 (packet_addr=false):                   │
-│  ┌───────────────────────────────────────────┐              │
-│  │ [Length 2B BE][Payload]                   │              │
-│  │                                           │              │
-│  │ 解析流程:                                 │              │
-│  │   1. 读取长度 (2B 大端)                   │              │
-│  │   2. 提取 Payload                         │              │
-│  │   3. 使用 SYN 时设置的固定目标地址         │              │
-│  │   4. relay_datagram(fixed_ep, payload)    │              │
-│  └───────────────────────────────────────────┘              │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### 出站：UDP 响应封装
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│              downlink_loop (出站方向)                         │
-│                                                              │
-│  循环:                                                       │
-│    n = co_await egress_socket_.async_receive_from            │
-│         (buffer, remote_endpoint)                            │
-│                                                              │
-│  PacketAddr 模式:                                            │
-│  ┌───────────────────────────────────────────┐              │
-│  │ 编码 SOCKS5 UDP relay 格式:               │              │
-│  │                                           │              │
-│  │ [ATYP 1B][Addr][Port 2B][UDP 数据]        │              │
-│  │                                           │              │
-│  │ ATYP 根据 remote_endpoint 类型决定:        │              │
-│  │   IPv4 → 0x01                            │              │
-│  │   IPv6 → 0x04                            │              │
-│  │                                           │              │
-│  │ 目的: 让客户端知道响应来源地址              │              │
-│  └───────────────────────────────────────────┘              │
-│                                                              │
-│  Length-prefixed 模式:                                       │
-│  ┌───────────────────────────────────────────┐              │
-│  │ 直接发送 UDP 数据（不编码地址）             │              │
-│  │ 客户端已知目标地址，无需额外信息            │              │
-│  └───────────────────────────────────────────┘              │
-│                                                              │
-│  封装后:                                                     │
-│    co_await owner_->send_data(stream_id, encoded_data)       │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### 数据累积与分帧
-
-当单个 mux 帧包含多个 UDP 数据报时：
-
-```
-mux_buffer_ 累积缓冲区:
-  ┌─────────────────────────────────┐
-  │ [DG1][DG2][DG3 partial...]      │
-  └─────────────────────────────────┘
-
-on_mux_data 被调用:
-  1. 将新数据追加到 mux_buffer_
-  2. 循环解析:
-     while mux_buffer_ 有完整数据报:
-       解析一帧 → relay_datagram()
-       从缓冲区移除已解析数据
-  3. 若最后一帧不完整 → 保留在缓冲区，等待下次调用
-```
-
-### 空闲超时机制
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    idle_timer_ 管理                           │
-│                                                              │
-│  parcel::start():                                            │
-│    co_spawn uplink_loop                                      │
-│      │                                                       │
-│      ├── idle_timer_.expires_after(udp_idle_timeout)         │
-│      │                                                       │
-│      ├── co_await idle_timer_.async_wait()                   │
-│      │                                                       │
-│      └── 超时 → close() → 释放 socket → 从 parcels_ 移除     │
-│                                                              │
-│  每次 on_mux_data 调用:                                       │
-│    touch_idle_timer() → 重置超时                              │
-│                                                              │
-│  典型超时值: 30 秒                                           │
-│    - 足够长: 不会中断正常的间歇性通信                          │
-│    - 足够短: 及时释放闲置的 UDP socket                        │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Socket 生命周期
-
-```
-首次 relay_datagram:
-  │
-  ensure_socket():
-    ├── if egress_socket_ 已存在 → 复用
-    └── 否则:
-          ├── 创建 udp::socket (基于目标地址类型选择 v4/v6)
-          ├── bind 到任意可用端口
-          ├── co_spawn downlink_loop
-          └── 存入 egress_socket_
-  │
-  async_send_to(payload, target_endpoint)
-  │
-  ...
-  │
-空闲超时或 close:
-  │
-  egress_socket_.close() → socket 释放
-  downlink_loop 结束
-  parcel 对象析构
-```
-
-### UDP 最大数据报限制
-
-`udp_max_dg` 参数限制单个数据报的最大大小：
-
-```
-on_mux_data 解析数据报:
-  if payload.size() > udp_max_dg:
-    → 截断或丢弃 (取决于实现)
-    → 记录错误日志
-```
-
-**推荐值**:
-- 1500 字节: 匹配以太网 MTU，避免 IP 分片
-- 65535 字节: UDP 最大理论值（实际受 MTU 限制）
+| 模块 | 使用方式 |
+|------|----------|
+| [[core/multiplex/core\|core]] | parcels_ 映射管理 parcel 生命周期 |
+| smux::craft / yamux::craft | dispatch_push → co_spawn on_data |

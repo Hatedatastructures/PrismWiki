@@ -184,6 +184,54 @@ if (snap->can_rewind()) {
 | 写入 | 0 额外开销 | 直接委托 |
 | 内存占用 | N 字节 | N 为预读数据长度（通常 24-256 字节） |
 
+## 设计决策
+
+### 为什么 preview 需要存在？
+
+**问题**: 协议识别（recognition）阶段需要预读入站数据来判断协议类型（HTTP/SOCKS5/TLS/SS2022），但这些数据属于后续协议处理器的输入。预读后数据已从 socket 缓冲区移出，后续读取无法重新获取。
+
+**选择**: preview 装饰器将预读数据保存在内部缓冲区，后续 async_read_some 优先返回预读数据，耗尽后委托给内层传输。这使协议管道在嗅探后仍能一致地处理完整数据流。
+
+**后果**: 预读数据回放对协议处理器完全透明。代价是额外的内存拷贝（通常 24 字节）和一次间接调用。
+
+**替代方案**: 让每个协议处理器自己处理"已预读 N 字节"的参数，增加所有处理器的复杂度。
+
+**源码依据**: `transport/preview.hpp:1-181`
+
+### 为什么 preview 覆写 completion-handler 路径？
+
+**问题**: 当 encrypted 的 ssl::stream 内部调用底层传输的 async_read_some 时，如果 preview 的预读数据阶段通过 co_spawn 桥接，会增加一个协程帧。
+
+**选择**: preview 覆写 completion-handler 路径的 async_read_some，在预读数据阶段同步完成（memcpy + 立即调用 handler），不发起任何异步操作。
+
+**后果**: TLS 握手期间的预读数据回放零协程帧开销。
+
+**源码依据**: `transport/preview.hpp:111`
+
+### 为什么 wrap_with_preview 对空数据直接返回原始传输？
+
+**问题**: 如果协议检测阶段预读 0 字节（如连接立即关闭），创建空的 preview 装饰器是无意义的开销。
+
+**选择**: wrap_with_preview 检查 data 是否为空，空则直接返回原始 inbound，不创建装饰器。
+
+**后果**: 减少不必要的装饰器层级，降低装饰器链深度。
+
+**源码依据**: `transport/preview.hpp:171-179`
+
+## 约束
+
+### 预读数据构造时复制
+
+**类型**: 所有权安全
+**规则**: preview 构造时将预读数据复制到内部 `memory::vector<std::byte>`。原始缓冲区在复制后可安全释放。
+**违反后果**: 如果不复制而是保存 span，原始缓冲区可能在 preview 生命周期内被释放
+
+### offset_ 单调递增不回退
+
+**类型**: 状态一致性
+**规则**: offset_ 从 0 单调递增到 preread_buffer_.size()，没有回退机制。预读数据只能被消费一次。
+**违反后果**: 回退 offset_ 会导致数据重复消费
+
 ## 相关页面
 
 - [[core/transport/overview|transport — 传输层总览]]

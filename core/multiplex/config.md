@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/multiplex/config.hpp
 title: multiplex::config - 多路复用通用配置
+tags: [multiplex, config, configuration]
 ---
 
 # multiplex::config - 多路复用通用配置
@@ -207,3 +208,62 @@ craft 构造函数接收对应子配置
 ```
 
 **注意**: `smux` 和 `yamux` 子配置不会被交叉使用，仅在对应协议被选中时生效。
+
+### 配置映射追踪链
+
+```
+JSON 配置文件 (configuration.json)
+    ↓ glaze 反序列化
+multiplex::config (enabled + smux + yamux + h2mux)
+    ↓ bootstrap_context.cfg
+bootstrap() → craft 构造函数
+    ↓ core_options.cfg → core::config_ 引用
+config_.smux / config_.yamux / config_.h2mux
+    ↓ 各子配置字段
+craft 行为参数（max_streams、buffer_size、keepalive_interval 等）
+```
+
+**关键路径**:
+- `config` 以引用形式在 `core` 和 `craft` 间传递，不复制
+- 引用生命周期必须长于 core/craft 实例（通常由 Agent 配置持有）
+- `h2mux::config` 包含在 `multiplex::config` 中但不在 sing-mux 协商中使用
+
+### 参数名映射（源码 → 配置 → 文档）
+
+| 源码字段 | JSON 键 | 默认值 | 所属 |
+|----------|---------|--------|------|
+| `config::enabled` | `enabled` | `false` | multiplex |
+| `smux::config::max_streams` | `smux.max_streams` | `32` | smux |
+| `smux::config::keepalive_interval` | `smux.keepalive_interval` | `30000` | smux |
+| `yamux::config::initial_window` | `yamux.initial_window` | `262144` | yamux |
+| `yamux::config::open_timeout` | `yamux.open_timeout` | `30000` | yamux |
+| `h2mux::config::max_frame_size` | `h2mux.max_frame_size` | `16384` | h2mux |
+
+### 与 duct/parcel 的参数传递
+
+```
+config_.smux.buffer_size → duct_options.opts.buffer_size → duct::read_size_
+    = min(buffer_size, max_frame_payload)
+
+config_.smux.idle_timeout → parcel_config.idle_timeout → parcel::idle_timeout_
+
+config_.smux.max_dgram → parcel_config.max_dgram → parcel::max_dgram_
+```
+
+## 设计决策
+
+### 为什么 enabled 默认为 false？
+
+**问题**: 多路复用是可选功能，大多数代理连接不需要 mux。
+
+**选择**: `enabled = false` 意味着不创建任何 mux 对象，检测到协商头也不会处理。
+
+**后果**: 零开销。需要 mux 的 Agent 必须显式配置 `enabled: true`。
+
+## 跨模块契约
+
+| multiplex::config | 使用方 | 契约 |
+|-------------------|--------|------|
+| `enabled` | Agent Session | false 时完全跳过 mux 逻辑 |
+| `smux`/`yamux` 子配置 | 对应 craft 构造函数 | 以 const 引用传递，生命周期由配置持有者保证 |
+| `h2mux` 子配置 | h2mux::craft | h2mux 不走 bootstrap 协商，由 TrustTunnel scheme 直接使用 |

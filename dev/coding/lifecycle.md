@@ -2,6 +2,7 @@
 title: 生命周期安全
 description: Prism 协程生命周期安全指南，包括 co_spawn 捕获和迭代器失效处理
 layer: dev
+tags: [dev, coding, lifecycle]
 ---
 
 # 生命周期安全

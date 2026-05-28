@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: Prism 开发路线图
+tags: [dev, roadmap]
 ---
 
 # Prism 开发路线图
@@ -179,7 +181,7 @@ layer: dev
 
 ## 相关页面
 
-- [[performance/overview]] — 性能架构概览
-- [[performance/report]] — 完整基准报告
-- [[extending/overview]] — 扩展开发概览
-- [[bugs/template]] — Bug 报告模板
+- [[dev/performance/overview|performance/overview]] — 性能架构概览
+- [[dev/performance/report|performance/report]] — 完整基准报告
+- [[dev/extending/overview|extending/overview]] — 扩展开发概览
+- [[dev/bugs/template|bugs/template]] — Bug 报告模板

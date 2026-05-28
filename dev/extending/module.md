@@ -1,5 +1,7 @@
 ---
 layer: dev
+title: 新模块开发
+tags: [dev, extending, module]
 ---
 
 # 新模块开发

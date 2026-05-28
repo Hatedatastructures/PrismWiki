@@ -1,4 +1,5 @@
 ---
+layer: dev
 title: 构建选项
 created: 2026-05-17
 updated: 2026-05-17
@@ -9,7 +10,7 @@ related:
   - "[[dev/building/cmake]]"
   - "[[dev/building/commands]]"
   - "[[dev/testing/testing|testing]]"
-  - "[[performance/benchmark]]"
+  - "[[dev/performance/report|performance/benchmark]]"
 sources:
   - I:/code/Prism/CLAUDE.md
 confidence: high
@@ -210,5 +211,5 @@ cmake --build build_profile --config RelWithDebInfo
 - [[dev/building/cmake|CMake 构建结构]] — CMake 配置详解
 - [[dev/building/commands|构建命令]] — 常用构建命令
 - [[dev/testing/testing|测试指南]] — 测试详情
-- [[performance/benchmark|性能基准]] — 基准测试结果
+- [[dev/performance/report|性能基准]] — 基准测试结果
 - [[dev/testing/stress|压力测试]] — 压力测试详情

@@ -1,4 +1,5 @@
 ---
+layer: dev
 title: 配置文件完整参考
 source:
   - I:/code/Prism/src/configuration.json

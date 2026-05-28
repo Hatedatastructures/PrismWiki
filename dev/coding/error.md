@@ -2,6 +2,7 @@
 title: 错误处理
 description: Prism 双轨错误处理策略，热路径错误码与启动异常分离
 layer: dev
+tags: [dev, coding, error-handling]
 ---
 
 # 错误处理

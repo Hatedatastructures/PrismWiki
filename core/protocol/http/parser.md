@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/protocol/http/parser.hpp
 title: HTTP 代理请求解析器
+tags: [protocol, http, parser, proxy, auth, basic]
 ---
 
 # HTTP 代理请求解析器
@@ -121,7 +122,7 @@ protocol/http::relay::forward -> build_forward_request_line -> memory::string
 ## 依赖
 
 - [[core/protocol/http/relay]] - HTTP 代理中继器
-- [[core/instance/account/directory]] - 账户目录
+- [[core/account/directory]] - 账户目录
 - [[core/crypto/base64]] - Base64 解码
 - [[core/crypto/sha224]] - 密码哈希
 

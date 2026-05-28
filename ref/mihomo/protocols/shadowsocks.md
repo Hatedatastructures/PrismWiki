@@ -453,4 +453,4 @@ proxies:
 - [[shadowsocksr]] - ShadowsocksR 协议
 - [[ref/protocol/shadowsocks-spec|shadowsocks-spec]] - Shadowsocks 协议规范
 - [[core/crypto/aead|aead]] - AEAD 加密
-- [[../transport/shadowsocks]] - Shadowsocks 传输层
+- [[ref/mihomo/transport/shadowsocks]] - Shadowsocks 传输层

@@ -1,4 +1,5 @@
 ---
+tags: [stealth, trusttunnel, config]
 layer: core
 source: I:/code/Prism/include/prism/stealth/trusttunnel/config.hpp
 title: TrustTunnel 伪装方案配置
@@ -7,6 +8,45 @@ title: TrustTunnel 伪装方案配置
 # TrustTunnel 伪装方案配置
 
 > 源码位置: `I:/code/Prism/include/prism/stealth/trusttunnel/config.hpp`
+
+## 设计决策（WHY）
+
+### 为什么 `network_type` 默认为 `both`
+
+同时支持 TCP 和 UDP 可以覆盖更多客户端场景。HTTP/2 (TCP) 作为基线保证兼容性，HTTP/3 (QUIC/UDP) 在支持的客户端上提供更好的性能。
+
+### 为什么 `congestion` 默认为 `bbr`
+
+BBR 是 Google 开发的拥塞控制算法，在高带宽长距离网络（如跨国代理）上比 Cubic 好得多。作为代理服务器，这个场景是典型使用场景。
+
+### 为什么 `users` 参与但 `short_ids` 不存在于 TrustTunnel
+
+TrustTunnel 使用标准的 username/password 认证（类似 HTTP Basic Auth），而非 ShadowTLS 的 HMAC 或 Reality 的 short_id。这是因为认证发生在 TLS 隧道内部，外层已有加密保护，无需复杂的密码学认证。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| 证书和私钥必须配对 | TLS 握手 | 不匹配会导致握手失败 |
+| users 列表不能为空 | `enabled()` 检查 | 无用户 = 未启用 |
+| network_type::udp 需要 QUIC 库支持 | 传输依赖 | 无 QUIC 库则 UDP 模式不可用 |
+| handshake_timeout_ms 和 idle_timeout_ms 单位为毫秒 | 配置格式 | 0 表示无限等待（危险） |
+
+## 失败场景
+
+| 场景 | 触发条件 | 后果 |
+|------|----------|------|
+| 证书文件不存在 | 路径配置错误 | TLS 握手失败 |
+| 私钥与证书不匹配 | 配置失误 | TLS 握手失败 |
+| users 为空 | 未配置用户 | `enabled()` 返回 false |
+| 空壳状态 | 当前实现不完整 | 方案不可用 |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `config` → `psm::config` | 嵌入 | `cfg.stealth.trusttunnel` 路径 |
+| `trusttunnel::scheme` → `config` | 调用 | `active()`/`snis()` |
 
 ## 概述
 

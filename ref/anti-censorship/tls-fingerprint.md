@@ -684,5 +684,5 @@ Prism 采用多层保障：
 - [[ref/anti-censorship/probing|主动探测]] — 主动探测防御
 - [[ref/anti-censorship/traffic-analysis|流量分析]] — 流量分析技术
 - [[ref/protocol/tls-clienthello|TLS ClientHello]] — ClientHello 结构解析
-- [[core/stealth/reality|Reality 协议]] — Reality 实现细节
+- [[core/stealth/reality/overview|Reality 协议]] — Reality 实现细节
 - [[core/recognition/overview|协议识别]] — 协议识别模块

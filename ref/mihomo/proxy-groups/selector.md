@@ -148,4 +148,4 @@ curl -X PUT http://127.0.0.1:9090/proxies/Proxy \
 - [[overview]] - 代理组概述
 - [[url-test]] - url-test 代理组
 - [[config]] - 代理组配置详解
-- [[../provider/overview|Provider 概述]]
+- [[ref/mihomo/provider/overview|Provider 概述]]

@@ -2,11 +2,46 @@
 layer: core
 source: I:/code/Prism/include/prism/stealth/shadowtls/constants.hpp
 title: ShadowTLS v3 协议常量
+tags:
+  - stealth
+  - shadowtls
+  - constants
 ---
 
 # ShadowTLS v3 协议常量
 
 > 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/constants.hpp`
+
+## 设计决策（WHY）
+
+### 为什么 `session_id_length_index` 恰好是 43
+
+这个值来自 TLS ClientHello 的固定前缀结构：TLS Record Header (5) + Handshake Header (4) + Client Version (2) + Client Random (32) = 43 字节。第 44 字节（偏移 43）是 SessionID 长度字段。ShadowTLS 要求 SessionID 恰好 32 字节，HMAC 标签嵌入在最后 4 字节（偏移 72-75）。
+
+### 为什么 `tls_hmac_header_size` 是 9 而非 5
+
+数据帧 = TLS Record Header (5) + HMAC Tag (4) + Payload。ShadowTLS 在标准 TLS ApplicationData 帧的 payload 前插入了 4 字节 HMAC 标签。读取时需要跳过 9 字节（而非标准的 5 字节）才能到达 payload。
+
+### 为什么 HMAC 标签只有 4 字节
+
+ShadowTLS 参照 `sing-shadowtls` 实现，使用 HMAC-SHA1 输出的前 4 字节。4 字节 = 32 位，碰撞概率约 1/2^32（约 43 亿次）。对于认证场景，这个安全性足够——攻击者无法在合理时间内穷举出正确的 HMAC。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| SessionID 必须 32 字节 | `tls_session_id_size` | ShadowTLS 不支持其他长度 |
+| HMAC 标签固定 4 字节 | `hmac_size` | 不与 SHA1 全输出比较 |
+| 常量为编译期 `constexpr` | 性能 | 零运行时开销 |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| 所有 ShadowTLS 子模块 → `constants` | 依赖 | 偏移量和大小定义 |
+| `auth` → `constants` | 调用 | HMAC 位置和大小 |
+| `handshake` → `constants` | 调用 | 帧格式和内容类型 |
+| `transport` → `constants` | 调用 | 帧头大小 |
 
 ## 概述
 

@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/multiplex/yamux/craft.hpp
 title: yamux::craft - yamux 多路复用会话服务端
+tags: [multiplex, yamux, craft, flow-control, window]
 ---
 
 # yamux::craft - yamux 多路复用会话服务端
@@ -196,3 +197,42 @@ graph TD
 - [[core/multiplex/yamux/config|yamux::config]] - yamux 协议配置
 - [[core/multiplex/duct|duct]] - TCP 流管道
 - [[core/multiplex/parcel|parcel]] - UDP 数据报管道
+## 设计决策
+
+### 为什么 yamux send_data 使用 CAS 窗口等待？
+
+**问题**: yamux 协议要求发送方遵守对端通告的窗口大小。如果当前窗口不足以容纳待发送数据，必须等待 WindowUpdate 帧扩大窗口。
+
+**选择**: `send_data` 使用 CAS（compare_exchange_weak）循环原子地扣减窗口。窗口不足时通过 `window_signal` 定时器挂起协程，收到 WindowUpdate 后 cancel 唤醒发送方。
+
+**后果**: 发送路径无锁，仅使用原子操作和定时器。但窗口不足时协程挂起，增加一次调度延迟。CAS 循环在窗口足够时快速通过，不会空转。
+
+**替代方案**: 使用 mutex + condition_variable 会阻塞 io_context 线程，违反协程纯度原则。
+
+**源码依据**: `yamux/craft.cpp:766-815`
+
+### 为什么 pending 流有超时但 smux 没有？
+
+**问题**: 客户端可能发送 SYN 后不发送地址数据，pending 流永久占用资源。
+
+**选择**: yamux 为每个 pending 流设置 `open_timeout` 超时定时器。超时后清理状态并发送 RST。
+
+**后果**: 比 smux 的 max_streams 兜底更精确，每个 pending 流有独立的超时控制。代价是每个 pending 流额外一个 `steady_timer` 对象。
+
+**源码依据**: `yamux/craft.cpp:676-713`
+
+## 约束
+
+### 窗口更新阈值为 initial_window / 2
+
+**类型**: 资源上限
+**规则**: 当 `recv_consumed` 累积达到 `initial_window / 2`（128KB）时发送 WindowUpdate
+**违反后果**: 不发送 WindowUpdate 会导致对端窗口耗尽，停止发送数据
+**源码依据**: `yamux/craft.cpp:751`
+
+### oversized Data 帧触发 GoAway
+
+**类型**: 协议安全
+**规则**: Data 帧载荷超过 `max_frame_payload`（65535）时发送 GoAway 并关闭会话
+**违反后果**: 整个 mux 会话终止，所有流中断
+**源码依据**: `yamux/craft.cpp:114-119`

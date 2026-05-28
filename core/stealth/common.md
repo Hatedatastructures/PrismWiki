@@ -22,6 +22,65 @@ updated: 2026-05-23
 
 `stealth::common` 命名空间提供伪装层的共享基础设施函数，包括 AEAD nonce 构造、TLS 记录附加数据生成、循环异或运算和原始 TLS 帧读取。这些工具被 [[core/stealth/overview|所有伪装方案]]（Reality、ShadowTLS、Restls 等）复用。
 
+## 设计决策（WHY）
+
+### 为什么 `make_aead_nonce` 将 sequence 放在低 8 字节
+
+TLS 1.3 规范（RFC 8446 Section 5.3）定义 nonce 构造为 `IV XOR (sequence as left-padded 12-byte)`。但实际实现中，64 位序列号放在低 8 字节（小端序）与 IV 的低 8 字节异或。这个选择是因为 TLS 记录序列号是 64 位整数，自然增长在低字节变化最频繁，与 IV 异或后能最大化 nonce 的变化位数。高 4 字节固定为零意味着 IV 的高 4 字节不会被序列号修改。
+
+### 为什么 `make_record_ad` 硬编码 `0x17` 和 `0x0303`
+
+- `0x17` (Application Data) 是 TLS 1.3 加密记录的唯一内容类型。握手完成后所有记录都是此类型。
+- `0x0303` 是 TLS 1.2 的记录层版本号。TLS 1.3 为兼容中间件，在记录层使用 TLS 1.2 版本号（真实版本在 handshake 中协商）。这两个值在 TLS 1.3 生命周期内不会改变，硬编码合理。
+
+### 为什么 `read_raw_tls_frame` 返回 `optional` 而非抛异常
+
+这是热路径函数，在每次握手过程中可能被调用多次（Reality 5 阶段握手每阶段至少一次）。使用 `error_code` + `optional` 的双轨错误策略，避免异常的栈展开开销。调用方检查 `optional` 即可，无需 try-catch。
+
+### 为什么 `xor_with_key` 就地修改而非返回新 buffer
+
+避免额外的内存分配。在 ShadowTLS 握手的 relay 阶段，每帧数据都要 XOR，如果每帧都分配新 buffer 会在热路径产生大量 PMR 分配。就地修改用 `span` 零拷贝。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| `iv` 必须 12 字节 | TLS 1.3 AEAD 规范 | AES-128-GCM 和 AES-256-GCM 的 nonce 都是 12 字节 |
+| `sequence` 同方向单调递增 | TLS 1.3 规范 | 读写方向各自独立计数，不可重用 |
+| `xor_with_key` key 不可为空 | 除零风险 | `i % key.len()` 除零 |
+| `read_raw_tls_frame` 仅适用于 TCP | 参数类型为 `tcp::socket&` | QUIC/UDP 帧读取不适用此函数 |
+| `encrypted_len` 不含 AEAD tag | `make_record_ad` 语义 | 调用方需自行加上 tag 大小（16 字节） |
+| 所有函数在 `stealth::common` 命名空间 | 模块组织 | 非 `stealth_scheme` 的成员函数 |
+
+## 失败场景
+
+| 场景 | 触发条件 | 表现 |
+|------|----------|------|
+| `sequence` 溢出 | 超过 2^64 | nonce 重复，AEAD 安全性被破坏 |
+| `iv` 不足 12 字节 | 调用方传错 | 内存越界读取（undefined behavior） |
+| `read_raw_tls_frame` 读取超时 | 网络中断 | `ec` 被设置，返回 `nullopt` |
+| `read_raw_tls_frame` 读到截断帧 | 连接在读取载荷中关闭 | `ec` 被设置为 `eof`，返回 `nullopt` |
+| `xor_with_key` key 与 data 长度关系 | key 长度整除 data 长度时模式更明显 | 弱密钥可被统计分析 |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `common` → `crypto::aead` | 被调用 | `make_aead_nonce` 和 `make_record_ad` 的输出传给 AEAD 的 encrypt/decrypt |
+| `reality::handshake` → `common` | 调用 | Reality seal/unseal 使用全部四个函数 |
+| `shadowtls::handshake` → `common` | 调用 | ShadowTLS relay 使用 `xor_with_key` 和 `read_raw_tls_frame` |
+| `restls::handshake` → `common` | 调用 | Restls 使用 `read_raw_tls_frame` |
+| `common` → `memory::container` | 依赖 | `read_raw_tls_frame` 返回 `memory::vector`（PMR 分配） |
+
+## 变更敏感性
+
+| 变更 | 影响范围 | 风险 |
+|------|----------|------|
+| 修改 `make_aead_nonce` 的 XOR 逻辑 | 所有使用 AEAD 的方案 | 极高：nonce 错误导致解密必然失败 |
+| 修改 `make_record_ad` 的固定字节 | 所有 AEAD 加密的方案 | 极高：AAD 错误导致 AEAD 认证失败 |
+| 修改 `read_raw_tls_frame` 的返回类型 | Reality、ShadowTLS、Restls | 高：调用方解包逻辑需同步修改 |
+| 修改 `xor_with_key` 为分配版本 | ShadowTLS relay 热路径 | 中：性能退化 |
+
 ## 命名空间
 
 ```cpp

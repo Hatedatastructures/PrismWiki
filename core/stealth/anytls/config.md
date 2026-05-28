@@ -1,4 +1,5 @@
 ---
+tags: [stealth, anytls, config]
 layer: core
 source: I:/code/Prism/include/prism/stealth/anytls/config.hpp
 title: AnyTLS 伪装方案配置
@@ -13,6 +14,44 @@ title: AnyTLS 伪装方案配置
 AnyTLS 是一种 TLS 伪装协议，使用标准 TLS 证书，通过应用层认证实现代理功能。可以叠加 ECH 加密 ClientHello SNI。
 
 协议参考: https://github.com/anytls/anytls
+
+## 设计决策（WHY）
+
+### 为什么 AnyTLS 使用标准 TLS 证书而非合成证书
+
+与 Reality 不同，AnyTLS 进行标准 TLS 握手。客户端验证服务器证书的 CA 签名链。这意味着 AnyTLS 需要有效的域名和对应的 CA 签发证书（如 Let's Encrypt）。
+
+### 为什么 ECH key 是可选的
+
+ECH（Encrypted Client Hello）加密客户端的 SNI，防止被动探测者识别连接目标。但 ECH 需要客户端支持，且服务端需要额外的 ECH 密钥配置。不启用 ECH 时，AnyTLS 仍然工作（SNI 明文传输）。
+
+### 为什么 padding_scheme 使用 MD5 + mt19937
+
+AnyTLS 的填充方案通过 MD5 哈希生成种子，用 mt19937 PRNG 生成随机填充大小。这种设计确保：相同配置产生相同的填充模式（确定性），但外部观察者无法预测填充大小（伪随机）。
+
+## 约束
+
+| 约束 | 来源 | 说明 |
+|------|------|------|
+| 证书必须有效且被 CA 签名 | 标准 TLS 握手 | 自签名证书会被客户端拒绝 |
+| ech_key 为空时 ECH 不启用 | 条件启用 | 仅在配置时生效 |
+| padding_scheme 影响所有帧 | 全局生效 | 不可按帧调整 |
+
+## 失败场景
+
+| 场景 | 触发条件 | 后果 |
+|------|----------|------|
+| 证书过期 | 未及时续签 | 客户端拒绝 TLS 握手 |
+| ech_key 格式错误 | 配置失误 | ECH 解密失败 |
+| 用户列表为空 | 未配置 | `enabled()` 返回 false |
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| `config` → `psm::config` | 嵌入 | `cfg.stealth.anytls` 路径 |
+| `anytls::scheme` → `config` | 调用 | `active()`/`snis()` |
+| `anytls::session` → `config` | 依赖 | 认证用户、填充配置 |
 
 ## 命名空间
 

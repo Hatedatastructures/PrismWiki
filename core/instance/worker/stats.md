@@ -2,6 +2,7 @@
 layer: core
 source: I:/code/Prism/include/prism/instance/worker/stats.hpp
 title: stats 模块
+tags: [instance, worker, stats, traffic, runtime]
 ---
 
 # stats 模块

@@ -46,10 +46,10 @@ inline auto is_ipv6_literal(const std::string_view host) noexcept -> bool;
 
 **用途：** 在 IPv6 被禁用时提前拦截 IPv6 字面量目标，避免不必要的连接尝试。
 
-### async_connect_with_retry
+### retry_connect
 
 ```cpp
-auto async_connect_with_retry(router &rt, std::span<const tcp::endpoint> endpoints)
+auto retry_connect(router &rt, std::span<const tcp::endpoint> endpoints)
     -> net::awaitable<pooled_connection>;
 ```
 
@@ -158,19 +158,19 @@ auto async_datagram(router &rt, std::string_view host, std::string_view port)
 1. IP 字面量直接构造端点；否则 DNS 解析
 2. 调用 `open_udp_socket()` 创建 UDP 套接字
 
-### resolve_datagram_target
+### resolve_dgram
 
 ```cpp
-auto resolve_datagram_target(router &rt, std::string_view host, std::string_view port)
+auto resolve_dgram(router &rt, std::string_view host, std::string_view port)
     -> net::awaitable<std::pair<fault::code, net::ip::udp::endpoint>>;
 ```
 
 仅解析数据报目标端点，不创建套接字。用于 UDP ASSOCIATE 场景，延迟到发送时才打开 UDP 套接字。
 
-### open_udp_socket
+### open_udp
 
 ```cpp
-inline auto open_udp_socket(const net::any_io_executor &executor, const net::ip::udp::endpoint &target)
+inline auto open_udp(const net::any_io_executor &executor, const net::ip::udp::endpoint &target)
     -> std::pair<fault::code, net::ip::udp::socket>;
 ```
 
@@ -184,10 +184,10 @@ inline auto open_udp_socket(const net::any_io_executor &executor, const net::ip:
 - `fault::code::success` + UDP 套接字：打开成功
 - `fault::code::io_error` + 空套接字：打开失败
 
-### make_datagram_router
+### make_router
 
 ```cpp
-inline auto make_datagram_router(router &rt)
+inline auto make_router(router &rt)
     -> std::function<net::awaitable<std::pair<fault::code, net::ip::udp::endpoint>>(std::string_view, std::string_view)>;
 ```
 
@@ -199,8 +199,7 @@ inline auto make_datagram_router(router &rt)
 ### dial（路由器版本）
 
 ```cpp
-auto dial(router &rt, std::string_view label, const protocol::target &target,
-          dial_options opts = {})
+auto dial(router &rt, dial_options opts)
     -> net::awaitable<std::pair<fault::code, shared_transmission>>;
 ```
 
@@ -208,9 +207,7 @@ auto dial(router &rt, std::string_view label, const protocol::target &target,
 
 **参数：**
 - `rt`：路由器引用
-- `label`：协议标签（如 "Trojan"、"SOCKS5"），用于日志
-- `target`：解析后的上游目标地址（`protocol::target`）
-- `opts`：路由策略选项
+- `opts`：路由策略选项（标签、目标地址、路由标志）
 
 **返回值：**
 - `fault::code::success` + `shared_transmission`：成功
@@ -219,14 +216,14 @@ auto dial(router &rt, std::string_view label, const protocol::target &target,
 **路由决策逻辑：**
 
 ```
-dial(rt, label, target, opts)
+dial(rt, opts)
     |
     v
 [IPv6 disabled + IPv6 literal?]
     |-- Yes --> return ipv6_disabled
     |
     v
-[opts.allow_reverse && !target.positive?]
+[allow_reverse && !target.positive?]
     |-- Yes --> rt.async_reverse(target.host)    // 反向路由表查找
     |-- No  --> async_forward(rt, target.host, target.port)  // DNS 解析 + 竞速
     |
@@ -240,7 +237,7 @@ dial(rt, label, target, opts)
 ```
 
 **关键行为：**
-- `allow_reverse = true` 且 `target.positive = false` 时优先查反向路由表
+- `allow_reverse` 且 `target.positive = false` 时优先查反向路由表
 - 反向路由表查找失败时不回退到正向路由，直接返回错误
 - 成功的连接通过 `transport::make_reliable()` 包装为 `shared_transmission`
 
@@ -266,20 +263,84 @@ auto dial(outbound::proxy &outbound_proxy, const protocol::target &target,
 ```cpp
 struct dial_options
 {
-    bool allow_reverse{true};  // 是否允许使用反向路由
-    bool require_open{true};   // 是否要求返回的套接字已打开
+    std::string_view label;              // 协议标签，用于日志记录
+    const protocol::target &target;      // 解析后的上游目标地址
+
+    enum class flag : std::uint8_t
+    {
+        normal,       // 允许反向路由，要求套接字已打开
+        no_reverse,   // 禁止反向路由
+        no_open,      // 不要求套接字已打开
+        neither       // 禁止反向路由 + 不要求套接字已打开
+    };
+
+    flag routing{flag::normal};          // 路由策略标志
 };
 ```
 
 | 字段 | 默认值 | 说明 |
 |------|--------|------|
-| `allow_reverse` | `true` | 允许通过反向路由表连接，适用于反向代理场景 |
-| `require_open` | `true` | 要求返回的套接字已打开，关闭后返回 `connection_refused` |
+| `label` | — | 协议标签（如 "Trojan"、"SOCKS5"），用于日志 |
+| `target` | — | 解析后的上游目标地址 |
+| `routing` | `normal` | 路由策略标志，控制反向路由和套接字打开要求 |
 
 **使用场景：**
-- 默认选项（全部 `true`）：标准反向/正向代理连接
-- `allow_reverse = false`：强制正向连接，忽略反向路由表
-- `require_open = false`：允许返回未打开的套接字（用于测试或特殊场景）
+- `normal`：标准反向/正向代理连接
+- `no_reverse`：强制正向连接，忽略反向路由表
+- `no_open`：允许返回未打开的套接字（测试场景）
+- `neither`：完全绕过路由和状态检查
+
+## 设计决策
+
+### 为什么 dial 函数使用 dial_options 结构体收敛参数？
+
+`dial()` 原本有 4 个参数（router、label、target、flag），超过项目规范上限 3 个。将 label、target、flag 合并到 `dial_options`，函数签名降为 2 个参数。这也使得未来新增路由策略只需扩展 `flag` 枚举，不影响调用方。
+
+**后果**: `dial_options` 持有 `target` 的引用，调用方必须保证 `target` 在 `co_await dial()` 完成前有效。
+
+### 为什么反向路由失败不回退到正向路由？
+
+反向路由表是配置层面的显式映射（dest → endpoint），如果配置了反向路由但查找失败，说明配置错误或目标不在映射中。静默回退到 DNS 解析会掩盖配置问题，让运维难以察觉路由错误。
+
+**后果**: 反向路由表缺失的域名需要显式配置为正向路由（`positive = true`），不会被自动降级。
+
+### 为什么 retry_connect 委托给 racer 而非自己重试？
+
+手动重试（逐端点串行尝试）在 DNS 返回多个地址时延迟叠加。racer 实现 RFC 8305 Happy Eyeballs v2 算法，IPv6 优先 50ms 后并行发起 IPv4，显著降低多地址场景的首连延迟。
+
+**后果**: 所有端点都失败时，延迟约等于单端点超时 + IPv4 竞速窗口，而非所有超时的总和。
+
+## 约束
+
+### dial_options 引用生命周期
+
+**类型**: 生命周期
+
+**规则**: `dial_options` 持有 `protocol::target` 的 `const` 引用，调用方必须保证 `target` 在 `co_await dial()` 完成前不被销毁。
+
+**违反后果**: 悬挂引用，协程恢复后访问已释放内存，未定义行为。
+
+**源码依据**: `dial.hpp:157`
+
+### make_router 回调持有非拥有引用
+
+**类型**: 生命周期
+
+**规则**: `make_router()` 返回的 `std::function` 通过空删除器 `shared_ptr` 持有 `router&`，不会延长 router 生命周期。
+
+**违反后果**: router 析构后调用回调 → 访问已释放内存 → 崩溃。
+
+**源码依据**: `dial.hpp:141`
+
+### 协程纯度
+
+**类型**: 线程安全
+
+**规则**: 所有函数返回 `net::awaitable`，必须在 io_context 线程上 `co_await`。禁止在协程中使用阻塞 socket 操作或 `std::mutex`。
+
+**违反后果**: 阻塞 io_context 线程，所有同线程的连接停滞。
+
+**源码依据**: CLAUDE.md 协程纯度规则
 
 ## 调用链
 
@@ -346,15 +407,51 @@ Client          Handler        dial()          router         DNS           race
 - [[core/connect/tunnel/forward]]：组合 `dial()` + `tunnel()` 的正向代理转发
 - [[core/connect/tunnel/tunnel]]：双向隧道转发
 - [[core/resolve/dns/dns]]：DNS 解析器，提供域名解析
-- [[core/transport]]：传输层抽象，`make_reliable()` 将连接包装为传输对象
+- [[core/transport/overview]]：传输层抽象，`make_reliable()` 将连接包装为传输对象
 - [[core/context/context]]：会话上下文，提供路由器和缓冲区配置
 - [[core/protocol/common/target]]：目标地址结构体，是路由决策的输入
 - [[core/outbound/proxy]]：出站代理，支持正向代理间接连接
 
+## 故障场景
+
+### DNS 解析失败导致连接失败
+
+**触发条件**: 目标域名无法解析（DNS 服务器无响应、域名不存在、网络中断）。
+
+**传播路径**: `rt.dns().resolve_tcp()` 返回错误 → `async_forward()` 返回 `host_noreply` → `dial()` 返回错误 + nullptr → 协议处理器返回连接失败 → 客户端收到连接重置。
+
+**外部表现**: 客户端连接超时。日志出现 `[Connect.Dial] DNS resolve xxx:yyy failed`。
+
+**恢复机制**: 自动。下次请求重新触发 DNS 解析。如果是临时故障，新请求可能成功。
+
+**日志关键字**: `DNS resolve` + `failed`
+
+### 连接池耗尽
+
+**触发条件**: 上游服务器响应慢，所有连接被占用且未归还。
+
+**传播路径**: `pool.async_acquire()` 等待超时 → `async_forward()` 返回 `bad_gateway` → `dial()` 返回错误 → 客户端连接失败。
+
+**外部表现**: 批量客户端连接超时。日志出现 `route failed: bad_gateway`。
+
+**恢复机制**: 自动。活跃连接关闭后归还池中，新请求可复用。可调低连接池 `max_pool_size` 加速回收。
+
+**日志关键字**: `bad_gateway` + `route failed`
+
+### IPv6 被禁用但目标为 IPv6
+
+**触发条件**: 配置禁用 IPv6，但目标地址是 IPv6 字面量或 DNS 解析仅返回 IPv6 地址。
+
+**传播路径**: `is_ipv6()` 返回 true → 直接返回 `ipv6_disabled` 或 `host_noreply`，不发起任何连接。
+
+**外部表现**: 特定目标始终连接失败。日志出现 `rejecting IPv6 literal`。
+
+**恢复机制**: 修改配置启用 IPv6 或更换目标地址。
+
+**日志关键字**: `IPv6 disabled` 或 `IPv6 literal`
+
 ## 注意事项
 
-1. **协程纯度**：所有函数返回 `net::awaitable`，无阻塞操作
-2. **IPv6 过滤**：IPv6 禁用时（`rt.ipv6_disabled()`），IPv6 字面量直接返回 `host_unreachable`，不会触发连接
-3. **反向路由优先**：`allow_reverse = true` 且非正向代理请求时，优先查反向路由表；反向路由查找失败不回退
-4. **生命周期**：`make_datagram_router()` 返回的回调持有路由器的非拥有引用，调用方需确保路由器生命周期
-5. **日志标签**：使用 `[Connect.Dial]` 前缀，便于日志过滤和诊断
+1. **IPv6 过滤**：IPv6 禁用时（`rt.ipv6_disabled()`），IPv6 字面量直接返回 `host_unreachable`，不会触发连接
+2. **反向路由优先**：路由策略允许反向路由且非正向代理请求时，优先查反向路由表；反向路由查找失败不回退
+3. **日志标签**：使用 `[Connect.Dial]` 前缀，便于日志过滤和诊断

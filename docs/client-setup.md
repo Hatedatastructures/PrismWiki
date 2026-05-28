@@ -250,5 +250,5 @@ A: 开启 `udp: true` 后，mihomo 会通过代理节点转发 UDP 流量（如 
 - [[ref/mihomo/proxy-groups/overview|proxy-groups]]
 - [[core/protocol/trojan|Trojan 协议]]
 - [[core/stealth/reality/handshake|Reality 伪装]]
-- [[core/stealth/shadowtls|ShadowTLS 伪装]]
+- [[core/stealth/shadowtls/overview|ShadowTLS 伪装]]
 - [[docs/configuration|配置说明]]

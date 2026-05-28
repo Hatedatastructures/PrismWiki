@@ -71,7 +71,7 @@ loader::build_account_directory(config)
 
 从配置的 `authentication.users` 构建账户目录，用于后续认证。
 
-详见 [[core/instance/account/directory|账户目录]]
+详见 [[core/account/directory|账户目录]]
 
 ### Step 6: 创建 Worker 线程池
 

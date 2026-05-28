@@ -1,233 +1,60 @@
 ---
-title: "shadowsocks.hpp — SS2022 协议处理管道"
+tags: [pipeline, shadowsocks, protocol-handler, aead, sip022]
+title: "SS2022 协议处理管道"
 layer: core
 source: "I:/code/Prism/include/prism/pipeline/protocols/shadowsocks.hpp"
-created: 2026-05-17
-updated: 2026-05-17
+module: pipeline
+updated: 2026-05-27
 ---
 
-# shadowsocks.hpp
+# SS2022 协议处理管道
 
-> 源码: `include/prism/pipeline/protocols/shadowsocks.hpp`
-> 实现: `src/prism/pipeline/protocols/shadowsocks.cpp`
-> 模块: Pipeline / protocols
+Shadowsocks 2022 协议处理器。无正特征协议，通过排除法 fallback 检测。负责 AEAD 解密验证、salt 防重放、时间戳验证和双向隧道转发。
 
-## 概述
+## 处理流程
 
-SS2022 协议处理管道，处理 Shadowsocks 2022 协议流量。负责无正特征的 SS2022 协议检测、密钥验证和数据转发。
+1. `wrap_with_preview(use_global_mr=true)` — 全局内存池
+2. 获取 thread_local salt pool（无锁防重放）
+3. 创建 SS2022 relay，执行握手（AEAD 解密 → 时间戳验证 → 地址解析）
+4. `relay->acknowledge()` — 乐观响应，先发 ack 再拨号
+5. `forward(relay->release())` — relay 本身作为 inbound 传输层，持续 AEAD 加解密
 
-## 命名空间
+## 设计决策
 
-`psm::pipeline`
+### 为什么 SS2022 使用乐观响应？
 
----
+AEAD 解密成功意味着客户端合法，可以先发送 acknowledge 再拨号上游。节省一个 RTT 等待时间，对延迟敏感的连接有明显改善。
 
-## 函数: shadowsocks()
+**后果**: 如果拨号上游失败，客户端已收到 ack 但连接会立即关闭。与 Mihomo 行为一致。
 
-> 源码位置: `shadowsocks.hpp:29`
-> 实现位置: `shadowsocks.cpp`
+### 为什么 relay 本身是传输层？
 
-### 功能
+SS2022 的数据传输需要持续加解密（每个 chunk 都有 AEAD 封装）。relay 继承 `transport::transmission`，`async_read_some()` 解密，`async_write_some()` 加密。上层 `tunnel()` 不感知加密细节。
 
-SS2022 协议处理函数，包括 AEAD 解密验证、地址解析和双向隧道转发。
+**后果**: relay 的生命周期覆盖整个隧道，不能提前释放。
 
-### 签名
+### 为什么 salt pool 是 thread_local？
 
-```cpp
-auto shadowsocks(session_context &ctx, std::span<const std::byte> data)
-    -> net::awaitable<void>;
-```
+salt 防重放检查是高频操作（每个连接），thread_local 避免锁竞争。SS2022 规范要求 salt 在一定时间窗口内唯一。
 
-### 参数
+**后果**: 每个 worker 线程有独立的 salt pool，跨线程的重放攻击无法检测。但实际场景中同一客户端连接由同一 worker 处理（亲和性哈希）。
 
-| 参数 | 类型 | 说明 |
+## 防重放机制
+
+| 层级 | 机制 | 说明 |
 |------|------|------|
-| ctx | `session_context &` | 会话上下文 |
-| data | `std::span<const std::byte>` | 预读数据 |
+| salt pool | thread_local set | 检测相同 salt 重放 |
+| 时间戳 | `abs(now - packet_time) > tolerance` | 检测过期包重放 |
+| AEAD 认证 | 解密失败即拒绝 | 篡改或错误密钥 |
 
-### 返回值
+## 引用关系
 
-`net::awaitable<void>` — 异步操作对象
+### 被调用
 
-### 处理流程
+- [[core/instance/dispatch/table|dispatch]] — 注册为 SS2022 处理器
 
-```
-+------------------+
-| 包装入站传输      |
-| wrap_with_preview() |
-| use_global_mr=true |
-+------------------+
-         │
-         ▼
-+------------------+
-| 获取 salt pool    |
-| thread_local 实例|
-| 无锁防重放        |
-+------------------+
-         │
-         ▼
-+------------------+
-| 创建 SS2022 relay |
-| shadowsocks::make_relay() |
-+------------------+
-         │
-         ▼
-+------------------+
-| 执行握手          |
-| relay::handshake() |
-| AEAD 解密验证     |
-| 时间戳验证        |
-| 地址解析          |
-+------------------+
-         │
-         ▼
-+------------------+
-| 乐观响应          |
-| relay::acknowledge() |
-| 先发送 ack 再拨号 |
-+------------------+
-         │
-         ▼
-+------------------+
-| forward()         |
-| relay 作为 inbound |
-| AEAD 加解密持续   |
-+------------------+
-```
+### 依赖
 
-### 调用链（向下）
-
-- [[core/pipeline/primitives#wrap_with_preview|wrap_with_preview]] — 包装入站传输（use_global_mr=true）
-- `protocol::shadowsocks::make_relay` — 创建 SS2022 中继器
-- `protocol::shadowsocks::relay::handshake` — 执行握手
-- `protocol::shadowsocks::relay::acknowledge` — 发送确认
-- [[core/pipeline/primitives#forward|forward]] — TCP 转发
-
-### 被调用（向上）
-
-- [[core/instance/dispatch/table|dispatch]] — 协议分发表注册为 SS2022 处理器
-
----
-
-## SS2022 协议特点
-
-### 无正特征
-
-SS2022 是无正特征协议，通过排除法 fallback 检测：
-- 没有 HTTP/SOCKS5/TLS 的特征
-- 24 字节预读数据不符合已知协议特征
-- 尝试 AEAD 解密验证
-
-### AEAD 加密
-
-SS2022 使用 AEAD 认证加密：
-- AES-128-GCM-SIV
-- AES-256-GCM-SIV
-- ChaCha20-Poly1305-SIV
-
-### 密钥派生
-
-使用 BLAKE3 进行密钥派生：
-```cpp
-// 从 PSK 派生会话密钥
-auto session_key = blake3::derive_key(psk, salt);
-```
-
-### salt pool 防重放
-
-```cpp
-// thread_local salt pool
-thread_local auto &pool = get_salt_pool();
-
-// 检查 salt 是否已使用
-if (pool.contains(salt)) {
-    return fault::code::replay_attack;
-}
-
-// 记录 salt
-pool.insert(salt, timestamp);
-```
-
-### 时间戳验证
-
-SS2022 包含时间戳，用于防止重放攻击：
-```cpp
-auto current_time = std::chrono::system_clock::now();
-auto packet_time = decode_timestamp(payload);
-
-if (abs(current_time - packet_time) > tolerance) {
-    return fault::code::timestamp_error;
-}
-```
-
----
-
-## 实现细节
-
-### 乐观响应模式
-
-SS2022 使用乐观响应，先发送 acknowledge 再拨号上游，减少 RTT：
-
-```cpp
-// AEAD 解密成功后立即发送 acknowledge
-co_await relay->acknowledge();
-
-// 然后拨号上游
-co_await primitives::forward(ctx, SS2022Str, target, relay->release());
-```
-
-### AEAD 解密验证
-
-```cpp
-// 从预读数据中提取 salt 和 encrypted payload
-auto salt = extract_salt(data);
-auto encrypted = extract_payload(data);
-
-// 派生会话密钥
-auto key = derive_session_key(psk, salt);
-
-// AEAD 解密
-auto [ec, decrypted] = co_await aead_decrypt(key, encrypted);
-
-if (fault::failed(ec)) {
-    trace::debug("{} decrypt failed", SS2022Str);
-    co_return;
-}
-```
-
-### 地址解析
-
-```cpp
-// 解析目标地址
-auto target = analysis::resolve(decrypted);
-```
-
-### relay 作为传输层
-
-SS2022 的 relay 本身是传输层，负责持续的 AEAD 加解密：
-
-```cpp
-// relay 继承 transmission
-class relay : public transport::transmission
-{
-    // async_read_some: 解密数据
-    // async_write_some: 加密数据
-};
-```
-
-### 注意事项
-
-- **无正特征**: 通过排除法检测，需要配置 PSK
-- **全局内存池**: 使用 `use_global_mr=true`
-- **salt pool**: thread_local 防重放
-- **乐观响应**: 减少 RTT，与 Mihomo 兼容
-
----
-
-## 相关文档
-
-- [[core/pipeline/overview|Pipeline 层总览]]
-- [[core/pipeline/primitives|管道原语]]
-- [[core/protocol/shadowsocks/config|SS2022 配置]]
-- [[core/crypto/blake3|BLAKE3 密钥派生]]
-- [[core/crypto/aead|AEAD 加密]]
+- [[core/pipeline/primitives|primitives]] — `wrap_with_preview`, `forward`
+- [[core/crypto/aead|crypto::aead]] — AEAD 加解密
+- [[core/crypto/blake3|crypto::blake3]] — BLAKE3 密钥派生

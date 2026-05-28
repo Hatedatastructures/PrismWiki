@@ -1,8 +1,8 @@
 ---
 layer: core
-source: include/prism/context/context.hpp
-title: Context 三层上下文
 module: context
+source: I:/code/Prism/include/prism/context/context.hpp
+title: Context 三层上下文
 tags:
   - context
   - server
@@ -11,16 +11,12 @@ tags:
   - lifecycle
   - zero-dependency
 created: 2026-05-23
-updated: 2026-05-23
+updated: 2026-05-27
 ---
 
 # Context 三层上下文
 
-> 源码位置: `include/prism/context/context.hpp`
-
-## 概述
-
-Context 模块定义了三层上下文结构，按生命周期从长到短分为 `server`（全局共享）、`worker`（工作线程）、`session`（会话级）。使用纯前向声明，不依赖任何实现模块头文件，确保零循环依赖。
+三层上下文结构，按生命周期从长到短分为 `server`（全局共享）、`worker`（工作线程）、`session`（会话级）。使用纯前向声明，零循环依赖。
 
 ## 三层架构
 
@@ -52,274 +48,98 @@ Context 模块定义了三层上下文结构，按生命周期从长到短分为
 
 ## server 结构体
 
-`server` 聚合服务器级别的共享资源，在服务器启动时创建，被所有工作线程共享。
-
-### 定义
-
-```cpp
-namespace psm::context
-{
-    struct server
-    {
-        std::atomic<std::shared_ptr<const psm::config>> cfg;    // 配置（可原子交换）
-        std::shared_ptr<ssl::context> ssl_ctx;                  // SSL 上下文
-        std::shared_ptr<account::directory> account_store;      // 账户注册表
-
-        [[nodiscard]] auto config() const -> const psm::config &;
-        void swap_config(std::shared_ptr<const psm::config> new_cfg);
-    };
-}
-```
-
-### 字段说明
+服务器级别的共享资源，启动时创建，所有工作线程共享。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `cfg` | `atomic<shared_ptr<const config>>` | 服务器配置，支持原子交换实现热加载 |
+| `cfg` | `atomic<shared_ptr<const config>>` | 配置，支持原子交换热加载 |
 | `ssl_ctx` | `shared_ptr<ssl::context>` | TLS 上下文，所有 TLS 连接共享 |
-| `account_store` | `shared_ptr<account::directory>` | [[core/account/directory|账户目录]]，全局共享 |
+| `account_store` | `shared_ptr<account::directory>` | [[core/account/directory|账户目录]] |
 
-### 方法
-
-#### config()
-
-```cpp
-[[nodiscard]] auto config() const -> const psm::config &;
-```
-
-获取当前配置（无锁读取）。通过 `atomic load` 加载 `shared_ptr`，解引用返回配置常量引用。
-
-#### swap_config()
-
-```cpp
-void swap_config(std::shared_ptr<const psm::config> new_cfg);
-```
-
-原子交换配置，用于配置热加载。调用后所有新请求立即使用新配置，进行中的请求仍使用旧配置（通过已持有的引用）。
-
-### 配置热加载流程
-
-```
-1. 接收到配置重载信号
-    │
-    ▼
-2. 解析新配置文件 → shared_ptr<const config>
-    │
-    ▼
-3. server.swap_config(new_cfg)
-    │   └── atomic store 替换 shared_ptr
-    │
-    ▼
-4. 后续请求通过 config() 获取新配置
-    │
-    └── 进行中的请求仍持有旧配置引用 → 安全
-```
+| 方法 | 说明 |
+|------|------|
+| `config()` | 无锁读取当前配置（`cfg.load()` + 解引用） |
+| `swap_config(new_cfg)` | 原子交换配置（热加载） |
 
 ## worker 结构体
 
-`worker` 封装单个工作线程的独立资源，实现线程间资源隔离和避免锁竞争。
-
-### 定义
-
-```cpp
-namespace psm::context
-{
-    struct worker
-    {
-        net::io_context &io_context;           // I/O 上下文引用
-        connect::router &router;               // 路由器引用
-        memory::resource_pointer memory_pool;  // 内存池资源指针
-        outbound::proxy *outbound{nullptr};    // 出站代理指针（由 worker 拥有）
-        stats::traffic::traffic_state *traffic{nullptr}; // 流量统计状态指针
-    };
-}
-```
-
-### 字段说明
+单个工作线程的独立资源，线程间隔离避免锁竞争。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `io_context` | `net::io_context &` | Boost.Asio I/O 上下文引用，事件循环核心 |
-| `router` | `connect::router &` | 路由器引用，管理上游连接 |
-| `memory_pool` | `memory::resource_pointer` | 线程局部内存池，无锁分配 |
-| `outbound` | `outbound::proxy *` | 出站代理（正向代理），可为 nullptr |
-| `traffic` | `stats::traffic::traffic_state *` | 流量统计状态，可为 nullptr |
+| `io_context` | `net::io_context &` | 事件循环核心 |
+| `router` | `connect::router &` | 上游连接路由 |
+| `memory_pool` | `memory::resource_pointer` | 线程局部内存池 |
+| `outbound` | `outbound::proxy *` | 出站代理（可为 nullptr） |
+| `traffic` | `stats::traffic::traffic_state *` | 流量统计状态（可为 nullptr） |
 
-### 线程隔离模型
+## session_opts 结构体
 
-```
-Thread 1 (worker)                Thread 2 (worker)
-┌───────────────────┐           ┌───────────────────┐
-│ io_context_1      │           │ io_context_2      │
-│ router_1          │           │ router_2          │
-│ memory_pool_1     │           │ memory_pool_2     │
-│ (无锁分配)        │           │ (无锁分配)        │
-└────────┬──────────┘           └────────┬──────────┘
-         │                               │
-         └───────────┬───────────────────┘
-                     │
-              ┌──────▼──────┐
-              │   server    │
-              │ (共享资源)  │
-              │ config      │
-              │ ssl_ctx     │
-              │ account_dir │
-              └─────────────┘
-```
+收敛 session 构造参数（遵循函数参数 ≤ 3 规范）。
 
-每个 worker 拥有独立的 `io_context`、`router` 和 `memory_pool`，避免线程间竞争。共享资源通过 `server` 结构体的原子操作访问。
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `session_id` | `uint64_t` | 会话唯一标识符 |
+| `server_ctx` | `server &` | 服务器上下文引用 |
+| `worker_ctx` | `worker &` | 工作线程上下文引用 |
+| `arena` | `frame_arena &` | 帧内存池引用 |
+| `verifier` | `function<bool(string_view)>` | 凭据验证函数 |
+| `buffer_size` | `uint32_t` | 数据传输缓冲区大小 |
+| `inbound` | `shared_transmission` | 入站传输对象 |
 
 ## session 结构体
 
-`session` 聚合单个连接会话所需的所有资源和状态，是请求处理流程的核心数据结构。
+单个连接会话的所有资源和状态，请求处理的核心数据结构。通过 `session_opts` 构造。禁止拷贝，支持移动。
 
-### 定义
-
-```cpp
-namespace psm::context
-{
-    struct session
-    {
-        // 禁止拷贝
-        session(const session &) = delete;
-        session &operator=(const session &) = delete;
-        // 支持移动
-        session(session &&) = default;
-        session &operator=(session &&) = delete;
-
-        session(std::uint64_t sid, server &srv, worker &wrk,
-                memory::frame_arena &arena,
-                std::function<bool(std::string_view)> verifier,
-                const std::uint32_t buf_size, shared_transmission in);
-
-        // 身份与上下文
-        std::uint64_t session_id{0};
-        server &server_ctx;
-        worker &worker_ctx;
-        memory::frame_arena &frame_arena;
-
-        // 认证
-        std::function<bool(std::string_view)> credential_verifier;
-        account::directory *account_directory{nullptr};
-        account::lease account_lease;
-
-        // 传输
-        std::uint32_t buffer_size;
-        shared_transmission inbound;
-        shared_transmission outbound;
-        outbound::proxy *outbound_proxy{nullptr};
-
-        // 协议
-        protocol::protocol_type detected_protocol{protocol::protocol_type::unknown};
-
-        // 多路复用
-        std::function<void()> active_stream_cancel;
-        std::function<void()> active_stream_close;
-    };
-}
-```
-
-### 字段分组
-
-#### 身份与上下文
-
-| 字段 | 类型 | 说明 |
+| 分组 | 字段 | 说明 |
 |------|------|------|
-| `session_id` | `uint64_t` | 会话唯一标识符（递增分配） |
-| `server_ctx` | `server &` | 服务器全局上下文引用 |
-| `worker_ctx` | `worker &` | 工作线程上下文引用 |
-| `frame_arena` | `frame_arena &` | 帧内存池引用（栈上单调分配器） |
+| 身份 | `session_id`, `server_ctx`, `worker_ctx`, `frame_arena` | 上下文链 |
+| 认证 | `credential_verifier`, `account_directory`, `account_lease` | 账户租约 |
+| 传输 | `buffer_size`, `inbound`, `outbound`, `outbound_proxy` | 双向传输 |
+| 协议 | `detected_protocol` | 识别结果 |
+| 多路复用 | `stream_cancel`, `stream_close` | 活跃流控制回调 |
 
-#### 认证与账户
+## 设计决策
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `credential_verifier` | `function<bool(string_view)>` | 凭据验证函数（密码/UUID 校验） |
-| `account_directory` | `account::directory *` | [[core/account/directory|账户目录]]指针 |
-| `account_lease` | `account::lease` | [[core/account/entry|账户连接租约]]（RAII） |
+### 为什么用前向声明而非 include？
 
-#### 传输层
+`context.hpp` 是被几乎所有模块 include 的头文件。如果它 include 了 `router.hpp`、`config.hpp` 等实现头文件，修改任何实现模块都会导致全项目重编译。通过前向声明，context.hpp 的修改面最小化。
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `buffer_size` | `uint32_t` | 数据传输缓冲区大小（字节） |
-| `inbound` | `shared_transmission` | 入站传输对象（客户端→服务器） |
-| `outbound` | `shared_transmission` | 出站传输对象（服务器→上游） |
-| `outbound_proxy` | `outbound::proxy *` | 出站代理指针 |
+**后果**: 仅能使用引用和指针类型，不能内联调用方法。实际 include 仅限 `entry.hpp`（需要完整定义用于 `account::lease` 成员）、`protocol/types.hpp`（枚举值）、`transport/transmission.hpp`（`shared_transmission`）。
 
-#### 协议识别
+### 为什么 server/config() 不加锁？
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `detected_protocol` | `protocol_type` | 识别出的协议类型 |
+配置使用 `atomic<shared_ptr<const config>>`，读取端 `cfg.load()` 是无锁原子操作。进行中的请求持有旧配置的 `shared_ptr` 引用，`swap_config()` 后旧配置不会立即销毁（引用计数保护）。实现读写无竞争。
 
-#### 多路复用控制
+**后果**: 配置热加载后，进行中的请求仍使用旧配置直到请求完成。
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `active_stream_cancel` | `function<void()>` | 活跃流取消回调 |
-| `active_stream_close` | `function<void()>` | 活跃流关闭回调 |
+### 为什么 session 用 session_opts 构造而非多参数？
 
-## session 构造流程
+遵循项目规范（Rule 1：函数参数 ≤ 3）。session 原本需要 7+ 个参数，用 `session_opts` 结构体收敛后构造函数只有一个参数。
 
-```
-listener 接受连接
-    │
-    ▼
-balancer 选择 worker
-    │
-    ▼
-launch 创建 session
-    │
-    ├── 分配 session_id (递增)
-    ├── 传入 server & 引用
-    ├── 传入 worker & 引用
-    ├── 传入 frame_arena & 引用
-    ├── 创建 credential_verifier (闭包捕获账户目录)
-    ├── 传入 buffer_size (来自配置)
-    └── 传入 inbound transport
-            │
-            ▼
-        session 处理流程
-            │
-            ├── recognition::recognize()
-            │       → session.detected_protocol = protocol_type
-            │
-            ├── dispatch::handler(detected_protocol)
-            │       → 协议处理器执行
-            │
-            ├── try_acquire(account_directory, credential)
-            │       → session.account_lease = lease
-            │
-            ├── 建立出站连接
-            │       → session.outbound = transport
-            │
-            └── tunnel 双向转发
-                    │
-                    ├── accumulate_uplink(account_lease.get(), n)
-                    └── accumulate_downlink(account_lease.get(), n)
-```
+**后果**: `session_opts` 的字段生命周期必须覆盖 session 构造完成。
 
-## 前向声明策略
+## 约束
 
-Context 头文件仅使用前向声明引用其他模块，不 include 任何实现头文件：
+### 引用成员生命周期
 
-```cpp
-// 前向声明（零实现模块依赖）
-namespace psm { struct config; }
-namespace psm::connect { class router; }
-namespace psm::account { class directory; class lease; }
-namespace psm::outbound { class proxy; }
-namespace psm::stats::traffic { class traffic_state; }
-namespace psm::memory { class frame_arena; using resource_pointer = std::pmr::memory_resource *; }
-```
+**类型**: 生命周期
 
-实际 include 的头文件仅包含类型定义：
-- `<prism/transport/transmission.hpp>` -- `shared_transmission` 类型
-- `<prism/account/entry.hpp>` -- `entry` 和 `lease` 完整定义
-- `<prism/protocol/protocol_type.hpp>` -- `protocol_type` 枚举
+**规则**: `session` 的 `server_ctx`、`worker_ctx`、`frame_arena` 是引用成员，对应对象必须比 session 活得更长。
 
-这种设计确保了 context.hpp 不会被实现细节污染，修改任何实现模块不需要重新编译包含 context.hpp 的代码。
+**违反后果**: 悬挂引用，未定义行为。
+
+**源码依据**: `context.hpp:166-169`
+
+### worker 不可跨线程
+
+**类型**: 线程安全
+
+**规则**: `worker` 的 `io_context`、`router`、`memory_pool` 都是线程局部资源，worker 实例只能在创建它的线程中使用。
+
+**违反后果**: 数据竞争。
+
+**源码依据**: `context.hpp:117-124`
 
 ## 依赖关系
 

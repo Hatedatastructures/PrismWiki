@@ -213,7 +213,7 @@ scheme_executor 执行
 | 依赖 | [[core/recognition/overview|Recognition]] | ClientHello 分析结果 |
 | 依赖 | [[core/fault/overview|Fault]] | 错误码 |
 | 依赖 | [[core/memory/overview|Memory]] | PMR 容器 |
-| 被依赖 | [[core/agent/overview|Agent]] | 会话处理使用伪装方案 |
+| 被依赖 | [[core/instance/overview|Instance]] | 会话处理使用伪装方案 |
 
 ## 相关文档
 

@@ -1,7 +1,7 @@
 ---
 tags: [transport, unreliable]
 layer: core
-source: I:/code/Prism/include/prism/transport/unreliable.hpp
+source: include/prism/transport/unreliable.hpp
 title: unreliable — UDP 数据报传输
 module: transport
 updated: 2026-05-27

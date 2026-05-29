@@ -413,168 +413,41 @@ SOCKS 探测特征:
    - 多层协议栈
 ```
 
+
 ## 在 Prism 中的应用
 
-Prism 实现了多层主动探测防御机制：
+Prism 通过多层伪装方案对抗主动探测，核心策略是"未认证连接回退到真实网站"。
 
-### Reality 认证
+| 防御机制 | 模块 | 原理 | 详见 |
+|----------|------|------|------|
+| Reality 身份验证 | `stealth/facade/reality/util/auth` | X25519 密钥交换 + session_id 内嵌 short_id，认证失败回退到 dest 站点 | [[core/stealth/reality/auth\|Reality Auth]] |
+| Reality 回退转发 | `stealth/facade/reality/handshake` | `fallback_dest()` 将未认证 ClientHello 转发到真实目标站，探测者看到合法 TLS 响应 | [[core/stealth/reality/handshake\|Reality Handshake]] |
+| ShadowTLS v3 HMAC 认证 | `stealth/facade/shadowtls/util/auth` | HMAC-SHA1 累积验证，客户端在握手中嵌入 HMAC 校验数据 | [[core/stealth/shadowtls/overview\|ShadowTLS]] |
+| ShadowTLS 后端中继 | `stealth/facade/shadowtls/handshake` | `connect_backend()` 连接真实 TLS 后端，中继真实 ServerHello，非授权连接直接关闭 | [[core/stealth/shadowtls/handshake\|ShadowTLS Handshake]] |
+| TLS 上下文配置 | `instance/worker/tls` | `tls::configure()` 设置 min TLS 1.2、ALPN、证书链，确保标准 TLS 行为 | [[core/instance/worker/worker\|Worker]] |
+| SS2022 重放窗口 | `shadowsocks/util/replay` | WireGuard bitmap 防重放，TCP 用 salt_pool (60s TTL) 去重 | [[core/protocol/shadowsocks/overview\|Shadowsocks]] |
 
-Reality 协议使用身份标记来区分合法客户端和探测者：
+### Reality 回退机制
 
-```cpp
-// src/prism/stealth/reality/auth.cpp
+Reality 是对抗主动探测最有效的方案。当未认证客户端（探测者）发送 ClientHello 时：
 
-auto reality_authenticator::verify_client_hello(
-    const client_hello_message& hello,
-    const reality_config& config
-) -> auth_result {
-    // 1. 检查 short_id
-    auto short_id_opt = extract_short_id(hello);
-    if (!short_id_opt) {
-        return auth_result::fallback;  // 无标记，回退
-    }
+1. `authenticate()` 检查 SNI → X25519 密钥交换 → session_id 解密 short_id
+2. 认证失败：`fallback_dest()` 建立到 `dest` 配置站点的 TCP 连接
+3. 将原始 ClientHello 转发给真实网站，之后双向透传
+4. 探测者看到的是与真实网站完全正常的 TLS 通信
 
-    // 2. 验证 short_id 是否有效
-    if (!is_valid_short_id(*short_id_opt, config.short_ids)) {
-        return auth_result::fallback;  // 无效标记，回退
-    }
+关键：Reality 的认证在 ClientHello 阶段完成，不增加额外 RTT。认证数据通过 X25519 共享密钥 + AES-128-GCM 加密嵌入 session_id 字段。
 
-    // 3. 提取认证数据
-    auto auth_data = extract_auth_data(hello);
-    if (!auth_data) {
-        return auth_result::fallback;
-    }
+### ShadowTLS 探测防御
 
-    // 4. 验证认证数据
-    if (!verify_auth_data(*auth_data, config)) {
-        return auth_result::rejected;  // 认证失败
-    }
+ShadowTLS v3 通过 HMAC-SHA1 累积认证区分合法客户端：
 
-    return auth_result::accepted;
-}
-```
+1. `connect_backend()` 连接真实 TLS 后端（如 `www.microsoft.com:443`）
+2. `run_relay()` 将真实 ServerHello 中继给客户端
+3. 客户端在后续 TLS 记录中嵌入 HMAC 验证数据
+4. `read_hmac_match()` 验证 HMAC → 认证成功继续 / 失败则关闭连接
 
-### ShadowTLS 认证
-
-ShadowTLS v3 引入了密码认证机制：
-
-```cpp
-// src/prism/stealth/shadowtls/auth.cpp
-
-auto shadowtls_authenticator::authenticate(
-    const std::vector<uint8_t>& data,
-    const shadowtls_config& config
-) -> auth_result {
-    // 1. 检查是否有认证数据
-    if (data.size() < auth_header_size) {
-        return auth_result::fallback;
-    }
-
-    // 2. 提取密码哈希
-    auto received_hash = extract_password_hash(data);
-
-    // 3. 计算期望的密码哈希
-    auto expected_hash = compute_password_hash(
-        config.password,
-        get_current_timestamp()
-    );
-
-    // 4. 比较哈希
-    if (received_hash == expected_hash) {
-        return auth_result::accepted;
-    }
-
-    // 5. 检查时间窗口内的其他有效哈希
-    for (int offset = -time_window; offset <= time_window; ++offset) {
-        auto alt_hash = compute_password_hash(
-            config.password,
-            get_current_timestamp() + offset
-        );
-        if (received_hash == alt_hash) {
-            return auth_result::accepted;
-        }
-    }
-
-    return auth_result::fallback;
-}
-```
-
-### 回退机制
-
-当检测到探测请求时，Prism 回退到真实网站响应：
-
-```cpp
-// src/prism/stealth/reality/handshake.cpp
-
-auto reality_handshake::handle_unauthorized_client(
-    const tcp_socket& socket,
-    const std::string& dest_host,
-    uint16_t dest_port
-) -> awaitable<void> {
-    // 1. 建立到真实网站的连接
-    auto dest_socket = co_await connect_to_dest(dest_host, dest_port);
-
-    // 2. 转发客户端的 ClientHello
-    co_await async_write(dest_socket, buffer(client_hello_data_));
-
-    // 3. 转发真实网站的响应给客户端
-    std::vector<uint8_t> response(buffer_size);
-    auto bytes_read = co_await dest_socket.async_read_some(buffer(response));
-    co_await async_write(socket, buffer(response.data(), bytes_read));
-
-    // 4. 双向转发数据
-    co_await bidirectional_transfer(socket, dest_socket);
-
-    co_return;
-}
-```
-
-### 探测检测
-
-Prism 实现了探测请求检测：
-
-```cpp
-// src/prism/recognition/probe/detector.cpp
-
-class probe_detector {
-public:
-    auto detect(const connection_info& info) -> probe_type {
-        // 1. 检查 IP 黑名单
-        if (is_blacklisted_ip(info.remote_ip)) {
-            return probe_type::known_probe_ip;
-        }
-
-        // 2. 检查连接模式
-        if (is_suspicious_pattern(info.remote_ip)) {
-            return probe_type::suspicious_pattern;
-        }
-
-        // 3. 检查请求特征
-        if (has_probe_characteristics(info.request_data)) {
-            return probe_type::probe_request;
-        }
-
-        return probe_type::normal;
-    }
-
-private:
-    auto is_suspicious_pattern(const std::string& ip) -> bool {
-        // 检查短时间内多次连接
-        auto count = get_connection_count(ip, std::chrono::minutes(5));
-        return count > threshold_;
-    }
-
-    auto has_probe_characteristics(const std::span<uint8_t>& data) -> bool {
-        // 检查已知的探测特征
-        for (const auto& pattern : probe_patterns_) {
-            if (match_pattern(data, pattern)) {
-                return true;
-            }
-        }
-        return false;
-    }
-};
-```
+与 Reality 不同，ShadowTLS 认证失败时直接关闭连接而非回退转发，这可能导致探测者通过连接关闭行为推断代理存在。
 
 ### 配置示例
 
@@ -591,12 +464,7 @@ Reality 配置：
         "0123456789abcdef",
         "fedcba9876543210",
         "abcdef0123456789"
-      ],
-      "probe_detection": {
-        "enabled": true,
-        "blacklist_ttl": 3600,
-        "rate_limit": 10
-      }
+      ]
     }
   }
 }
@@ -613,15 +481,12 @@ ShadowTLS 配置：
       "handshake": {
         "dest": "www.cloudflare.com:443",
         "server_name": "www.cloudflare.com"
-      },
-      "probe_detection": {
-        "enabled": true,
-        "fallback_behavior": "proxy_real_response"
       }
     }
   }
 }
 ```
+
 
 ## 最佳实践
 

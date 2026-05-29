@@ -1,7 +1,9 @@
 ---
 title: "channel — 通道阶段概述"
 layer: core
-source: "I:/code/Prism/include/prism/connect/"
+source:
+  - include/prism/connect/
+  - include/prism/transport/
 module: "channel"
 type: overview
 tags: [channel, transport, transmission, connection-pool, TLS]
@@ -17,7 +19,7 @@ related:
 
 # channel — 通道阶段概述
 
-> 源码目录: `I:/code/Prism/include/prism/connect/`
+> 源码: `include/prism/connect/` + `include/prism/transport/`
 > 模块: [[channel|channel]]
 > 定位: 请求处理流程的第五阶段
 

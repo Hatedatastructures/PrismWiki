@@ -2,7 +2,7 @@
 title: "outbound — 出站代理模块"
 layer: core
 module: outbound
-source: I:/code/Prism/include/prism/outbound/
+source: include/prism/outbound/
 tags: [outbound, proxy, direct, adapter]
 created: 2026-05-17
 updated: 2026-05-28
@@ -71,6 +71,46 @@ updated: 2026-05-28
 |-----------|-------------|
 | `outbound::proxy` | `constant/adapters.go` 中的 `ProxyAdapter` 接口 |
 | `outbound::direct` | `adapter/outbound/direct.go` |
+
+
+## 约束
+
+| 约束 | 规则 | 违反后果 | 来源 |
+|------|------|----------|------|
+| outbound 为 header-only | 无编译单元，全部模板/内联 | 修改导致所有依赖模块重编译 | `outbound/` |
+| 代理链深度有限 | 过多嵌套代理导致延迟叠加 | 性能退化 | `outbound/proxy.hpp` |
+
+## 故障场景
+
+### 1. 上游代理不可达
+
+**触发条件**: 配置的上游代理地址无法连接
+
+**传播路径**: outbound dial -> 连接失败 -> 返回错误码
+
+**外部表现**: 代理请求失败
+
+### 2. 代理认证失败
+
+**触发条件**: 上游代理要求认证但凭证错误
+
+**传播路径**: 上游返回认证错误 -> outbound 转发错误
+
+**外部表现**: 客户端收到代理认证错误响应
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| outbound -> [[core/connect/dial/dial\|connect]] | 依赖 | 通过 dial 建立到上游代理的连接 |
+| outbound <- [[core/connect/tunnel/tunnel\|connect]] | 被依赖 | tunnel/forward 使用 outbound 做协议级转发 |
+
+## 变更敏感度
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| outbound::proxy 接口变更 | connect/tunnel/forward | 编译失败 |
+| 新增代理类型 | 协议处理流程 | 需在 dispatch 层注册 |
 
 ## 参见
 

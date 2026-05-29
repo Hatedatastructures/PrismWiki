@@ -1,7 +1,7 @@
 ---
 tags: [channel, transport, transmission]
 layer: core
-source: I:/code/Prism/include/prism/transport/transmission.hpp
+source: include/prism/transport/transmission.hpp
 title: transmission — 传输层流式抽象接口
 module: transport
 updated: 2026-05-27

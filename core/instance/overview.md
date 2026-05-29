@@ -1,7 +1,7 @@
 ---
 title: Instance 模块总览
 layer: core
-source: "I:/code/Prism/include/prism/instance/"
+source: "include/prism/instance/"
 module: instance
 tags: [instance, overview, architecture]
 updated: 2026-05-27
@@ -84,6 +84,60 @@ Instance 启动:
   8. 启动 listener（监听端口 → 分发到 balancer）
   9. 启动所有线程
 ```
+
+
+## 约束
+
+| 约束 | 规则 | 违反后果 | 来源 |
+|------|------|----------|------|
+| worker 数量等于 CPU 核心数 - 1 | 每个 worker 独占一个 io_context 线程 | worker 数量与核心数不匹配导致性能退化 | `instance/config.hpp` |
+| TLS 证书路径必须有效 | PEM 格式证书文件必须存在 | 启动失败 | `instance/config.hpp` |
+| 认证用户列表为空则无认证 | 空 auth.users 表示接受所有连接 | 安全性降低 | `instance/config.hpp` |
+| limits 连接限制硬性上限 | 超过 max_connections 拒绝新连接 | 客户端连接被拒 | `instance/config.hpp` |
+
+## 故障场景
+
+### 1. TLS 证书加载失败
+
+**触发条件**: 配置的证书文件路径不存在或格式错误
+
+**传播路径**: worker 初始化 -> tls::configure() 失败 -> 启动异常退出
+
+**外部表现**: 服务无法启动
+
+### 2. 监听端口被占用
+
+**触发条件**: 配置的监听端口已被其他进程占用
+
+**传播路径**: listener::start() -> bind 失败 -> 异常退出
+
+**外部表现**: 服务无法启动，日志显示地址已使用
+
+### 3. 所有 worker 线程饱和
+
+**触发条件**: 并发连接数超过 limits 配置
+
+**传播路径**: balancer 分发 -> 所有 worker active_sessions 达到上限 -> 拒绝新连接
+
+**外部表现**: 新连接被关闭
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| instance -> [[core/recognition/overview\|recognition]] | 调用 | launch 中 session 调用 recognition::recognize() 识别协议 |
+| instance -> [[core/protocol/overview\|protocol]] | 调用 | session::diversion() 分发到协议处理器 |
+| instance -> [[core/connect/overview\|connect]] | 调用 | 协议处理器通过 connect::dial 建立上游连接 |
+| instance -> [[core/stealth/overview\|stealth]] | 调用 | recognition 识别为 TLS 后调用 stealth 方案执行握手 |
+| instance <- [[core/stats/overview\|stats]] | 被依赖 | worker 持有 worker_load 和 traffic_state |
+
+## 变更敏感度
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| instance::config 字段变更 | 所有下游模块 | 序列化/反序列化需同步更新 |
+| worker 线程模型变更 | stats/balancer | 负载均衡和统计逻辑需适配 |
+| TLS 配置变更 | 所有 TLS 连接 | 证书、密码套件影响客户端兼容性 |
 
 ## 引用关系
 

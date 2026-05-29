@@ -2,7 +2,7 @@
 tags: [transformer, overview]
 layer: core
 module: transformer
-source: I:/code/Prism/include/prism/transformer/json.hpp
+source: include/prism/transformer/json.hpp
 title: Transformer 模块
 ---
 
@@ -53,6 +53,39 @@ glaze 反序列化可能中途失败。如果直接写入 `value`，失败时 `v
 **违反后果**: 配置文件过大可能导致 OOM。
 
 **源码依据**: `json.hpp:9`
+
+
+## 故障场景
+
+### 1. JSON 反序列化字段缺失
+
+**触发条件**: 配置文件缺少必需字段
+
+**传播路径**: glaze 反序列化 -> 字段缺失 -> 使用默认值或抛异常
+
+**外部表现**: 配置加载失败或使用默认值运行
+
+### 2. 转换输出与预期格式不匹配
+
+**触发条件**: transformer 输出的 JSON 结构与下游消费者预期不一致
+
+**传播路径**: 下游解析失败 -> 配置错误
+
+**外部表现**: 模块行为异常
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| transformer <- [[core/loader/config\|config]] | 被依赖 | config 加载使用 glaze 序列化，transformer 提供辅助转换 |
+| transformer -> glaze | 依赖 | 依赖 glaze 库的 JSON 序列化/反序列化能力 |
+
+## 变更敏感度
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| glaze 库升级 | 所有序列化 | glz::meta 语法可能变化 |
+| JSON 字段名变更 | 配置文件兼容性 | 现有配置文件失效 |
 
 ## 引用关系
 

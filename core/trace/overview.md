@@ -3,8 +3,8 @@ tags: [trace, overview]
 layer: core
 module: trace
 source:
-  - I:/code/Prism/include/prism/trace/config.hpp
-  - I:/code/Prism/src/prism/trace/spdlog.cpp
+  - include/prism/trace/config.hpp
+  - src/prism/trace/spdlog.cpp
 title: Trace 模块
 ---
 
@@ -94,6 +94,49 @@ graph TD
     F --> H[stdout_color_sink]
     F --> I[thread_pool]
 ```
+
+
+## 故障场景
+
+### 1. 日志文件写入失败
+
+**触发条件**: 磁盘满或权限不足
+
+**传播路径**: spdlog -> 文件写入失败 -> 日志丢失但服务继续
+
+**外部表现**: 日志文件不更新，服务正常运行
+
+### 2. 高频日志导致性能退化
+
+**触发条件**: log_level 设为 debug/trace 且并发连接数高
+
+**传播路径**: 大量日志写入 -> I/O 瓶颈 -> 协程调度延迟
+
+**外部表现**: 代理吞吐量下降
+
+### 3. 日志格式变更未同步
+
+**触发条件**: 修改日志格式但未更新下游分析工具
+
+**传播路径**: 日志格式变化 -> 解析失败
+
+**外部表现**: 监控面板/日志分析工具异常
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| trace <- 所有模块 | 被依赖 | 所有模块通过 trace 宏输出日志 |
+| trace -> spdlog | 依赖 | 底层使用 spdlog 库 |
+| trace <- [[core/loader/config\|config]] | 配置 | 从全局配置读取 log_level、输出目标等 |
+
+## 变更敏感度
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| spdlog 库升级 | 日志初始化和格式化 | API 可能变化 |
+| log_level 枚举变更 | 所有日志调用 | 编译失败 |
+| 日志格式变更 | 下游分析工具 | 需同步更新解析器 |
 
 ## 相关模块
 

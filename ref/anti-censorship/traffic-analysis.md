@@ -565,283 +565,78 @@ SSH 侧信道:
 
 ## 在 Prism 中的应用
 
-Prism 在多个层面实现了流量分析对抗机制：
+Prism 通过以下机制对抗流量分析：
 
-### 多路复用对抗
+| 防御机制 | 模块 | 原理 | 详见 |
+|----------|------|------|------|
+| 多路复用 | `multiplex/` | 将多个流混合到单条传输连接上，使单个流量的包大小、时序、方向特征被叠加和分散 | [[core/multiplex/overview]] |
+| Restls 流量整形 | `stealth/facade/restls/` | 通过脚本引擎的 `send`/`wait`/`recv` 指令自定义流量发送模式，使用 MD5+mt19937 PRNG 生成随机填充 | [[core/stealth/restls/script]] |
+| AnyTLS 帧填充 | `stealth/stack/anytls/` | 在帧级别使用 MD5+mt19937 PRNG 填充，平滑帧大小分布 | [[core/stealth/anytls/padding]] |
+| Reality 透明代理 | `stealth/facade/reality/` | 未认证客户端的流量回落到真实网站，继承真实站点的流量模式，无需显式填充 | [[core/stealth/reality/handshake]] |
+| 连接池复用 | `connect/pool/` | 跨请求复用 TCP 连接，减少连接级别的指纹攻击面 | [[core/connect/pool/pool]] |
+| 流量统计 | `stats/` | 跟踪每协议流量计数器用于运行时监控（注：不实现流量分析检测） | [[core/stats/traffic]] |
 
-Prism 的多路复用模块混合多个流的流量：
+### 多路复用
 
-```cpp
-// include/prism/multiplex/session.hpp
+Prism 的多路复用模块（`mux::core` 抽象基类）支持三种复用协议实现：`smux::craft`、`yamux::craft`、`h2mux::craft`。多路复用将多个独立流的数据帧交错发送到同一条底层传输连接上，使观察者无法将单个包关联到特定用户流。帧的交错顺序和时机自然引入了随机性，破坏了单流的包大小和时序指纹。
 
-/// @brief 多路复用会话
-/// @details 在单个连接上承载多个流，混淆流量特征
-class mux_session {
-public:
-    /// 打开新流
-    auto open_stream(const stream_config& config) -> awaitable<stream_ptr>;
+详见 [[core/multiplex/overview]]。
 
-    /// 发送数据（混合多个流）
-    auto send_data(stream_id id, const std::span<uint8_t>& data) -> awaitable<void>;
+### Restls 流量整形
 
-private:
-    /// 流调度器，决定发送顺序
-    struct scheduler {
-        /// 交错发送策略
-        auto schedule_send(const std::vector<pending_send>& pending) -> std::vector<send_order>;
+Restls 协议（`stealth/facade/restls/`）内置脚本引擎（`script.hpp`），支持 `send`、`wait`、`recv` 三类指令，允许用户自定义流量发送模式。填充数据通过 MD5 种子 + mt19937 PRNG 生成，确保可复现的伪随机性。脚本能力使得 Restls 可以模拟特定应用的流量行为（如 HTTP 请求-响应模式），有效对抗基于包大小序列的指纹攻击。
 
-        /// 随机化发送顺序
-        void randomize_order(std::vector<send_order>& orders);
+详见 [[core/stealth/restls/script]]。
 
-        /// 添加时序混淆
-        void add_timing_noise(std::vector<send_order>& orders);
-    };
+### AnyTLS 帧填充
 
-    scheduler sched_;
-    std::unordered_map<stream_id, stream_ptr> streams_;
-};
-```
+AnyTLS 协议（`stealth/stack/anytls/`）在帧级别实现填充（`padding.hpp`），使用 MD5+mt19937 PRNG 生成填充长度。帧填充将不同大小的载荷归一化到相似的分布区间，消除基于帧大小的特征泄露。AnyTLS 同时在帧内承载多路复用流（`stealth/stack/anytls/mux/`），进一步混合流量特征。
 
-### 流量填充
+详见 [[core/stealth/anytls/padding]]。
 
-Prism 在协议层实现流量填充：
+### Reality 透明代理
 
-```cpp
-// include/prism/pipeline/primitives.hpp
+Reality 方案（`stealth/facade/reality/`）的核心优势在于：当非授权客户端（如审查探测者）连接时，Reality 将其连接透明回落到真实的目标网站。这意味着回落流量完全是真实网站的 TLS 流量，其包大小、时序、方向特征与正常访问该网站完全一致。已认证客户端的通信则通过 X25519 密钥交换和 seal 加密封装在同一个 TLS 连接内。因此 Reality 无需显式的填充或时序混淆机制。
 
-/// @brief 流量填充配置
-struct padding_config {
-    bool enabled = true;             ///< 是否启用填充
-    size_t min_padding = 16;         ///< 最小填充字节数
-    size_t max_padding = 128;        ///< 最大填充字节数
-    size_t block_size = 16;          ///< 块大小（字节）
-    padding_strategy strategy = padding_strategy::random;
-};
+详见 [[core/stealth/reality/handshake]]。
 
-/// @brief 应用流量填充
-auto apply_padding(
-    std::vector<uint8_t>& packet,
-    const padding_config& config
-) -> void {
-    if (!config.enabled) return;
+### 连接池复用
 
-    // 计算填充量
-    size_t current_size = packet.size();
-    size_t target_size = 0;
+连接池模块（`connect/pool/`）复用已建立的 TCP 连接来处理多个后续请求。连接复用减少了新建连接的频率，从而降低了连接级别的特征暴露（如 TLS 握手模式、连接持续时间分布）。连接池还内置健康检查机制，确保复用的连接保持可用。
 
-    switch (config.strategy) {
-        case padding_strategy::fixed:
-            target_size = std::max(current_size, config.min_padding + config.min_padding);
-            break;
-        case padding_strategy::random:
-            target_size = current_size + random_padding(config);
-            break;
-        case padding_strategy::block_aligned:
-            target_size = align_to_block(current_size, config.block_size);
-            break;
-    }
+详见 [[core/connect/pool/pool]]。
 
-    // 添加填充
-    if (target_size > current_size) {
-        size_t padding_size = target_size - current_size;
-        auto padding = generate_random_padding(padding_size);
-        packet.insert(packet.end(), padding.begin(), padding.end());
-    }
-}
-```
+### 流量统计
 
-### 时序混淆
+Stats 模块（`stats/traffic.hpp`）跟踪每协议的流量计数器（字节、包数等），用于运行时监控和运维诊断。需要明确的是，该模块不实现任何流量分析检测或防御功能，仅提供可观测性数据。
 
-Prism 实现时序混淆机制：
-
-```cpp
-// include/prism/transport/timing.hpp
-
-/// @brief 时序混淆配置
-struct timing_config {
-    bool enabled = true;              ///< 是否启用时序混淆
-    size_t min_delay_ms = 0;          ///< 最小延迟（毫秒）
-    size_t max_delay_ms = 100;        ///< 最大延迟（毫秒）
-    timing_strategy strategy = timing_strategy::random;
-};
-
-/// @brief 应用时序混淆
-auto apply_timing_noise(
-    const timing_config& config
-) -> awaitable<void> {
-    if (!config.enabled) co_return;
-
-    // 计算延迟
-    size_t delay_ms = 0;
-    switch (config.strategy) {
-        case timing_strategy::random:
-            delay_ms = random_delay(config.min_delay_ms, config.max_delay_ms);
-            break;
-        case timing_strategy::fixed:
-            delay_ms = config.min_delay_ms;
-            break;
-        case timing_strategy::adaptive:
-            delay_ms = adaptive_delay_based_on_load();
-            break;
-    }
-
-    // 执行延迟（非阻塞）
-    if (delay_ms > 0) {
-        co_await async_sleep(std::chrono::milliseconds(delay_ms));
-    }
-}
-```
-
-### Reality 流量模式
-
-Reality 方案自动获得真实网站的流量模式：
-
-```cpp
-// src/prism/stealth/reality/session.cpp
-
-auto reality_session::handle_data_transfer(
-    const tcp_socket& client,
-    const tcp_socket& target
-) -> awaitable<void> {
-    // Reality 自动继承目标网站的流量特征
-    // 无需额外的填充或混淆
-
-    // 双向转发
-    auto client_to_target = bidirectional_transfer(client, target);
-    auto target_to_client = bidirectional_transfer(target, client);
-
-    // 等待两个方向完成
-    co_await (client_to_target && target_to_client);
-}
-```
-
-### 配置示例
-
-流量混淆配置：
-
-```json
-{
-  "traffic_obfuscation": {
-    "padding": {
-      "enabled": true,
-      "strategy": "random",
-      "min_padding": 16,
-      "max_padding": 128,
-      "block_size": 16
-    },
-    "timing": {
-      "enabled": true,
-      "strategy": "random",
-      "min_delay_ms": 0,
-      "max_delay_ms": 50
-    },
-    "multiplex": {
-      "enabled": true,
-      "min_streams": 2,
-      "max_streams": 16,
-      "mix_strategy": "interleave"
-    }
-  }
-}
-```
-
-### 流量特征检测
-
-Prism 实现流量特征检测用于诊断：
-
-```cpp
-// include/prism/diagnostics/traffic_analyzer.hpp
-
-/// @brief 流量特征分析器
-class traffic_analyzer {
-public:
-    /// 提取流量特征
-    auto extract_features(const connection_stats& stats) -> traffic_features;
-
-    /// 计算特征指纹
-    auto compute_fingerprint(const traffic_features& features) -> std::string;
-
-    /// 与正常流量特征比对
-    auto compare_with_normal(const traffic_features& features) -> similarity_score;
-
-private:
-    /// 特征统计
-    struct feature_stats {
-        double mean_packet_size;
-        double variance_packet_size;
-        double entropy_packet_size;
-        double mean_interval;
-        double variance_interval;
-        double up_down_ratio;
-    };
-
-    feature_stats compute_statistics(const connection_stats& stats);
-};
-```
+详见 [[core/stats/traffic]]。
 
 ## 最佳实践
 
-### 配置建议
+### 方案选择
 
-根据威胁等级选择配置：
+根据威胁模型选择合适的防御方案组合：
 
-| 威胁等级 | 填充 | 时序混淆 | 多路复用 | 性能影响 |
-|----------|------|----------|----------|----------|
-| 低 | 关闭 | 关闭 | 可选 | 0% |
-| 中 | 随机填充 | 小延迟 | 启用 | 10-20% |
-| 高 | 固定大小填充 | 大延迟 | 强制启用 | 30-50% |
+| 威胁模型 | 推荐方案组合 | 说明 |
+|----------|-------------|------|
+| 仅需规避 DPI | Reality 或 ShadowTLS | TLS 伪装足以规避 DPI，流量模式由回落站点自然提供 |
+| 需对抗基本流量分析 | Reality + 多路复用 | 多路复用混合多流特征，Reality 提供真实回落流量 |
+| 需对抗高级流量分析 | Reality + AnyTLS + 多路复用 | AnyTLS 帧填充 + 多流混合提供更强的统计抗性 |
+| 需自定义流量模式 | Restls + 多路复用 | Restls 脚本引擎允许精确控制流量行为 |
 
-### 性能权衡
+### 性能考虑
 
-流量混淆会带来性能损失：
+流量分析防御机制的性能影响：
 
-```
-性能影响分析:
+| 机制 | 带宽开销 | 延迟影响 | CPU 开销 |
+|------|----------|----------|----------|
+| Reality | 无额外开销 | 无额外延迟 | 仅密钥交换 |
+| 多路复用 | 帧头开销（协议相关） | 极小调度延迟 | 帧封装/解封 |
+| AnyTLS 填充 | 填充字节（PRNG 决定） | 极小 | MD5+PRNG 计算 |
+| Restls 脚本 | 取决于脚本配置 | 取决于 `wait` 指令 | MD5+PRNG 计算 |
 
-填充:
-- 带宽增加: 10-30%
-- CPU 增加: 5-10%（生成随机数）
-
-时序混淆:
-- 延迟增加: 0-100ms
-- 吞吐量减少: 0-20%
-
-多路复用:
-- 连接数减少: 大幅减少
-- 复杂度增加: 中等
-- 内存增加: 每流状态
-
-综合影响:
-- 轻度混淆: 5-10% 性能损失
-- 中度混淆: 15-25% 性能损失
-- 重度混淆: 40-60% 性能损失
-```
-
-### 部署策略
-
-分阶段部署流量混淆：
-
-```
-第一阶段: 诊断
-- 启用流量特征分析
-- 收集当前流量特征
-- 与正常流量比对
-
-第二阶段: 调整
-- 确定需要混淆的特征
-- 选择合适的混淆策略
-- 配置参数
-
-第三阶段: 验证
-- 测试混淆效果
-- 验证特征差异减少
-- 确认功能正常
-
-第四阶段: 监控
-- 持续监控流量特征
-- 定期检查效果
-- 动态调整参数
-```
+建议优先使用 Reality 方案，因为它无需额外填充即可获得真实站点的流量特征，是性价比最高的流量分析防御手段。
 
 ## 常见问题
 
@@ -866,13 +661,13 @@ private:
 
 ### Q3: Reality 如何对抗流量分析？
 
-Reality 通过以下方式对抗：
-- 使用真实网站的 TLS 连接
-- 继承真实网站的流量特征
-- 自动获得正确的包大小模式
-- 自动获得正确的时序模式
+Reality 通过回落机制对抗流量分析：
+- 未认证客户端（包括审查探测者）的连接被透明回落到真实目标网站
+- 回落流量完全是真实网站的 TLS 流量，包大小、时序、方向特征与正常访问一致
+- 已认证客户端的通信通过 X25519 密钥交换和 seal 加密封装在同一连接内
+- 无需显式的填充或时序混淆，流量模式由回落站点自然提供
 
-Reality 是最有效的流量分析对抗方案之一。
+Reality 是最有效的流量分析对抗方案之一，因为它不需要人为模拟流量模式，而是直接承载真实站点的流量。
 
 ### Q4: 多路复用如何提高安全性？
 
@@ -932,4 +727,3 @@ Reality 是最有效的流量分析对抗方案之一。
 - [[ref/anti-censorship/probing|主动探测]] — 主动探测防御
 - [[ref/protocol/multiplex|多路复用协议]] — 多路复用实现
 - [[core/multiplex/overview|多路复用模块]] — Prism 多路复用实现
-- [[core/pipeline/overview|Pipeline 模块]] — Prism 流量处理实现

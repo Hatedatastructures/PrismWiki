@@ -5,7 +5,7 @@ updated: 2026-05-27
 layer: core
 module: connect
 source:
-  - I:/code/Prism/include/prism/connect.hpp
+  - include/prism/connect.hpp
 tags: [connect, overview, outbound]
 ---
 
@@ -56,6 +56,42 @@ forward(ctx, opts)                            ← 入口：拨号+隧道
 
 LIFO 保证最近归还的连接最先被复用，最近使用的连接最可能仍处于健康状态。长时间空闲的连接自然沉底，在 cleanup 时优先被淘汰。
 
+
+## 约束
+
+| 约束 | 规则 | 违反后果 | 来源 |
+|------|------|----------|------|
+| 连接池 LIFO 回收 | 最近使用的连接优先复用 | 旧连接可能因对端关闭而失效 | `pool/pool.hpp` |
+| 健康检查检测失效连接 | 池化连接使用前检查可用性 | 使用失效连接导致协议错误 | `pool/health.hpp` |
+| dial 返回 fault::code | 连接失败不抛异常，返回错误码 | 调用方必须检查错误码 | `dial/dial.hpp` |
+| tunnel 双向转发不可中断 | tunnel() 协程持续到任一端关闭 | 无法主动中止传输 | `tunnel/tunnel.hpp` |
+
+## 故障场景
+
+### 1. DNS 解析失败
+
+**触发条件**: 目标域名无法解析
+
+**传播路径**: router -> resolver -> 解析失败 -> 返回 fault::connection_refused
+
+**外部表现**: 代理连接失败，客户端收到连接拒绝
+
+### 2. 连接池连接已失效
+
+**触发条件**: 池中连接被对端关闭但未检测到
+
+**传播路径**: 从池中取出连接 -> 首次写入失败 -> 丢弃连接 -> 重新 dial
+
+**外部表现**: 首次请求延迟增加（重试开销）
+
+### 3. Happy Eyeballs 全部失败
+
+**触发条件**: IPv4 和 IPv6 地址均无法连接
+
+**传播路径**: racer 竞速 -> 所有连接尝试超时或被拒 -> 返回最低优先级错误
+
+**外部表现**: 代理连接失败
+
 ## 跨模块契约
 
 | 模块 A | 模块 B | 契约内容 |
@@ -67,6 +103,14 @@ LIFO 保证最近归还的连接最先被复用，最近使用的连接最可能
 | tunnel | context::session | `tunnel()` 通过 `ctx.worker_ctx.traffic` 刷写流量统计，`ctx.account_lease` 累加账户用量 |
 | tunnel | transport | `tunnel()` 使用 `shut_close()` 优雅关闭传输层 |
 | router | resolve::dns | router 拥有 DNS 解析器实例，提供 `dns()` 访问器 |
+
+## 变更敏感度
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| dial 接口签名变更 | 所有协议处理器 | 编译失败 |
+| pool 回收策略变更 | 连接复用率 | 性能和资源使用变化 |
+| tunnel 缓冲区大小变更 | 传输性能 | 吞吐量和内存占用 |
 
 ## 相关文档
 

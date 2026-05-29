@@ -1,226 +1,171 @@
 ---
-title: Boost.Asio Coroutine
+title: Boost.Asio 与 Prism 协程
 created: 2026-05-17
-updated: 2026-05-17
+updated: 2026-05-29
 layer: ref
 tags: [programming, boost, asio, coroutine]
 ---
 
-# Boost.Asio 协程
+# Boost.Asio 与 Prism 协程
 
-> Boost.Asio 的异步模型与 C++20/23 协程整合原理。
-> 最后更新：2026-05-17
+Prism 基于 Boost.Asio 构建纯协程架构，所有 I/O 操作均为异步。本文聚焦 Prism 使用的 Asio 模式和约定，而非通用 Asio 教程。
 
----
+## Prism 使用的 Asio 模式
 
-## Asio 异步模型
+### 核心模式表
 
-### Proactor 模式
+| 模式 | Prism 用法 | 示例位置 |
+|------|-----------|---------|
+| `use_awaitable` | 所有 async 操作的默认 completion token | transport、stealth、protocol |
+| `redirect_error` | 将错误码从异常转为输出参数 | tunnel、seal、handshake |
+| `co_spawn` | 启动独立协程（detached） | listener 分发、launch 会话 |
+| `steady_timer` | 超时保护、竞速取消 | Reality 握手超时、Happy Eyeballs |
+| `this_coro::executor` | 获取当前协程的执行器 | 所有需要 timer 的协程 |
+| `detached` | 无人监听的协程完成 | 后台任务、日志刷入 |
 
-Asio 采用 Proactor 模式：
+### redirect_error 模式
 
-```
- Initiator           Proactor          Asynchronous Operation
-    │                   │                      │
-    │ start async op    │                      │
-    │──────────────────>│─────────────────────>│
-    │                   │                      │
-    │                   │   operation completes│
-    │                   │<─────────────────────│
-    │                   │                      │
-    │ completion handler│                      │
-    │<──────────────────│                      │
-```
-
-### 异步操作类型
-
-| 操作 | 方法 | 说明 |
-|------|------|------|
-| 读取 | `async_read_some` | 读取部分数据 |
-| 写入 | `async_write_some` | 写入部分数据 |
-| 连接 | `async_connect` | 异步连接 |
-| 接受 | `async_accept` | 异步接受连接 |
-| 定时 | `async_wait` | 定时器等待 |
-
----
-
-## 协程适配
-
-### awaitable<T>
-
-Asio 提供 `awaitable<T>` 作为协程返回类型：
+Prism 热路径中禁止异常，使用 `redirect_error` 将 Asio 错误从异常转为错误码：
 
 ```cpp
-// 协程函数签名
-asio::awaitable<void> handle_session(tcp::socket socket);
-
-asio::awaitable<size_t> read_data(tcp::socket& socket);
-asio::awaitable<void> write_data(tcp::socket& socket, std::span<uint8_t> data);
-```
-
-### co_spawn
-
-启动协程：
-
-```cpp
-// 启动协程
-asio::co_spawn(
-    io_context,
-    handle_session(std::move(socket)),
-    asio::detached  // 或 use_awaitable
-);
-```
-
-### co_await
-
-等待异步操作：
-
-```cpp
-asio::awaitable<void> handle_session(tcp::socket socket) {
-    // 等待读取
-    size_t n = co_await socket.async_read_some(
-        asio::buffer(data),
-        asio::use_awaitable
-    );
-    
-    // 等待写入
-    co_await asio::async_write(
-        socket,
-        asio::buffer(response),
-        asio::use_awaitable
-    );
+std::error_code ec;
+auto n = co_await socket.async_read_some(
+    net::buffer(buf),
+    net::redirect_error(net::use_awaitable, ec));
+if (ec) {
+    // 处理错误，不抛异常
 }
 ```
 
----
+### deadline 竞速模式
 
-## 执行上下文
-
-### io_context
-
-事件循环核心：
+Reality 握手和 Happy Eyeballs 使用定时器与操作竞速：
 
 ```cpp
-asio::io_context ctx;
-// 添加工作
-asio::co_spawn(ctx, task1(), asio::detached);
-asio::co_spawn(ctx, task2(), asio::detached);
-// 运行
-ctx.run();
+net::steady_timer deadline(inbound->executor(), std::chrono::seconds(30));
+auto on_deadline = [&inbound](const boost::system::error_code &ec) {
+    if (!ec) inbound->cancel();
+};
+deadline.async_wait(std::move(on_deadline));
+// ... 执行握手 ...
+deadline.cancel();  // 成功时取消定时器
 ```
 
-### strand
+## Prism 协程约定
 
-序列化执行：
+### 每线程 io_context
+
+每个 worker 线程拥有独立的 `io_context`，避免跨线程调度：
+
+```
+worker_0: io_context → session_0a, session_0b, ...
+worker_1: io_context → session_1a, session_1b, ...
+```
+
+好处：同一线程上的协程无竞争，`strand` 仅在跨线程通信时需要。
+
+### 禁止 mutex
+
+协程中禁止 `std::mutex` / `std::lock_guard`。替代方案：
+
+| 场景 | 替代方案 |
+|------|----------|
+| 计数器/标志位 | `std::atomic` + `memory_order_relaxed` |
+| 跨线程消息 | `net::post()` 到目标 executor |
+| 生产者-消费者 | `concurrent_channel` |
+| 互斥访问 | `strand` 序列化 |
+
+详见 [[dev/coding/coroutine|协程约定]]。
+
+### co_spawn 保活
+
+`co_spawn` 的 lambda 必须按值捕获 `self`（shared_ptr），保持对象存活：
 
 ```cpp
-asio::strand<asio::io_context::executor_type> strand(ctx.get_executor());
-
-// 保证顺序
-asio::co_spawn(strand, task1(), asio::detached);
-asio::co_spawn(strand, task2(), asio::detached);
+net::co_spawn(executor,
+    [self = shared_from_this()]() -> net::awaitable<void> {
+        co_await self->process();
+    },
+    net::detached);
 ```
 
----
+### co_await 后引用失效
 
-## 定时器
-
-### steady_timer
-
-高精度定时器：
+`co_await` 挂起恢复后，裸指针、迭代器、引用可能失效。必须重新获取：
 
 ```cpp
-asio::awaitable<void> with_timeout(tcp::socket& socket) {
-    asio::steady_timer timer(co_await asio::this_coro::executor);
-    timer.expires_after(std::chrono::seconds(5));
-    
-    // 等待定时器或操作
-    auto result = co_await timer.async_wait(asio::use_awaitable);
-}
+// 恢复后容器可能已被修改
+co_await async_op();
+auto it = vec.begin() + offset;  // 重新获取，不能用旧的 it
 ```
 
-### 超时模式
+详见 [[dev/coding/lifecycle|生命周期管理]]。
+
+### net::post 跨线程
+
+从线程 A 向线程 B 的 `io_context` 提交任务：
 
 ```cpp
-asio::awaitable<void> timeout_read(tcp::socket& socket) {
-    asio::steady_timer timer(co_await asio::this_coro::executor);
-    timer.expires_after(std::chrono::milliseconds(300));
-    
-    // 并发等待
-    auto order = co_await asio::experimental::make_parallel_group({
-        socket.async_read_some(asio::buffer(data), asio::use_awaitable),
-        timer.async_wait(asio::use_awaitable)
-    }).async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
-    
-    if (order[1] == 0) { // timer completed first
-        socket.close();
-        throw timeout_error();
-    }
-}
+net::post(target_executor, [self]() {
+    // 在目标线程上执行
+});
 ```
 
----
+用于 balancer 将连接分发给目标 worker。
 
-## 错误处理
+## Prism 特有的协程管道
 
-### try-catch
+### 六阶段流水线
 
-协程内异常处理：
+```
+listener → balancer → worker → session → recognition → protocol handler
+```
+
+每个阶段都是独立协程，通过 `co_spawn` 和 `co_await` 串联。
+
+### 传输层抽象
+
+所有 I/O 通过 `transport::transmission` 接口：
 
 ```cpp
-asio::awaitable<void> safe_handler(tcp::socket socket) {
-    try {
-        co_await handle_data(socket);
-    } catch (const std::exception& e) {
-        log_error(e.what());
-        socket.close();
-    }
-}
+struct transmission {
+    virtual auto async_read_some(span<byte>, error_code&) -> awaitable<size_t> = 0;
+    virtual auto async_write_some(span<const byte>, error_code&) -> awaitable<size_t> = 0;
+};
 ```
 
-### 错误码
+实现类：`reliable`（TCP）、`encrypted`（TLS）、`seal`（Reality AEAD）、`mux_stream`（多路复用）。
 
-使用 `asio::error_code`：
+## 常见模式速查
+
+### 写入完整缓冲区
 
 ```cpp
-asio::awaitable<void> error_code_read(tcp::socket& socket) {
-    asio::error_code ec;
-    size_t n = co_await socket.async_read_some(
-        asio::buffer(data),
-        asio::redirect_error(asio::use_awaitable, ec)
-    );
-    
-    if (ec) {
-        // 处理错误
-        return;
-    }
-}
+co_await net::async_write(socket, net::buffer(data, size),
+    net::redirect_error(net::use_awaitable, ec));
 ```
 
----
+### 读取固定长度
 
-## Prism 应用
+```cpp
+co_await net::async_read(socket, net::buffer(buf, expected_size),
+    net::redirect_error(net::use_awaitable, ec));
+```
 
-Prism 使用 Asio 协程实现：
+### 带超时的操作
 
-| 模块 | 使用方式 | 详见 |
-|------|----------|------|
-| Agent | 监听接受协程 | [[core/instance/front/listener|Listener]] |
-| Session | 会话处理协程 | [[core/session/session|Session]] |
-| Channel | 连接建立协程 | [[core/connect/overview|Channel]] |
-| Pipeline | 协议处理协程 | [[core/pipeline/overview|Pipeline]] |
-
----
+```cpp
+net::steady_timer timer(co_await net::this_coro::executor);
+timer.expires_after(std::chrono::seconds(5));
+timer.async_wait([&](const boost::system::error_code&) { socket.cancel(); });
+// ... async operation ...
+timer.cancel();
+```
 
 ## 相关参考
 
-- [[cpp23-coroutine|C++23 协程]] — 协程原理
-- [[dev/coding/coroutine|协程约定]] — Prism 协程规范
-- [[core/instance/front/listener|Listener 实现]] — Asio 使用实例
-
----
-
-## 进一步阅读
-
-- Boost.Asio 文档: https://www.boost.org/doc/libs/release/doc/html/boost_asio.html
-- C++20 协程提案: https://en.cppreference.com/w/cpp/language/coroutines
+- [[dev/coding/coroutine|协程约定]] — Prism 协程规范（纯度要求、禁止事项）
+- [[dev/coding/lifecycle|生命周期管理]] — co_await 后引用失效、co_spawn 保活
+- [[core/architecture|架构]] — 六阶段流水线详解
+- [[core/transport/transmission|Transport]] — 传输层抽象接口
+- [Boost.Asio 文档](https://www.boost.org/doc/libs/release/doc/html/boost_asio.html)

@@ -289,9 +289,10 @@ Reality 的关键特性：
 - **主动探测防护**：未授权客户端收到真实网站的响应
 
 相关代码：
-- `stealth/reality/handshake.cpp` - Reality 握手实现
-- `stealth/reality/auth.cpp` - 客户端身份验证
-- `recognition/probe/analyzer.cpp` - ClientHello 特征分析
+- `stealth/facade/reality/handshake.hpp` — Reality 握手实现
+- `stealth/facade/reality/util/auth.hpp` — 客户端身份验证
+- `recognition/tls/features.hpp` — ClientHello 特征提取
+- 详见 [[core/stealth/reality/overview|Reality 模块]]
 
 ### ShadowTLS
 
@@ -319,8 +320,9 @@ ShadowTLS 的关键特性：
 - **回退机制**：对非授权客户端回退到真实 TLS
 
 相关代码：
-- `stealth/shadowtls/handshake.cpp` - ShadowTLS 握手实现
-- `stealth/shadowtls/auth.cpp` - 密码认证实现
+- `stealth/facade/shadowtls/handshake.hpp` — ShadowTLS 握手实现
+- `stealth/facade/shadowtls/util/auth.hpp` — 密码认证实现
+- 详见 [[core/stealth/shadowtls/overview|ShadowTLS 模块]]
 
 ### Restls
 
@@ -347,7 +349,9 @@ Restls 的关键特性：
 - **兼容性**：支持 TLS 1.2 和 TLS 1.3
 
 相关代码：
-- `stealth/restls/scheme.cpp` - Restls 方案实现
+- `stealth/facade/restls/handshake.hpp` — Restls 握手实现
+- `stealth/facade/restls/script.hpp` — Restls 脚本引擎
+- 详见 [[core/stealth/restls/overview|Restls 模块]]
 
 ### ECH 支持
 
@@ -369,21 +373,14 @@ ECH 配置示例:
 
 ### 流量特征隐藏
 
-Prism 在协议层面实现了多种流量特征隐藏：
+Prism 在多个模块中实现流量特征隐藏，详见各模块文档：
 
-**包大小随机化**
-```cpp
-// 在 pipeline/primitives.cpp 中实现
-auto random_padding = generate_random_padding(min_size, max_size);
-packet.insert(packet.end(), random_padding.begin(), random_padding.end());
-```
-
-**时序混淆**
-```cpp
-// 通过协程实现非阻塞延迟
-auto delay = generate_random_delay(min_ms, max_ms);
-co_await async_sleep(delay);
-```
+| 隐藏机制 | 模块 | 说明 | 详见 |
+|----------|------|------|------|
+| 帧级填充 | AnyTLS | MD5+mt19937 PRNG 随机填充 | [[core/stealth/anytls/padding]] |
+| 流量整形脚本 | Restls | send/wait/recv 自定义脚本 | [[core/stealth/restls/script]] |
+| 多流混合 | Multiplex | 多路复用混合多个流的帧 | [[core/multiplex/overview]] |
+| 连接复用 | Connection Pool | 复用 TCP 连接减少指纹 | [[core/connect/pool/pool]] |
 
 ## 最佳实践
 

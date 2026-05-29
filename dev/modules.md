@@ -57,7 +57,7 @@ Prism 的模块可以分为以下几类：
 
 | 模块 | 头文件 | 源文件 | 职责 |
 |------|--------|--------|------|
-| agent（核心） | `include/prism/instance/` | `src/prism/agent/` | 核心会话链路：监听、负载均衡、会话管理、协议分发 |
+| agent（核心） | `include/prism/instance/` | `src/prism/instance/` | 核心会话链路：监听、负载均衡、会话管理、协议分发 |
 | recognition | `include/prism/recognition/` | `src/prism/recognition/` | 协议智能识别：外层探测 + TLS 伪装方案识别 |
 | pipeline | `include/prism/pipeline/` | `src/prism/pipeline/` | 协议处理管道：原语 + 各协议会话编排 |
 | protocol | `include/prism/protocol/` | `src/prism/protocol/` | 协议编解码：消息结构、中继器、TLS 特征 |

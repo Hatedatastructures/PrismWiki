@@ -429,170 +429,44 @@ Trojan 请求结构:
 - 需要额外实现滑动窗口
 ```
 
+
+
 ## 在 Prism 中的应用
 
-Prism 在多个协议中实现了完整的防重放机制：
+Prism 在 Shadowsocks 2022 协议中实现了重放防御，其他伪装方案通过加密认证天然防重放。
 
-### Shadowsocks 2022 防重放
+| 防御机制 | 模块 | 原理 | 详见 |
+|----------|------|------|------|
+| SS2022 TCP salt 去重 | `shadowsocks/util/salts` | `salt_pool` 使用 unordered_map + 60s TTL 记录已见 salt，重复 salt 直接拒绝 | [[core/protocol/shadowsocks/overview\|Shadowsocks]] |
+| SS2022 UDP 重放窗口 | `shadowsocks/util/replay` | `replay_window` 使用 WireGuard 风格 bitmap（size 64）记录时间戳，滑动窗口防重放 | [[core/protocol/shadowsocks/overview\|Shadowsocks]] |
+| Reality X25519 认证 | `stealth/facade/reality/util/auth` | 每次握手使用不同的 X25519 临时密钥对，共享密钥不可预测不可重放 | [[core/stealth/reality/auth\|Reality Auth]] |
+| ShadowTLS HMAC 累积验证 | `stealth/facade/shadowtls/util/auth` | HMAC-SHA1 累积覆盖所有 TLS 记录，重放旧记录导致 HMAC 校验失败 | [[core/stealth/shadowtls/overview\|ShadowTLS]] |
 
-Prism 实现了 Shadowsocks 2022 的滑动窗口防重放机制：
+### SS2022 TCP 重放防御
 
-```cpp
-// include/prism/protocol/shadowsocks/replay.hpp
+SS2022 AEAD 流加密中，每个会话的第一个包包含随机 salt 用于派生加密密钥。`salt_pool`（`shadowsocks/util/salts.hpp`）维护一个 `unordered_map<salt_hash, expiry_time>`，TTL 为 60 秒：
 
-/// @brief 防重放滑动窗口
-/// @details 使用位图记录已见时间戳，防止重放攻击
-class replay_window {
-public:
-    /// @brief 构造函数
-    /// @param window_size 窗口大小（秒）
-    explicit replay_window(size_t window_size = 120);
+1. 收到新连接的 salt → 检查 `salt_pool` 中是否已存在
+2. 已存在 → 重放攻击，直接关闭连接
+3. 不存在 → 记录 salt + 60s 过期时间
+4. 过期 salt 由后续访问时惰性清理
 
-    /// @brief 检查并记录时间戳
-    /// @param timestamp Unix 时间戳
-    /// @return true 如果时间戳有效且未见，false 如果时间戳无效或已见
-    auto check_and_record(uint64_t timestamp) -> bool;
+### SS2022 UDP 重放防御
 
-    /// @brief 清理过期记录
-    void cleanup();
+UDP 无连接，每个包独立。`replay_window`（`shadowsocks/util/replay.hpp`）使用 WireGuard 风格的 bitmap 实现：
 
-private:
-    size_t window_size_;                  ///< 窗口大小
-    uint64_t window_base_;                ///< 窗口起始时间
-    std::vector<bool> seen_map_;          ///< 已见时间戳位图
-    std::mutex mutex_;                    ///< 保护位图
-
-    auto is_in_window(uint64_t timestamp) const -> bool;
-    auto get_window_offset(uint64_t timestamp) const -> size_t;
-};
-```
-
-实现细节：
-
-```cpp
-// src/prism/protocol/shadowsocks/replay.cpp
-
-auto replay_window::check_and_record(uint64_t timestamp) -> bool {
-    auto current_time = get_current_timestamp();
-
-    // 1. 检查时间戳是否在有效窗口内
-    if (timestamp < current_time - window_size_ / 2 ||
-        timestamp > current_time + window_size_ / 2) {
-        return false;  // 时间戳过期或超前太多
-    }
-
-    // 2. 滑动窗口
-    if (timestamp > window_base_ + window_size_) {
-        // 需要滑动窗口
-        auto new_base = timestamp - window_size_ / 2;
-        auto slide_distance = new_base - window_base_;
-
-        // 清理旧记录
-        for (size_t i = 0; i < slide_distance && i < seen_map_.size(); ++i) {
-            seen_map_[i] = false;
-        }
-
-        window_base_ = new_base;
-    }
-
-    // 3. 检查是否已见
-    auto offset = get_window_offset(timestamp);
-    if (offset >= seen_map_.size()) {
-        return false;
-    }
-
-    if (seen_map_[offset]) {
-        return false;  // 已见，重放攻击
-    }
-
-    // 4. 记录已见
-    seen_map_[offset] = true;
-    return true;
-}
-```
+1. bitmap 大小 64，对应 64 个时间槽
+2. 每个包携带时间戳 → 计算在 bitmap 中的偏移
+3. 偏移对应的 bit 已设置 → 重放，丢弃
+4. 偏移对应的 bit 未设置 → 设置该 bit，接受
 
 ### Reality 防重放
 
-Reality 协议使用 short_id 和认证数据实现防重放：
-
-```cpp
-// src/prism/stealth/reality/auth.cpp
-
-auto reality_authenticator::verify_auth_data(
-    const auth_data& data,
-    const reality_config& config
-) -> bool {
-    // 1. 验证 short_id
-    if (!config.short_ids.contains(data.short_id)) {
-        return false;
-    }
-
-    // 2. 验证时间戳
-    auto current_time = get_current_timestamp();
-    if (data.timestamp < current_time - timestamp_window_ ||
-        data.timestamp > current_time + timestamp_window_) {
-        return false;  // 时间戳无效
-    }
-
-    // 3. 检查重放窗口
-    if (!replay_window_.check_and_record(data.timestamp)) {
-        return false;  // 重放攻击
-    }
-
-    // 4. 验证认证哈希
-    auto expected_hash = compute_auth_hash(
-        data.short_id,
-        data.timestamp,
-        config.public_key
-    );
-
-    return data.auth_hash == expected_hash;
-}
-```
+Reality 的认证通过 X25519 密钥交换完成。每次 ClientHello 包含不同的 X25519 临时公钥，派生的共享密钥具有随机性。short_id 虽然静态配置，但解密 short_id 的 AES-128-GCM 密钥每次握手都不同（由 X25519 共享密钥派生），因此重放旧 ClientHello 无法通过认证。
 
 ### ShadowTLS 防重放
 
-ShadowTLS v3 使用密码哈希实现防重放：
-
-```cpp
-// src/prism/stealth/shadowtls/auth.cpp
-
-auto shadowtls_authenticator::verify_password_hash(
-    const std::vector<uint8_t>& received_hash,
-    const shadowtls_config& config
-) -> bool {
-    auto current_time = get_current_timestamp();
-
-    // 1. 检查当前时间窗口
-    for (int offset = -time_window_; offset <= time_window_; ++offset) {
-        auto expected_hash = compute_password_hash(
-            config.password,
-            current_time + offset
-        );
-
-        if (received_hash == expected_hash) {
-            // 2. 检查是否已使用该时间戳
-            if (!replay_window_.check_and_record(current_time + offset)) {
-                return false;  // 重放攻击
-            }
-            return true;
-        }
-    }
-
-    return false;  // 密码不匹配
-}
-
-auto shadowtls_authenticator::compute_password_hash(
-    const std::string& password,
-    uint64_t timestamp
-) -> std::vector<uint8_t> {
-    // 使用 HMAC-SHA256 计算密码哈希
-    auto key = derive_key_from_password(password);
-    auto message = fmt::format("{}:{}", password, timestamp);
-
-    return crypto::hmac_sha256(key, message);
-}
-```
+ShadowTLS v3 使用 HMAC-SHA1 累积认证。认证数据覆盖从握手开始到当前的所有 TLS 记录，重放旧记录会导致 HMAC 累积值不匹配，连接终止。
 
 ### 配置示例
 
@@ -603,12 +477,7 @@ Shadowsocks 2022 配置：
   "protocol": {
     "shadowsocks": {
       "psk": "BASE64_ENCODED_PSK",
-      "method": "2022-blake3-aes-128-gcm",
-      "replay_protection": {
-        "enabled": true,
-        "window_size": 120,
-        "cleanup_interval": 60
-      }
+      "method": "2022-blake3-aes-128-gcm"
     }
   }
 }
@@ -620,52 +489,12 @@ Reality 配置：
 {
   "stealth": {
     "reality": {
-      "short_ids": [
-        "0123456789abcdef",
-        "fedcba9876543210"
-      ],
-      "replay_protection": {
-        "enabled": true,
-        "timestamp_window": 60
-      }
+      "short_ids": ["0123456789abcdef", "fedcba9876543210"]
     }
   }
 }
 ```
 
-### 防重放状态管理
-
-Prism 使用高效的内存管理来存储防重放状态：
-
-```cpp
-// include/prism/protocol/shadowsocks/replay_window.hpp
-
-/// @brief 防重放窗口配置
-struct replay_config {
-    bool enabled = true;           ///< 是否启用防重放
-    size_t window_size = 120;      ///< 窗口大小（秒）
-    size_t cleanup_interval = 60;  ///< 清理间隔（秒）
-    size_t max_memory = 1048576;   ///< 最大内存使用（字节）
-};
-
-/// @brief 全局防重放窗口管理器
-class replay_manager {
-public:
-    /// 获取或创建指定密钥的防重放窗口
-    auto get_window(const std::string& key) -> std::shared_ptr<replay_window>;
-
-    /// 清理所有窗口
-    void cleanup_all();
-
-    /// 获取内存使用统计
-    auto get_memory_usage() const -> size_t;
-
-private:
-    std::unordered_map<std::string, std::shared_ptr<replay_window>> windows_;
-    std::mutex mutex_;
-    replay_config config_;
-};
-```
 
 ## 最佳实践
 
@@ -686,15 +515,7 @@ private:
 
 合理配置内存限制：
 
-```json
-{
-  "replay_protection": {
-    "max_memory": 1048576,  // 1MB
-    "window_size": 120,
-    "cleanup_interval": 60
-  }
-}
-```
+Prism 的 SS2022 重放防御由 `shadowsocks/util/salts.hpp`（TCP salt 去重，60s TTL）和 `shadowsocks/util/replay.hpp`（UDP bitmap，size 64）自动管理，无需额外配置。
 
 内存估算：
 - 每个时间戳: 1 位

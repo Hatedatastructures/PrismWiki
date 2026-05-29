@@ -17,7 +17,7 @@ Prism 知识库 — Prism 高性能代理引擎的项目文档。
 ```
 wiki/
 ├── core/              # 模块实现细节（详细，开发排障）
-│   ├── agent/         # 前端监听、会话管理、负载均衡
+│   ├── instance/      # 前端监听、会话管理、负载均衡
 │   ├── channel/       # 连接池、传输层、Happy Eyeballs
 │   ├── pipeline/      # 协议处理器、管道原语
 │   ├── protocol/      # 协议格式、常量、配置
@@ -162,7 +162,7 @@ tags: [module tags]
 ## Tag Taxonomy
 
 ### 模块标签
-- agent, channel, pipeline, protocol, stealth, recognition, resolve, multiplex, crypto, outbound, memory, fault, exception, trace, transformer, loader
+- instance, channel, pipeline, protocol, stealth, recognition, resolve, multiplex, crypto, outbound, memory, fault, exception, trace, transformer, loader
 
 ### 协议标签
 - socks5, http, trojan, vless, shadowsocks, reality, shadowtls, restls, anytls, trusttunnel, ech, hysteria2, tuic, wireguard, vmess

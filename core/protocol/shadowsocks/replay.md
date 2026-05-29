@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/shadowsocks/replay.hpp"
+source: include/prism/protocol/shadowsocks/util/replay.hpp
 title: SS2022 PacketID 重放检测
 tags: [protocol, shadowsocks, replay, packet-id, sliding-window, wireguard, udp]
 ---
 
 # SS2022 PacketID 重放检测
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/shadowsocks/replay.hpp`
+> 源码位置: `include/prism/protocol/shadowsocks/util/replay.hpp`
 
 ## 概述
 

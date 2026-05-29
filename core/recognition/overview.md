@@ -3,7 +3,7 @@ tags: [recognition, overview]
 layer: core
 module: recognition
 source:
-  - I:/code/Prism/include/prism/recognition/
+  - include/prism/recognition/
 title: Recognition 模块
 updated: 2026-05-27
 ---
@@ -77,6 +77,57 @@ updated: 2026-05-27
 | [[core/instance/session/session\|session]] | `recognition::recognize()` |
 | Probe 内部 | `probe::probe()` → `probe::detect()` |
 | Identify 内部 | `layered_detection_pipeline` → `stealth::scheme::detect()` |
+
+
+## 约束
+
+| 约束 | 规则 | 违反后果 | 来源 |
+|------|------|----------|------|
+| probe 预读 24 字节 | 第一包至少 24 字节才能区分协议 | 数据不足时等待，增加延迟 | `probe/probe.hpp` |
+| ClientHello 解析容忍残缺 | 仅提取必要字段，不要求完整 ClientHello | 残缺 ClientHello 可能导致特征提取不完整 | `identify/identify.hpp` |
+| 方案执行器顺序敏感 | Tier 0 优先，Tier 1 次之，按 weight 排序 | 方案注册顺序影响检测效率 | `scheme_executor` |
+
+## 故障场景
+
+### 1. 预读超时
+
+**触发条件**: 客户端建立连接后不发送数据
+
+**传播路径**: probe 预读 -> async_read_some 超时 -> 返回超时错误
+
+**外部表现**: 连接关闭
+
+### 2. ClientHello 格式异常
+
+**触发条件**: TLS ClientHello 格式不合规
+
+**传播路径**: parse_clienthello -> 解析失败 -> 标记为 tls 但无特征 -> 交给默认处理
+
+**外部表现**: 连接按普通 TLS 处理
+
+### 3. 所有方案均未命中
+
+**触发条件**: 流量不匹配任何已注册方案
+
+**传播路径**: scheme_executor 遍历所有方案 -> 均返回 false -> 使用默认处理
+
+**外部表现**: 连接按原始协议处理（通常为标准 TLS）
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| recognition -> [[core/stealth/overview\|stealth]] | 调用 | scheme_executor 调用已注册 stealth 方案的 sniff/verify/handshake |
+| recognition -> [[core/protocol/types\|protocol]] | 依赖 | 返回 protocol_type 枚举标识检测到的协议 |
+| recognition <- [[core/instance/overview\|instance]] | 被依赖 | session 调用 recognize() 获取检测结果 |
+
+## 变更敏感度
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| probe 检测逻辑变更 | 协议识别准确率 | 误判或漏判导致协议处理错误 |
+| feature_bit 枚举新增 | 所有 sniff/verify 实现 | 各方案需适配新特征位 |
+| 方案注册宏变更 | 方案发现机制 | 新方案无法注册 |
 
 ## 相关模块
 

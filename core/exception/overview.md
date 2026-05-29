@@ -3,10 +3,10 @@ tags: [exception, overview]
 layer: core
 module: exception
 source:
-  - I:/code/Prism/include/prism/exception/deviant.hpp
-  - I:/code/Prism/include/prism/exception/network.hpp
-  - I:/code/Prism/include/prism/exception/protocol.hpp
-  - I:/code/Prism/include/prism/exception/security.hpp
+  - include/prism/exception/deviant.hpp
+  - include/prism/exception/network.hpp
+  - include/prism/exception/protocol.hpp
+  - include/prism/exception/security.hpp
 title: Exception 模块
 ---
 
@@ -53,6 +53,47 @@ title: Exception 模块
 | 协议配置不兼容 | `exception::protocol` | 启动阶段，致命 |
 | 运行时网络 I/O 错误 | `fault::code` | 预期内，高频 |
 | 运行时认证失败 | `fault::code` | 预期内，中频 |
+
+
+## 约束
+
+| 约束 | 规则 | 违反后果 | 来源 |
+|------|------|----------|------|
+| deviant 仅用于启动/致命路径 | 热路径使用 fault::code | 热路径抛异常导致性能严重退化 | `exception/deviant.hpp` |
+| 异常层次固定三层 | deviant -> network/protocol/security | 新异常类型必须继承已有层级 | `exception/deviant.hpp` |
+| what() 返回中文描述 | 异常消息为中文 | 日志系统需支持 UTF-8 | `exception/deviant.hpp` |
+
+## 故障场景
+
+### 1. 热路径意外抛异常
+
+**触发条件**: 协程热路径中抛出 deviant 异常
+
+**传播路径**: 异常逃出协程 -> co_spawn 捕获但未处理 -> 连接静默关闭
+
+**外部表现**: 连接断开，无有效错误信息
+
+### 2. 异常消息编码问题
+
+**触发条件**: 终端/日志系统不支持 UTF-8
+
+**传播路径**: what() 返回中文 -> 终端乱码
+
+**外部表现**: 日志中异常消息不可读
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| exception <- 所有模块 | 被依赖 | 启动路径和致命错误使用异常层次 |
+| exception -> [[core/fault/overview\|fault]] | 互补 | fault::code 用于热路径，exception 用于启动路径 |
+
+## 变更敏感度
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| deviant 接口变更 | 所有 throw 路径 | 编译失败 |
+| 新增异常子类 | 异常捕获逻辑 | catch 子句需适配 |
 
 ## 相关模块
 

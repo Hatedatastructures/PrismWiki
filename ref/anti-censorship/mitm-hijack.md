@@ -606,169 +606,44 @@ ShadowTLS v3:
 - 攻击者无法冒充客户端（无密码）
 ```
 
+
+
 ## 在 Prism 中的应用
 
-Prism 在多个层面实现了中间人攻击防御机制：
+Prism 通过伪装方案和加密协议在多个层面防御中间人攻击：
 
-### Reality 证书获取
+| 防御机制 | 模块 | 原理 | 详见 |
+|----------|------|------|------|
+| Reality 证书获取 | `stealth/facade/reality/handshake` | `fetch_dest_cert()` 使用 BoringSSL 连接真实 dest 站点获取合法 TLS 证书 | [[core/stealth/reality/handshake\|Reality Handshake]] |
+| Reality X25519 认证 | `stealth/facade/reality/util/auth` | X25519 密钥交换派生共享密钥 + AES-128-GCM 解密 short_id，中间人无私钥无法伪造 | [[core/stealth/reality/auth\|Reality Auth]] |
+| ShadowTLS HMAC 验证 | `stealth/facade/shadowtls/util/auth` | HMAC-SHA1 累积认证，中间人篡改 TLS 记录会导致 HMAC 校验失败 | [[core/stealth/shadowtls/overview\|ShadowTLS]] |
+| TLS 上下文安全配置 | `instance/worker/tls` | `tls::configure()` 设置 min TLS 1.2 + ALPN + 证书链，强制安全密码套件 | [[core/instance/worker/worker\|Worker]] |
+| AEAD 加密封装 | `stealth/facade/reality/seal` | TLS 1.3 ApplicationData 层 AES-128-GCM 加密，防篡改防窃听 | [[core/stealth/reality/seal\|Reality Seal]] |
 
-Reality 方案通过获取真实网站证书来防御中间人攻击：
+### Reality 中间人防御
 
-```cpp
-// src/prism/stealth/reality/handshake.cpp
+Reality 是对抗 MITM 最有效的方案。其核心安全保证来自 X25519 密钥交换：
 
-auto reality_handshake::fetch_dest_certificate(
-    const std::string& dest_host,
-    uint16_t dest_port
-) -> awaitable<certificate_info> {
-    // 建立到真实网站的 TLS 连接
-    ssl_socket socket;
-    co_await socket.async_connect(dest_host, dest_port);
+1. 服务端持有静态 X25519 私钥，客户端持有对应公钥
+2. 客户端在 ClientHello 的 `key_share` 扩展中发送临时公钥
+3. 服务端用静态私钥与客户端公钥做 X25519 → 共享密钥
+4. 从共享密钥派生 `auth_key`，用 AES-128-GCM 解密 session_id 中的 short_id
+5. 中间人没有服务端私钥，无法计算共享密钥，无法伪造或篡改认证数据
 
-    // 执行 TLS 握手
-    co_await socket.async_handshake(ssl::handshake_type::client);
+Reality 的 `fetch_dest_cert()` 使用 BoringSSL 标准客户端连接真实 dest 站点，获取合法证书链。证书验证由 BoringSSL 的内置 CA 信任库完成，非自实现。获取的证书用于构造 ServerHello 响应，使客户端看到的证书与直接访问目标站点完全一致。
 
-    // 获取真实网站的证书
-    auto cert = socket.get_peer_certificate();
+### ShadowTLS 中间人防御
 
-    // 验证证书真实性
-    auto verified = verify_certificate_chain(cert);
-    if (!verified) {
-        throw security_exception("Certificate verification failed");
-    }
+ShadowTLS v3 通过 HMAC-SHA1 累积认证确保传输完整性：
 
-    // 提取证书信息
-    certificate_info info;
-    info.certificate = cert;
-    info.fingerprint = compute_cert_fingerprint(cert);
-    info.subject = get_certificate_subject(cert);
-    info.issuer = get_certificate_issuer(cert);
-    info.expiry = get_certificate_expiry(cert);
+1. `connect_backend()` 连接真实 TLS 后端
+2. 中继真实 ServerHello 给客户端（含真实证书）
+3. 后续 TLS 记录通过 HMAC-SHA1 累积校验
+4. 中间人篡改任何记录都会导致 HMAC 不匹配，连接终止
 
-    co_return info;
-}
-```
+### TLS 上下文配置
 
-### 证书验证
-
-Prism 实现严格的证书验证：
-
-```cpp
-// include/prism/stealth/cert_verifier.hpp
-
-/// @brief 证书验证器
-class certificate_verifier {
-public:
-    /// @brief 验证证书链
-    /// @param cert 目标证书
-    /// @param chain 证书链
-    /// @return 验证结果
-    auto verify_chain(const certificate& cert, const cert_chain& chain) -> verify_result;
-
-    /// @brief 验证证书固定
-    /// @param cert 目标证书
-    /// @param pinned_fingerprint 固定的指纹
-    /// @return 是否匹配
-    auto verify_pinning(const certificate& cert, const std::string& pinned_fingerprint) -> bool;
-
-    /// @brief 检查证书吊销状态
-    /// @param cert 目标证书
-    /// @return 是否已吊销
-    auto check_revocation(const certificate& cert) -> revoke_status;
-
-private:
-    /// 验证证书有效期
-    auto verify_validity(const certificate& cert) -> bool;
-
-    /// 验证证书用途
-    auto verify_key_usage(const certificate& cert) -> bool;
-
-    /// 验证主题名称匹配
-    auto verify_subject_match(const certificate& cert, const std::string& hostname) -> bool;
-
-    /// 验证证书签名
-    auto verify_signature(const certificate& cert, const certificate& issuer) -> bool;
-};
-```
-
-### 密码套件选择
-
-Prism 强制使用前向保密密码套件：
-
-```cpp
-// src/prism/agent/tls.cpp
-
-auto configure_tls_context(ssl::context& ctx) -> void {
-    // TLS 1.3 默认启用前向保密
-    ctx.set_options(ssl::context::default_workarounds |
-                    ssl::context::no_sslv2 |
-                    ssl::context::no_sslv3 |
-                    ssl::context::no_tlsv1 |
-                    ssl::context::no_tlsv1_1);
-
-    // TLS 1.2 只使用前向保密套件
-    ctx.set_cipher_list(
-        "ECDHE-ECDSA-AES128-GCM-SHA256:"
-        "ECDHE-RSA-AES128-GCM-SHA256:"
-        "ECDHE-ECDSA-AES256-GCM-SHA384:"
-        "ECDHE-RSA-AES256-GCM-SHA384:"
-        "ECDHE-ECDSA-CHACHA20-POLY1305:"
-        "ECDHE-RSA-CHACHA20-POLY1305"
-    );
-
-    // 验证模式：要求证书验证
-    ctx.set_verify_mode(ssl::verify_peer | ssl::verify_fail_if_no_peer_cert);
-
-    // 设置验证回调
-    ctx.set_verify_callback([](bool preverified, ssl::verify_context& ctx) {
-        // 额外验证逻辑
-        return verify_certificate_extra(preverified, ctx);
-    });
-}
-```
-
-### 身份验证
-
-Prism 实现客户端身份验证来防御中间人伪装：
-
-```cpp
-// src/prism/stealth/reality/auth.cpp
-
-auto reality_authenticator::verify_client_identity(
-    const client_hello_features& features,
-    const reality_config& config
-) -> auth_result {
-    // 1. 提取 short_id
-    auto short_id = extract_short_id(features);
-    if (!short_id) {
-        // 无身份标记，可能是探测者或中间人
-        return auth_result::fallback;
-    }
-
-    // 2. 验证 short_id 是否在配置中
-    if (!config.short_ids.contains(*short_id)) {
-        // 无效 short_id，可能是中间人伪造
-        return auth_result::rejected;
-    }
-
-    // 3. 验证时间戳（防重放）
-    auto timestamp = extract_timestamp(features);
-    if (!verify_timestamp(timestamp)) {
-        // 时间戳无效，可能是重放攻击
-        return auth_result::rejected;
-    }
-
-    // 4. 验证认证哈希
-    auto auth_hash = compute_auth_hash(features, config);
-    auto expected_hash = get_expected_hash(config);
-    if (auth_hash != expected_hash) {
-        // 认证哈希不匹配，可能是中间人篡改
-        return auth_result::rejected;
-    }
-
-    return auth_result::accepted;
-}
-```
+`instance/worker/tls.cpp` 中的 `tls::configure()` 设置全局 TLS 安全基线：min TLS 1.2、ALPN 协商、证书链配置。所有 TLS 连接（包括 Reality 的 `fetch_dest_cert`）共享此安全基线。
 
 ### 配置示例
 
@@ -778,60 +653,15 @@ Reality 配置：
 {
   "stealth": {
     "reality": {
-      "dest": "www.google.com:443",
-      "server_names": ["www.google.com", "google.com"],
+      "dest": "www.microsoft.com:443",
+      "server_names": ["www.microsoft.com"],
       "private_key": "GENERATED_PRIVATE_KEY",
-      "short_ids": ["0123456789abcdef", "fedcba9876543210"],
-      "certificate_verification": {
-        "verify_chain": true,
-        "verify_expiry": true,
-        "verify_revocation": true,
-        "min_tls_version": "tls1.3"
-      }
+      "short_ids": ["0123456789abcdef"]
     }
   }
 }
 ```
 
-TLS 配置：
-
-```json
-{
-  "tls": {
-    "min_version": "tls1.2",
-    "preferred_version": "tls1.3",
-    "cipher_suites": [
-      "TLS_AES_128_GCM_SHA256",
-      "TLS_AES_256_GCM_SHA384",
-      "TLS_CHACHA20_POLY1305_SHA256"
-    ],
-    "ecdhe_curves": ["x25519", "secp256r1", "secp384r1"],
-    "verify_peer": true,
-    "forward_secrecy_required": true
-  }
-}
-```
-
-### 证书固定配置
-
-```json
-{
-  "certificate_pinning": {
-    "enabled": true,
-    "mode": "public_key",
-    "pins": [
-      {
-        "hostname": "proxy.example.com",
-        "pin": "sha256/ABCDEF1234567890...",
-        "enforce": true
-      }
-    ],
-    "backup_pins": [
-      "sha256/FEDCBA0987654321..."
-    ]
-  }
-}
-```
 
 ## 最佳实践
 
@@ -1002,25 +832,9 @@ Reality 是最有效的方案。
 
 ### Q7: 如何配置 Prism 的证书验证？
 
-Prism 配置示例：
-```json
-{
-  "tls": {
-    "verify_peer": true,
-    "verify_fail_if_no_peer_cert": true,
-    "min_version": "tls1.3",
-    "forward_secrecy_required": true
-  },
-  "stealth": {
-    "reality": {
-      "certificate_verification": {
-        "verify_chain": true,
-        "verify_expiry": true
-      }
-    }
-  }
-}
-```
+Prism 的 TLS 安全由 `instance/worker/tls.cpp` 中的 `tls::configure()` 统一管理，
+设置最低 TLS 1.2 版本和 ALPN 协商。Reality 方案通过 `fetch_dest_cert()` 使用 BoringSSL 标准客户端获取真实站点证书，
+证书验证由 BoringSSL 内置 CA 信任库完成。详见 [[core/stealth/reality/handshake|Reality Handshake]] 和 [[core/instance/worker/worker|Worker]]。
 
 ## 参考资料
 

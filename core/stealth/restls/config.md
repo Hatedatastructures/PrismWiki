@@ -1,13 +1,13 @@
 ---
 tags: [stealth, restls, config]
 layer: core
-source: I:/code/Prism/include/prism/stealth/restls/config.hpp
+source: include/prism/stealth/restls/config.hpp
 title: Restls 伪装方案配置
 ---
 
 # Restls 伪装方案配置
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/restls/config.hpp`
+> 源码位置: `include/prism/stealth/restls/config.hpp`
 
 ## 概述
 

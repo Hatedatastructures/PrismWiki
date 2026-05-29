@@ -2,8 +2,8 @@
 title: Runtime 运行时统计
 layer: core
 source:
-  - I:/code/Prism/include/prism/stats/runtime.hpp
-  - I:/code/Prism/src/prism/stats/runtime.cpp
+  - include/prism/stats/runtime.hpp
+  - src/prism/stats/runtime.cpp
 module: stats
 tags: [stats, runtime, worker, load-balancing]
 created: 2026-05-23

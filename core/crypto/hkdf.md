@@ -1,8 +1,8 @@
 ---
 layer: core
-source:
-  - I:/code/Prism/include/prism/crypto/hkdf.hpp
-  - I:/code/Prism/src/prism/crypto/hkdf.cpp
+source: include/prism/crypto/hkdf.hpp
+  - include/prism/crypto/hkdf.hpp
+  - src/prism/crypto/hkdf.cpp
 tags: [crypto, hkdf, key-derivation]
 title: HKDF 密钥派生
 ---
@@ -71,7 +71,7 @@ TLS 1.3 transcript hash 经常需要拼接 2-3 个数据块计算哈希（如 Cl
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/crypto/hkdf.hpp`
+- 头文件：`include/prism/crypto/hkdf.hpp`
 
 ## 常量定义
 

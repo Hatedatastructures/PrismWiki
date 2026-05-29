@@ -1,8 +1,8 @@
 ---
 title: 连接问题排查指南
 source:
-  - I:/code/Prism/include/prism/connect/
-  - I:/code/Prism/src/prism/channel/
+  - include/prism/connect/
+  - src/prism/channel/
 module: debugging
 type: reference
 tags: [connection, network, timeout, disconnect, troubleshooting]

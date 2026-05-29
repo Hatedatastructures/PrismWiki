@@ -1,8 +1,8 @@
 ---
 title: 常见问题汇总
 source:
-  - I:/code/Prism/include/prism/fault/
-  - I:/code/Prism/tests/
+  - include/prism/fault/
+  - tests/
 module: debugging
 type: reference
 tags: [faq, troubleshooting, common-issues, errors, solutions]

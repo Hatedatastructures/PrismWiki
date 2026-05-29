@@ -1,7 +1,7 @@
 ---
 title: "config.hpp — Agent 配置类型定义（Core 层）"
 layer: core
-source: "I:/code/Prism/include/prism/instance/config.hpp"
+source: "include/prism/instance/config.hpp"
 created: 2026-05-17
 tags: [agent, config, endpoint, authentication, certificate, PMR, glaze]
 ---

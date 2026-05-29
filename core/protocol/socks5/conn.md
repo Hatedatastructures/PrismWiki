@@ -3,8 +3,8 @@ title: SOCKS5 协议中继器
 layer: core
 module: protocol/socks5
 source:
-  - I:/code/Prism/include/prism/protocol/socks5/conn.hpp
-  - I:/code/Prism/src/prism/protocol/socks5/conn.cpp
+  - include/prism/protocol/socks5/conn.hpp
+  - src/prism/protocol/socks5/conn.cpp
 tags: [protocol, socks5, conn]
 ---
 

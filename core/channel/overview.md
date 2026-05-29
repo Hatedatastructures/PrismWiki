@@ -1,7 +1,7 @@
 ---
 title: "channel — 通道阶段概述"
 layer: core
-source:
+source: include/prism/connect/pool/health.hpp
   - include/prism/connect/
   - include/prism/transport/
 module: "channel"
@@ -162,3 +162,88 @@ channel/
 - [[core/connect/pool/pool|pool]] — TCP 连接池
 - [[core/connect/dial/racer|racer]] — Happy Eyeballs 竞速器
 - [[core/transport/adapter/connector|connector]] — Boost.Asio 适配器
+## 设计决策（WHY）
+
+### 为什么连接池使用 LIFO 栈式缓存
+
+LIFO 策略保证最近使用的连接在栈顶优先复用，降低连接过期风险。后进先出意味着热端点的高频连接总被优先取回，冷端点连接自然沉底被后台清理淘汰。相比 FIFO 或随机选取，LIFO 在连接存活窗口内最大化复用率。
+
+### 为什么采用 Happy Eyeballs RFC 8305 算法
+
+DNS 解析通常返回多个 IP 地址（IPv4 + IPv6）。串行尝试导致首地址不可达时延迟叠加。RFC 8305 的 250ms 交错启动策略在保持 IPv6 优先的同时，快速回退到可用地址。竞速器内部通过共享 race_context 的 winner 标志实现"第一个成功 wins"语义，无需互斥锁。
+
+### 为什么 transmission 采用抽象基类而非 concept
+
+transmission 是所有传输层的统一接口，被 protocol 和 stealth 模块大量使用。抽象基类允许在运行时擦除具体传输类型（TCP/TLS/UDP），支持将加密传输无缝替换为明文传输。virtual 函数开销在此场景可忽略（IO 密集），换来的是跨层多态灵活性。
+
+### 为什么连接池设计为线程局部（无锁）
+
+每个 worker 线程持有独立的 io_context 和连接池。线程隔离消除了连接获取/归还路径上的互斥竞争，LIFO 栈操作在单线程上是 O(1)。这要求连接只能在创建它的线程中归还，pooled_connection 的 RAII 语义自然保证这一点。
+
+### 为什么 pooled_connection 使用 RAII 包装器
+
+连接的获取和归还必须配对。RAII 包装器通过析构函数自动调用 recycle()，即使协程异常退出也能正确归还连接。release() 方法支持转移 socket 所有权（如交给 tunnel），此时析构不会归还。移动语义确保连接在协程间安全传递。
+
+## 约束
+
+| 约束 | 规则 | 违反后果 | 来源 |
+|------|------|----------|------|
+| 线程隔离 | connection_pool 单线程使用 | 数据竞争、UB | 无锁设计前提 |
+| io_context 生命周期 | pool 析构前 io_context 必须有效 | 定时器回调崩溃 | pool.hpp 注释 |
+| RAII 归还 | pooled_connection 析构触发 recycle | 连接泄漏 | 资源管理 |
+| 健康检测 | 复用前必须 healthy_fast() | 使用已关闭连接导致 EPIPE | 连接可靠性 |
+| 协程纯度 | async_acquire 返回 awaitable | 阻塞 worker 线程 | 协程约定 |
+| 容量限制 | 每端点缓存数由 config 控制 | 内存持续增长 | pool config |
+| racer 竞速安全 | racer 是局部变量，子协程捕获 pool 引用 | racer 析构后协程访问悬挂引用 | racer.hpp 注释 |
+
+## 故障场景
+
+### 1. 连接池返回僵尸连接
+
+对端已发送 FIN 但连接仍在池中。healthy_fast() 通过非阻塞 recv(MSG_PEEK) 检测到此状态，将连接标记为不健康并关闭。若检测遗漏（极端竞态），协议层首次读写会收到 EOF/error，触发正常连接关闭和重试。
+
+### 2. 所有 racer 端点不可达
+
+address_racer::race() 尝试所有候选端点后无 winner，返回空 pooled_connection。调用方（router）检测到空连接后返回 fault::code::bad_gateway，最终传递到协议层返回连接失败响应。
+
+### 3. 连接池容量耗尽
+
+当某端点的缓存栈达到容量上限时，recycle() 直接关闭归还的连接而非入栈。统计计数器 total_evictions 递增。不会导致崩溃，但复用率下降，后续请求需新建连接。
+
+### 4. 后台清理定时器未启动
+
+若 start() 未在 io_context.run() 前调用，过期连接不会被自动清理。连接池逐渐积累失效连接，占用文件描述符。不影响正确性（复用前仍有健康检测），但资源浪费持续增长。
+
+### 5. snapshot rewind 后原始传输状态不一致
+
+snapshot（预读回滚传输）在 rewind 时恢复读取位置，但底层传输可能已经消费了更多数据。若 rewind 后的数据与预期不符，伪装方案切换会失败。需要确保 snapshot 捕获的数据量不超过内部缓冲区容量。
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| transmission 接口 | channel -> protocol/stealth | 所有传输层实现此抽象基类，协议和伪装模块通过接口读写 |
+| connection_pool 引用 | channel <- connect::router | router 持有 pool 引用，通过 pool 获取连接 |
+| pooled_connection RAII | channel -> connect::tunnel | tunnel 接管连接后通过 release() 获取裸 socket |
+| health 检测契约 | pool -> health | pool 在 acquire 和 recycle 时调用 healthy_fast() |
+| address_racer 竞速 | router -> racer -> pool | router 提供端点列表，racer 通过 pool 竞速连接 |
+| snapshot rewind | stealth -> snapshot | 伪装方案依次尝试，失败时 rewind 恢复到初始状态 |
+
+## 变更敏感度
+
+### 对外影响
+
+| 变更 | 影响范围 | 说明 |
+|------|----------|------|
+| transmission 接口变更 | protocol 所有 relay、stealth 所有 scheme | 核心抽象，广泛依赖 |
+| pooled_connection API 变更 | router、racer、forward | 连接生命周期管理依赖 |
+| healthy_fast() 行为变更 | 连接池复用质量 | 过严导致复用率下降，过松导致 EPIPE |
+
+### 对内影响
+
+| 变更 | 影响范围 | 说明 |
+|------|----------|------|
+| LIFO 栈实现替换 | pool 内部、stats 计算 | 缓存策略变更影响复用行为 |
+| racer 延迟参数调整 | Happy Eyeballs 行为 | 250ms 延迟为 RFC 建议值，偏离需性能验证 |
+| 健康检测阈值调整 | 僵尸连接检出率 | 影响 pool 质量和连接建立延迟 |
+| config 参数变更 | pool 容量、超时、清理间隔 | 运维调优，不影响代码逻辑 |

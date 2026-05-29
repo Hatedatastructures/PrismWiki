@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/shadowsocks/salts.hpp"
+source: "include/prism/protocol/shadowsocks/salts.hpp"
 title: SS2022 Salt 重放保护池
 tags: [protocol, shadowsocks, salts, replay, pool, fnv1a, heterogeneous]
 ---
 
 # SS2022 Salt 重放保护池
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/shadowsocks/salts.hpp`
+> 源码位置: `include/prism/protocol/shadowsocks/salts.hpp`
 
 ## 概述
 

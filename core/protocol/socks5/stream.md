@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/protocol/socks5/stream.hpp
+source: include/prism/protocol/socks5/stream.hpp
 title: SOCKS5 协议中继器
 tags: [protocol, socks5, stream, relay, handshake, udp, rfc1928]
 ---
@@ -11,7 +11,7 @@ tags: [protocol, socks5, stream, relay, handshake, udp, rfc1928]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/protocol/socks5/stream.hpp`
+`include/prism/protocol/socks5/stream.hpp`
 
 ## 类定义
 

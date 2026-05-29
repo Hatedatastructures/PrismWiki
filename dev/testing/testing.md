@@ -2,9 +2,9 @@
 layer: dev
 title: 测试体系完整指南
 source:
-  - I:/code/Prism/tests/ (47 个测试文件)
-  - I:/code/Prism/tests/CMakeLists.txt
-  - I:/code/Prism/tests/common/TestRunner.hpp
+  - tests/ (47 个测试文件)
+  - tests/CMakeLists.txt
+  - tests/common/TestRunner.hpp
 module: testing
 type: reference
 tags: [testing, ctest, unit, e2e, regression, integration, protocol, crypto]

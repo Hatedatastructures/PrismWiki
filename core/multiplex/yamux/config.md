@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/yamux/config.hpp
+source: include/prism/multiplex/yamux/config.hpp
 title: yamux::config - yamux 协议配置
 tags: [multiplex, yamux, config, flow-control, configuration]
 ---
@@ -9,7 +9,7 @@ tags: [multiplex, yamux, config, flow-control, configuration]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/yamux/config.hpp`
+`include/prism/multiplex/yamux/config.hpp`
 
 ## 概述
 

@@ -2,9 +2,9 @@
 tags: [memory, overview]
 layer: core
 module: memory
-source:
-  - I:/code/Prism/include/prism/memory/container.hpp
-  - I:/code/Prism/include/prism/memory/pool.hpp
+source: include/prism/memory/pool.hpp
+  - include/prism/memory/container.hpp
+  - include/prism/memory/pool.hpp
 title: Memory 模块
 ---
 
@@ -71,7 +71,74 @@ title: Memory 模块
 
 **源码依据**: `pool.hpp:231-232`
 
+## 故障场景
+
+### 1. enable_pooling() 未调用
+
+**触发条件**: main.cpp 启动时跳过了 `system::enable_pooling()` 调用
+
+**传播路径**: `get_default_resource()` 返回 `new_delete_resource` -> 所有 PMR 容器使用默认堆分配器 -> 热路径产生大量小对象 malloc/free
+
+**外部表现**: 性能严重退化，CPU 时间花在全局堆锁竞争上
+
+**恢复机制**: 无运行时恢复，必须重启进程
+
+### 2. frame_arena 跨线程使用
+
+**触发条件**: frame_arena 在线程 A 创建，在线程 B 调用 `get()` 或 `reset()`
+
+**传播路径**: `monotonic_buffer_resource` 内部状态无锁保护 -> 数据竞争（UB）
+
+**外部表现**: 内存损坏、段错误，或间歇性崩溃
+
+### 3. 大对象穿透池
+
+**触发条件**: 单次分配超过 `policy::max_size`（16384 字节 / 16KB）
+
+**传播路径**: `pooled_object::operator new` 判断 size > max_size -> 回退到 `::operator new` -> 直接堆分配
+
+**外部表现**: 不影响正确性，但该对象不享受池化收益（分配/释放走系统堆）
+
+### 4. thread_local_pool 内存不释放
+
+**触发条件**: worker 线程长期运行，池中累积大量 chunk
+
+**传播路径**: `unsynchronized_pool_resource` 按需向 `new_delete_resource` 申请 chunk -> 不主动归还 -> 内存占用持续增长
+
+**外部表现**: RSS 缓慢增长，但受 `max_blocks=256` 限制单线程池上限可控
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| memory -> std::pmr | 依赖 | PMR 基础设施（synchronized_pool, unsynchronized_pool, monotonic_buffer） |
+| [[core/stats/overview|stats]] <- memory | 被依赖 | memory_tracker 包装全局 PMR 池，在分配/释放时更新计数器 |
+| [[core/instance/overview|instance]] <- memory | 被依赖 | worker 持有 frame_arena，session 使用 hot_pool 分配临时对象 |
+| [[core/transport/overview|transport]] <- memory | 被依赖 | 传输层使用 memory::vector 做缓冲区 |
+| [[core/multiplex/overview|multiplex]] <- memory | 被依赖 | mux 帧解析使用 frame_arena |
+| memory 自包含 | 无外部依赖 | 不依赖项目中其他模块，仅依赖标准库 |
+
+## 变更敏感度
+
+### 对外影响
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| policy::max_size 变更 | 所有池化对象 | 减小导致更多堆穿透，增大增加内存碎片 |
+| policy::max_blocks 变更 | 池内存上限 | 减小降低峰值内存，增大允许更多 chunk |
+| frame_arena 栈缓冲大小变更 | 帧解析路径 | 过小增加穿透频率，过大浪费栈空间 |
+| enable_pooling() 行为变更 | 全局 PMR 默认资源 | 影响所有未显式指定分配器的 PMR 容器 |
+
+### 对内影响
+
+| 上游变更 | 本模块受影响 | 需要检查 |
+|---------|------------|---------|
+| C++ 标准 PMR 实现变更 | synchronized_pool / unsynchronized_pool 行为 | 线程安全保证和性能特征 |
+| 编译器 thread_local 实现变更 | local_pool 的线程隔离语义 | 是否真正每线程独立 |
+
 ## 相关模块
 
 - [[core/fault/overview|Fault 模块]]：错误码系统
 - [[core/exception/overview|Exception 模块]]：异常系统
+- [[core/stats/overview|Stats 模块]]：内存分配统计
+- [[core/instance/overview|Instance 模块]]：worker 和 session 的内存使用

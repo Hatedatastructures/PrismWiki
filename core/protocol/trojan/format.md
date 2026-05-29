@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/trojan/framing.hpp"
+source: "include/prism/protocol/trojan/framing.hpp"
 title: Trojan 协议格式编解码
 tags: [protocol, trojan, format, framing, credential, udp, parse]
 ---
 
 # Trojan 协议格式编解码
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/trojan/framing.hpp`
+> 源码位置: `include/prism/protocol/trojan/framing.hpp`
 
 ## 概述
 

@@ -1,7 +1,7 @@
 ---
 title: "router — 分发层路由器"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/router.hpp"
+source: "include/prism/resolve/router.hpp"
 module: resolve
 tags: [router, resolve, dispatch, routing]
 updated: 2026-05-27

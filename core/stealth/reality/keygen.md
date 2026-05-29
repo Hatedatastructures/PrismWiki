@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/reality/keygen.hpp
+source: include/prism/stealth/reality/keygen.hpp
 title: Reality Keygen
 tags:
   - stealth
@@ -16,7 +16,7 @@ TLS 1.3 密钥调度实现。
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/stealth/reality/keygen.hpp`
+- 头文件：`include/prism/stealth/reality/keygen.hpp`
 
 ## 设计决策（WHY）
 

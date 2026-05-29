@@ -2,10 +2,10 @@
 layer: dev
 title: UDP 协议实践指南
 source:
-  - I:/code/Prism/include/prism/connect/dial/parcel.hpp
-  - I:/code/Prism/include/prism/protocol/socks5/udp.hpp
-  - I:/code/Prism/src/prism/channel/parcel/
-  - I:/code/Prism/src/prism/protocol/socks5/udp.cpp
+  - include/prism/connect/dial/parcel.hpp
+  - include/prism/protocol/socks5/udp.hpp
+  - src/prism/channel/parcel/
+  - src/prism/protocol/socks5/udp.cpp
 module: channel
 type: reference
 tags: [udp, transport, network, socks5, parcel, datagram, dns]

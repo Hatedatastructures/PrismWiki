@@ -1,8 +1,8 @@
 ---
 title: GFW 封锁原理深度解析
 source:
-  - I:/code/Prism/include/prism/stealth/
-  - I:/code/Prism/docs/stealth/proxy-detection.md
+  - include/prism/stealth/
+  - docs/stealth/proxy-detection.md
 module: stealth
 type: concept
 tags: [gfw, censorship, detection, dpi, tls-fingerprint, active-probing, bypass]

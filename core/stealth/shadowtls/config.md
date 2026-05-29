@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/shadowtls/config.hpp
+source: include/prism/stealth/shadowtls/config.hpp
 title: ShadowTLS v3 服务端配置
 tags:
   - stealth
@@ -10,7 +10,7 @@ tags:
 
 # ShadowTLS v3 服务端配置
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/config.hpp`
+> 源码位置: `include/prism/stealth/shadowtls/config.hpp`
 
 ## 概述
 

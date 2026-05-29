@@ -1,7 +1,7 @@
 ---
 title: "config — DNS 解析器配置"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/dns/config.hpp"
+source: "include/prism/resolve/dns/config.hpp"
 module: "resolve/dns"
 type: config
 tags: [dns, config, upstream, rules, cache]
@@ -16,7 +16,7 @@ related:
 
 # config — DNS 解析器配置
 
-> 源码位置: `I:/code/Prism/include/prism/resolve/dns/config.hpp`
+> 源码位置: `include/prism/resolve/dns/config.hpp`
 > 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]]
 > 类型: header-only 配置定义
 

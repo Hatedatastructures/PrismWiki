@@ -1,7 +1,7 @@
 ---
 title: health
 layer: core
-source: I:/code/Prism/include/prism/connect/pool/health.hpp
+source: include/prism/connect/pool/health.hpp
 module: connect
 tags:
   - health-check

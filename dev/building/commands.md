@@ -12,7 +12,7 @@ related:
   - "[[dev/testing/testing|testing]]"
   - "[[dev/performance/report|performance/benchmark]]"
 sources:
-  - I:/code/Prism/CLAUDE.md
+  - CLAUDE.md
 confidence: high
 layer: dev
 ---

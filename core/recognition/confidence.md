@@ -2,7 +2,7 @@
 tags: [recognition, confidence]
 layer: core
 module: recognition
-source: I:/code/Prism/include/prism/recognition/confidence.hpp
+source: include/prism/recognition/confidence.hpp
 title: confidence.hpp
 ---
 

@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/protocol/common/read.hpp
+source: include/prism/protocol/common/read.hpp
 title: 共享 I/O 读取工具
 tags: [protocol, common, read, io, coroutine, awaitable]
 ---
@@ -11,7 +11,7 @@ tags: [protocol, common, read, io, coroutine, awaitable]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/protocol/common/read.hpp`
+`include/prism/protocol/common/read.hpp`
 
 ## 命名空间
 

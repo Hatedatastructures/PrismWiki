@@ -1,9 +1,9 @@
 ---
 title: 性能问题排查指南
 source:
-  - I:/code/Prism/include/prism/
-  - I:/code/Prism/src/prism/
-  - I:/code/Prism/benchmarks/
+  - include/prism/
+  - src/prism/
+  - benchmarks/
 module: debugging
 type: reference
 tags: [performance, latency, throughput, bottleneck, profiling, troubleshooting]

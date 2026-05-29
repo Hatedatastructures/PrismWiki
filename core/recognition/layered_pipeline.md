@@ -2,7 +2,7 @@
 tags: [recognition, layered_pipeline]
 layer: core
 module: recognition
-source: I:/code/Prism/include/prism/recognition/pipeline.hpp
+source: include/prism/recognition/pipeline.hpp
 title: layered_detection_pipeline
 ---
 

@@ -2,7 +2,7 @@
 tags: [recognition, result]
 layer: core
 module: recognition
-source: I:/code/Prism/include/prism/recognition/result.hpp
+source: include/prism/recognition/result.hpp
 title: result.hpp
 ---
 

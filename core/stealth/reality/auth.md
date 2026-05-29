@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/reality/auth.hpp
+source: include/prism/stealth/reality/auth.hpp
 title: Reality Auth
 tags:
   - stealth
@@ -15,7 +15,7 @@ Reality 协议的客户端认证逻辑。
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/stealth/reality/auth.hpp`
+- 头文件：`include/prism/stealth/reality/auth.hpp`
 
 ## 设计决策（WHY）
 

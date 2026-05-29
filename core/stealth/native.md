@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/native.hpp
+source: include/prism/stealth/native.hpp
 title: native 模块
 tags:
   - stealth
@@ -14,7 +14,7 @@ tags:
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/stealth/native.hpp`
+`include/prism/stealth/native.hpp`
 
 ## 模块职责
 

@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/vless/framing.hpp"
+source: "include/prism/protocol/vless/framing.hpp"
 title: VLESS 协议格式编解码
 tags: [protocol, vless, format, framing, uuid, parse, udp]
 ---
 
 # VLESS 协议格式编解码
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/vless/framing.hpp`
+> 源码位置: `include/prism/protocol/vless/framing.hpp`
 
 ## 概述
 

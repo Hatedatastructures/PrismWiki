@@ -2,7 +2,7 @@
 tags: [pipeline, http, protocol-handler, connect, forward]
 title: "HTTP 协议处理管道"
 layer: core
-source: "I:/code/Prism/include/prism/pipeline/protocols/http.hpp"
+source: "include/prism/pipeline/protocols/http.hpp"
 module: pipeline
 updated: 2026-05-27
 ---

@@ -111,7 +111,7 @@ inline auto wrap_with_preview(shared_transmission inbound,
 
 将入站传输包装为带预读数据的传输。若 `data` 为空则直接返回原始入站传输，不创建装饰器。
 
-**效果**: 在 [[core/recognition|recognition]] 模块探测协议后，将预读的 24 字节（或更多）数据包装回传输层，使后续协议处理无需关心预读逻辑。
+**效果**: 在 [[core/recognition/overview|recognition]] 模块探测协议后，将预读的 24 字节（或更多）数据包装回传输层，使后续协议处理无需关心预读逻辑。
 
 ## 装饰器链
 
@@ -237,6 +237,6 @@ if (snap->can_rewind()) {
 - [[core/transport/overview|transport — 传输层总览]]
 - [[core/transport/snapshot|snapshot — 可回滚传输]]
 - [[core/transport/transmission|transmission — 传输抽象]]
-- [[core/recognition|recognition — 协议识别]]
+- [[core/recognition/overview|recognition — 协议识别]]
 - [[core/stealth/overview|stealth — TLS 伪装]]
 - [[core/connect/overview|connect/util — 连接工具函数]]

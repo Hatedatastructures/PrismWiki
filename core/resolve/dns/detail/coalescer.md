@@ -1,7 +1,7 @@
 ---
 title: "coalescer -- 请求合并器"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/dns/detail/coalescer.hpp"
+source: "include/prism/resolve/dns/detail/coalescer.hpp"
 module: "resolve/dns/detail"
 type: component
 tags: [dns, coalescer, request-merge, concurrent]
@@ -14,7 +14,7 @@ related:
 
 # coalescer -- 请求合并器
 
-> 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/coalescer.hpp`
+> 源码位置: `include/prism/resolve/dns/detail/coalescer.hpp`
 > 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 
 ## 组件定位

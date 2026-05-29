@@ -1,7 +1,7 @@
 ---
 title: "rules_engine -- DNS 域名规则引擎"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/dns/detail/rules.hpp"
+source: "include/prism/resolve/dns/detail/rules.hpp"
 module: "resolve/dns/detail"
 type: component
 tags: [dns, rules, trie, wildcard, adblock]
@@ -14,7 +14,7 @@ related:
 
 # rules_engine -- DNS 域名规则引擎
 
-> 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/rules.hpp`
+> 源码位置: `include/prism/resolve/dns/detail/rules.hpp`
 > 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 
 ## 组件定位

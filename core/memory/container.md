@@ -2,7 +2,7 @@
 tags: [memory, container]
 layer: core
 module: memory
-source: I:/code/Prism/include/prism/memory/container.hpp
+source: include/prism/memory/container.hpp
 title: memory::container
 ---
 

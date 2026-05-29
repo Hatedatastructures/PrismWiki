@@ -1,8 +1,8 @@
 ---
 title: 日志分析方法指南
 source:
-  - I:/code/Prism/include/prism/trace/
-  - I:/code/Prism/src/prism/trace/
+  - include/prism/trace/
+  - src/prism/trace/
 module: debugging
 type: reference
 tags: [logging, analysis, trace, debug, grep, filter, pattern]

@@ -3,9 +3,9 @@ layer: dev
 title: PMR 内存策略
 description: Prism 多态内存资源 (PMR) 策略，实现热路径零堆分配
 source:
-  - I:/code/Prism/include/prism/memory/container.hpp
-  - I:/code/Prism/include/prism/memory/pool.hpp
-  - I:/code/Prism/benchmarks/MemoryBench.cpp
+  - include/prism/memory/container.hpp
+  - include/prism/memory/pool.hpp
+  - benchmarks/MemoryBench.cpp
 module: memory
 type: concept
 tags: [cpp, pmr, memory-management, performance, zero-allocation]

@@ -2,7 +2,7 @@
 tags: [exception, security]
 layer: core
 module: exception
-source: I:/code/Prism/include/prism/exception/security.hpp
+source: include/prism/exception/security.hpp
 title: exception::security
 ---
 

@@ -1,7 +1,7 @@
 ---
 layer: dev
 title: 编写测试
-source: I:/code/Prism/tests/
+source: tests/
 module: testing
 type: guide
 tags: [testing, writing, unit-test, cpp]

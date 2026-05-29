@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/smux/config.hpp
+source: include/prism/multiplex/smux/config.hpp
 title: smux::config - smux 协议配置
 tags: [multiplex, smux, config, configuration]
 ---
@@ -9,7 +9,7 @@ tags: [multiplex, smux, config, configuration]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/smux/config.hpp`
+`include/prism/multiplex/smux/config.hpp`
 
 ## 概述
 

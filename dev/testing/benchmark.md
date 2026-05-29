@@ -1,7 +1,7 @@
 ---
 layer: dev
 title: 基准测试
-source: I:/code/Prism/benchmarks/
+source: benchmarks/
 module: testing
 type: reference
 tags: [testing, benchmark, performance, google-benchmark]

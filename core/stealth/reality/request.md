@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/reality/request.hpp
+source: include/prism/stealth/reality/request.hpp
 title: Reality Request
 tags:
   - stealth
@@ -15,7 +15,7 @@ TLS ClientHello 解析器。
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/stealth/reality/request.hpp`
+- 头文件：`include/prism/stealth/reality/request.hpp`
 
 ## 设计决策（WHY）
 

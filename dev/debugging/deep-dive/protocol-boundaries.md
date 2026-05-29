@@ -1,11 +1,11 @@
 ---
 title: 代理协议实现边界与认证深层分析
 source:
-  - I:/code/Prism/src/prism/protocol/shadowsocks/conn.cpp
-  - I:/code/Prism/src/prism/protocol/trojan/conn.cpp
-  - I:/code/Prism/src/prism/protocol/vless/conn.cpp
-  - I:/code/Prism/src/prism/protocol/socks5/conn.cpp
-  - I:/code/Prism/src/prism/crypto/aead.cpp
+  - src/prism/protocol/shadowsocks/conn.cpp
+  - src/prism/protocol/trojan/conn.cpp
+  - src/prism/protocol/vless/conn.cpp
+  - src/prism/protocol/socks5/conn.cpp
+  - src/prism/crypto/aead.cpp
 module: debugging
 type: deep-dive
 tags: [debugging, protocol, authentication, ss2022, trojan, vless, socks5, failure-analysis, implementation-boundary]

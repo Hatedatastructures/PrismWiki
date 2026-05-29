@@ -1,7 +1,7 @@
 ---
 title: "utility — DNS 解析器工具函数"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/dns/detail/utility.hpp"
+source: "include/prism/resolve/dns/detail/utility.hpp"
 module: "resolve/dns/detail"
 type: utility
 tags: [dns, utility, zero-alloc, parse, port]
@@ -13,7 +13,7 @@ related:
 
 # utility — DNS 解析器工具函数
 
-> 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/utility.hpp`
+> 源码位置: `include/prism/resolve/dns/detail/utility.hpp`
 > 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 > 类型: header-only 工具函数
 

@@ -1,7 +1,7 @@
 ---
 title: "message -- DNS 报文编解码"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/dns/detail/format.hpp"
+source: "include/prism/resolve/dns/detail/format.hpp"
 module: "resolve/dns/detail"
 type: component
 tags: [dns, format, wire, encode, decode, rfc1035]
@@ -14,7 +14,7 @@ related:
 
 # message -- DNS 报文编解码
 
-> 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/format.hpp`
+> 源码位置: `include/prism/resolve/dns/detail/format.hpp`
 > 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 
 ## 组件定位

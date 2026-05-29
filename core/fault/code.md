@@ -2,7 +2,7 @@
 tags: [fault, code]
 layer: core
 module: fault
-source: I:/code/Prism/include/prism/fault/code.hpp
+source: include/prism/fault/code.hpp
 title: fault::code
 ---
 

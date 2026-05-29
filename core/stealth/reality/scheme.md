@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/reality/scheme.hpp
+source: include/prism/stealth/reality/scheme.hpp
 title: Reality Scheme
 tags:
   - stealth
@@ -16,8 +16,8 @@ Reality 伪装方案类，封装 Reality TLS 握手和协议检测逻辑。
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/stealth/reality/scheme.hpp`
-- 实现文件：`I:/code/Prism/src/prism/stealth/reality/scheme.cpp`
+- 头文件：`include/prism/stealth/reality/scheme.hpp`
+- 实现文件：`src/prism/stealth/reality/scheme.cpp`
 
 ## 类定义
 

@@ -1,7 +1,7 @@
 ---
 title: "upstream -- DNS 查询客户端"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/dns/upstream.hpp"
+source: "include/prism/resolve/dns/upstream.hpp"
 module: "resolve/dns"
 type: component
 tags: [dns, upstream, udp, tcp, dot, doh]

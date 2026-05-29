@@ -2,7 +2,7 @@
 tags: [trace, overview]
 layer: core
 module: trace
-source:
+source: include/prism/trace/config.hpp
   - include/prism/trace/config.hpp
   - src/prism/trace/spdlog.cpp
 title: Trace 模块

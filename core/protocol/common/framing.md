@@ -3,7 +3,7 @@ title: 共享协议帧解析
 created: 2026-05-25
 updated: 2026-05-27
 layer: core
-source: I:/code/Prism/include/prism/protocol/common/framing.hpp
+source: include/prism/protocol/common/framing.hpp
 tags: [protocol, common, framing, parse, ipv4, ipv6, domain, port]
 ---
 

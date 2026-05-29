@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/vless/config.hpp"
+source: "include/prism/protocol/vless/config.hpp"
 title: VLESS 协议配置
 tags: [protocol, vless, config, udp, uuid]
 ---
 
 # VLESS 协议配置
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/vless/config.hpp`
+> 源码位置: `include/prism/protocol/vless/config.hpp`
 
 ## 概述
 

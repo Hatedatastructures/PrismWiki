@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/bootstrap.hpp
+source: include/prism/multiplex/bootstrap.hpp
 title: multiplex::bootstrap - 多路复用会话引导
 tags: [multiplex, bootstrap, sing-mux, negotiate]
 updated: 2026-05-28
@@ -10,7 +10,7 @@ updated: 2026-05-28
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/bootstrap.hpp`
+`include/prism/multiplex/bootstrap.hpp`
 
 ## 概述
 

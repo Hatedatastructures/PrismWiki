@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/config.hpp
+source: include/prism/multiplex/config.hpp
 title: multiplex::config - 多路复用通用配置
 tags: [multiplex, config, configuration]
 ---
@@ -9,7 +9,7 @@ tags: [multiplex, config, configuration]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/config.hpp`
+`include/prism/multiplex/config.hpp`
 
 ## 概述
 

@@ -1,13 +1,13 @@
 ---
 tags: [stealth, trusttunnel, scheme]
 layer: core
-source: I:/code/Prism/include/prism/stealth/trusttunnel/scheme.hpp
+source: include/prism/stealth/trusttunnel/scheme.hpp
 title: TrustTunnel 伪装方案
 ---
 
 # TrustTunnel 伪装方案
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/trusttunnel/scheme.hpp`
+> 源码位置: `include/prism/stealth/trusttunnel/scheme.hpp`
 
 ## 设计决策（WHY）
 

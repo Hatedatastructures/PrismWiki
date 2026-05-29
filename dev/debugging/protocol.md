@@ -1,9 +1,9 @@
 ---
 title: 协议问题排查指南
 source:
-  - I:/code/Prism/include/prism/protocol/
-  - I:/code/Prism/include/prism/pipeline/
-  - I:/code/Prism/src/prism/protocol/
+  - include/prism/protocol/
+  - include/prism/pipeline/
+  - src/prism/protocol/
 module: debugging
 type: reference
 tags: [protocol, parsing, encoding, authentication, troubleshooting]

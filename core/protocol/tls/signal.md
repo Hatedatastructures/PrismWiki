@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/tls/signal.hpp"
+source: "include/prism/protocol/tls/signal.hpp"
 title: TLS ClientHello 解析器
 tags: [protocol, tls, signal, clienthello, parse, sni, key-share]
 ---
 
 # TLS ClientHello 解析器
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/tls/signal.hpp`
+> 源码位置: `include/prism/protocol/tls/signal.hpp`
 
 ## 概述
 

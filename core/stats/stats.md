@@ -1,7 +1,7 @@
 ---
 title: Stats 统计模块入口
 layer: core
-source: I:/code/Prism/include/prism/stats/stats.hpp
+source: include/prism/stats/stats.hpp
 module: stats
 tags: [stats, module]
 created: 2026-05-23

@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/instance/session/session.hpp
+source: include/prism/instance/session/session.hpp
 title: session 模块
 created: 2026-05-17
 updated: 2026-05-28

@@ -1,13 +1,13 @@
 ---
 tags: [stealth, anytls, scheme]
 layer: core
-source: I:/code/Prism/include/prism/stealth/anytls/scheme.hpp
+source: include/prism/stealth/anytls/scheme.hpp
 title: AnyTLS 伪装方案
 ---
 
 # AnyTLS 伪装方案
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/anytls/scheme.hpp`
+> 源码位置: `include/prism/stealth/anytls/scheme.hpp`
 
 ## 概述
 

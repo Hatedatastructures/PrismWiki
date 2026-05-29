@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/shadowtls/scheme.hpp
+source: include/prism/stealth/shadowtls/scheme.hpp
 title: ShadowTLS v3 伪装方案
 tags:
   - stealth
@@ -12,7 +12,7 @@ tags:
 
 # ShadowTLS v3 伪装方案
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/scheme.hpp`
+> 源码位置: `include/prism/stealth/shadowtls/scheme.hpp`
 
 ## 概述
 

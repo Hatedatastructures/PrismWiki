@@ -1,8 +1,8 @@
 ---
 layer: core
-source:
-  - I:/code/Prism/include/prism/crypto/block.hpp
-  - I:/code/Prism/src/prism/crypto/block.cpp
+source: include/prism/crypto/block.hpp
+  - include/prism/crypto/block.hpp
+  - src/prism/crypto/block.cpp
 tags: [crypto, block, aes-ecb]
 title: AES-ECB 单块加密
 ---
@@ -55,7 +55,7 @@ AES-ECB 单块加密是 UDP 逐包操作，每个数据包调用一次。`EVP_CI
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/crypto/block.hpp`
+- 头文件：`include/prism/crypto/block.hpp`
 
 ## 函数详解
 

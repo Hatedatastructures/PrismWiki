@@ -1,17 +1,17 @@
 ---
 layer: core
-source:
-  - "I:/code/Prism/include/prism/protocol/vless/process.hpp"
-  - "I:/code/Prism/src/prism/protocol/vless/process.cpp"
-  - "I:/code/Prism/include/prism/protocol/vless/packet.hpp"
+source: include/prism/protocol/vless/process.hpp
+  - "include/prism/protocol/vless/process.hpp"
+  - "src/prism/protocol/vless/process.cpp"
+  - "include/prism/protocol/vless/packet.hpp"
 title: VLESS 处理入口与请求结构
 tags: [protocol, vless, process, request, mux, udp, tcp]
 ---
 
 # VLESS 处理入口与请求结构
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/vless/process.hpp`
-> 实现位置: `I:/code/Prism/src/prism/protocol/vless/process.cpp`
+> 源码位置: `include/prism/protocol/vless/process.hpp`
+> 实现位置: `src/prism/protocol/vless/process.cpp`
 
 ## 模块概述
 

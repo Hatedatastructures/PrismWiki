@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/instance/worker/stats.hpp
+source: include/prism/instance/worker/stats.hpp
 title: stats 模块
 tags: [instance, worker, stats, traffic, runtime]
 ---
@@ -9,7 +9,7 @@ tags: [instance, worker, stats, traffic, runtime]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/instance/worker/stats.hpp`
+`include/prism/instance/worker/stats.hpp`
 
 ## 模块职责
 

@@ -1,8 +1,8 @@
 ---
 layer: core
-source:
-  - I:/code/Prism/include/prism/crypto/blake3.hpp
-  - I:/code/Prism/src/prism/crypto/blake3.cpp
+source: include/prism/crypto/blake3.hpp
+  - include/prism/crypto/blake3.hpp
+  - src/prism/crypto/blake3.cpp
 tags: [crypto, blake3, hash]
 title: BLAKE3 密钥派生
 ---
@@ -69,7 +69,7 @@ SS2022 (SIP022) 规范明确规定使用 BLAKE3 derive_key 进行密钥派生，
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/crypto/blake3.hpp`
+- 头文件：`include/prism/crypto/blake3.hpp`
 
 ## 函数详解
 

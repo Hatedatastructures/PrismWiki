@@ -1,7 +1,7 @@
 ---
 tags: [transport, adapter, connector]
 layer: core
-source: I:/code/Prism/include/prism/transport/adapter/connector.hpp
+source: include/prism/transport/adapter/connector.hpp
 title: connector
 ---
 

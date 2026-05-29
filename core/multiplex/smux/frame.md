@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/smux/frame.hpp
+source: include/prism/multiplex/smux/frame.hpp
 title: smux::frame - smux 帧协议定义
 tags: [multiplex, smux, frame, protocol, encoding]
 updated: 2026-05-28
@@ -10,7 +10,7 @@ updated: 2026-05-28
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/smux/frame.hpp`
+`include/prism/multiplex/smux/frame.hpp`
 
 ## 概述
 

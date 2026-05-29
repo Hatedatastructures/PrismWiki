@@ -1,7 +1,7 @@
 ---
 layer: dev
 title: 并发测试
-source: I:/code/Prism/tests/concurrency/
+source: tests/concurrency/
 module: testing
 type: reference
 tags: [testing, concurrency, multi-thread, coroutine]

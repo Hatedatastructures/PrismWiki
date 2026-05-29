@@ -3,7 +3,7 @@ title: h2mux::config - h2mux 协议配置
 created: 2026-05-25
 updated: 2026-05-27
 layer: core
-source: I:/code/Prism/include/prism/multiplex/h2mux/config.hpp
+source: include/prism/multiplex/h2mux/config.hpp
 tags: [multiplex, h2mux, config, configuration]
 ---
 
@@ -11,7 +11,7 @@ tags: [multiplex, h2mux, config, configuration]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/h2mux/config.hpp`
+`include/prism/multiplex/h2mux/config.hpp`
 
 ## 概述
 

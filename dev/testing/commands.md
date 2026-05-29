@@ -1,7 +1,7 @@
 ---
 layer: dev
 title: 测试命令
-source: I:/code/Prism/tests/CMakeLists.txt
+source: tests/CMakeLists.txt
 module: testing
 type: reference
 tags: [testing, ctest, cmake, commands]

@@ -1,7 +1,7 @@
 ---
 title: Prism 完整日志参考字典
 source:
-  - I:/code/Prism/src/prism/
+  - src/prism/
 module: debugging
 type: reference
 tags: [debugging, logging, reference, trace, diagnostics]

@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/trojan/constants.hpp"
+source: "include/prism/protocol/trojan/constants.hpp"
 title: Trojan 协议常量
 tags: [protocol, trojan, constants, command, address-type]
 ---
 
 # Trojan 协议常量
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/trojan/constants.hpp`
+> 源码位置: `include/prism/protocol/trojan/constants.hpp`
 
 ## 概述
 

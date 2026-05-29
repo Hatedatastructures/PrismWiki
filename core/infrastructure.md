@@ -3,7 +3,7 @@ title: Core 基础设施
 created: 2026-05-17
 updated: 2026-05-28
 layer: core
-source: "I:/code/Prism/include/prism/memory/, I:/code/Prism/include/prism/fault/, I:/code/Prism/include/prism/exception/, I:/code/Prism/include/prism/trace/, I:/code/Prism/include/prism/transformer/, I:/code/Prism/include/prism/loader/"
+source: "include/prism/memory/, include/prism/fault/, include/prism/exception/, include/prism/trace/, include/prism/transformer/, include/prism/loader/"
 tags: [infrastructure, memory, fault, exception, trace, transformer, loader]
 ---
 

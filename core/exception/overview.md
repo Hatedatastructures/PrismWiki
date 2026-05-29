@@ -2,7 +2,7 @@
 tags: [exception, overview]
 layer: core
 module: exception
-source:
+source: include/prism/exception/deviant.hpp
   - include/prism/exception/deviant.hpp
   - include/prism/exception/network.hpp
   - include/prism/exception/protocol.hpp

@@ -2,7 +2,7 @@
 tags: [fault, handling]
 layer: core
 module: fault
-source: I:/code/Prism/include/prism/fault/handling.hpp
+source: include/prism/fault/handling.hpp
 title: fault::handling
 ---
 

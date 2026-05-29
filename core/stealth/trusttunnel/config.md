@@ -1,13 +1,13 @@
 ---
 tags: [stealth, trusttunnel, config]
 layer: core
-source: I:/code/Prism/include/prism/stealth/trusttunnel/config.hpp
+source: include/prism/stealth/trusttunnel/config.hpp
 title: TrustTunnel 伪装方案配置
 ---
 
 # TrustTunnel 伪装方案配置
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/trusttunnel/config.hpp`
+> 源码位置: `include/prism/stealth/trusttunnel/config.hpp`
 
 ## 设计决策（WHY）
 

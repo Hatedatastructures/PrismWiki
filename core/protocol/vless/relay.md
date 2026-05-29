@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/vless/relay.hpp"
+source: "include/prism/protocol/vless/relay.hpp"
 title: VLESS 协议中继器
 tags: [protocol, vless, relay, handshake, uuid, mux, udp]
 ---
 
 # VLESS 协议中继器
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/vless/relay.hpp`
+> 源码位置: `include/prism/protocol/vless/relay.hpp`
 
 ## 概述
 

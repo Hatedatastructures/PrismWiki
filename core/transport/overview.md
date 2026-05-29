@@ -1,7 +1,7 @@
 ---
 title: "transport -- 传输层总览"
 layer: core
-source: "I:/code/Prism/include/prism/transport/"
+source: "include/prism/transport/"
 module: "transport"
 type: overview
 tags: [transport, transmission, reliable, encrypted, unreliable, snapshot, preview, connector]
@@ -14,7 +14,7 @@ related:
 
 # transport -- 传输层总览
 
-> 源码目录: `I:/code/Prism/include/prism/transport/`
+> 源码目录: `include/prism/transport/`
 > 模块: [[core/transport/overview|transport]]
 > 定位: 请求处理流程的传输抽象层
 
@@ -343,3 +343,61 @@ transport/
 - [[core/connect/overview|connect]] -- 连接层总览
 - [[core/connect/pool/pool|连接池]] -- 连接复用管理
 - [[core/instance/overview|instance]] -- 实例层总览
+
+## 故障场景
+
+### 1. TLS 握手失败
+
+**触发条件**: 客户端证书不匹配、SNI 无后端、BoringSSL 内部错误
+**传播路径**: `encrypted::ssl_handshake()` → 返回 `fault::code` → 从 `connector` 释放传输层所有权 → 调用方决定终止或走 native 兜底
+**外部表现**: 客户端收到 TLS alert，连接中断
+**恢复机制**: 客户端需重新发起连接，无法在当前连接上恢复
+
+### 2. TCP 连接中断
+
+**触发条件**: 网络超时、对端 RST、中间设备丢包
+**传播路径**: `reliable::async_read_some()` 返回 `ec=connection_reset` 或 `n=0` → 上层协议处理器退出读写循环 → session 关闭
+**外部表现**: 数据传输停止，双向转发终止
+**恢复机制**: 无，连接不可恢复；连接池中该 socket 被 `healthy_fast()` 检测后销毁
+
+### 3. 装饰器链 rewind 失败
+
+**触发条件**: `snapshot` 包装的传输层在读取阶段之后发生写入（`wrote_==true`），调用 `rewind()`
+**传播路径**: `can_rewind()` 返回 false → stealth 执行器跳过 rewind → 管道终止或走 native 兜底
+**外部表现**: 当前伪装方案失败后无法尝试下一个方案
+**恢复机制**: native 兜底方案作为最终回退
+
+### 4. 连接池连接不健康
+
+**触发条件**: 池中复用的 TCP 连接已被对端关闭或处于半开状态
+**传播路径**: `healthy_fast()` 探测失败 → 连接从池中移除并销毁 → 调用方重新拨号
+**外部表现**: 首次使用池连接时短暂延迟（探测 + 重连），不影响正确性
+**恢复机制**: 自动重连，调用方透明
+
+### 5. UDP 数据报端点不匹配
+
+**触发条件**: `unreliable` 收到来自非预期远程端点的数据报
+**传播路径**: 数据报被静默丢弃 → 循环等待匹配来源 → 可能无限等待
+**外部表现**: 如果仅有不匹配来源的数据报，数据流挂起
+**恢复机制**: 依赖对端重传或超时机制
+
+## 变更敏感度
+
+### 对外影响
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| `transmission` 虚函数签名变更 | 所有叶子节点（reliable/encrypted/unreliable）和装饰器（preview/snapshot） | 必须同步更新所有实现，否则编译失败或运行时 UB |
+| `shared_transmission` 类型定义变更 | 整个协议栈（protocol/stealth/connect/multiplex） | 所有持有传输层指针的模块需修改 |
+| 装饰器链构造顺序变更 | recognition、stealth、protocol 层 | rewind/preview 语义变化，可能导致预读数据丢失 |
+| `async_write`/`async_read` 自由函数行为变更 | 所有使用组合写入/读取的模块 | 帧完整性或数据丢失 |
+| `close()` 语义变更（如连接池归还逻辑） | connect/pool、session 生命周期 | 池连接泄漏或过早释放 |
+
+### 对内影响
+
+| 上游变更 | 本模块受影响 | 需要检查 |
+|---------|------------|---------|
+| Boost.Asio `AsyncStream` 概念变更 | `connector` 适配器实现 | `async_read_some`/`async_write_some` 签名兼容性 |
+| BoringSSL `ssl::stream` API 变更 | `encrypted` TLS 握手和关闭流程 | `ssl_handshake` 工厂方法、`close_notify` 发送逻辑 |
+| `memory` 模块 PMR 容器类型变更 | `preview`、`snapshot`、`connector` 内部缓冲区 | 分配器类型、构造函数参数 |
+| `fault::code` 枚举新增或重命名 | 所有传输类型的错误码映射 | `to_ec` 转换函数、错误路径分支 |

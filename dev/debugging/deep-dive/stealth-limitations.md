@@ -1,8 +1,8 @@
 ---
 title: 伪装方案执行器限制与故障分析
 source:
-  - I:/code/Prism/src/prism/stealth/executor.cpp
-  - I:/code/Prism/src/prism/recognition/recognition.cpp
+  - src/prism/stealth/executor.cpp
+  - src/prism/recognition/recognition.cpp
 module: debugging
 type: deep-dive
 tags: [debugging, stealth, executor, rewind, snapshot, failure-analysis]

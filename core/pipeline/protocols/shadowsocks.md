@@ -2,7 +2,7 @@
 tags: [pipeline, shadowsocks, protocol-handler, aead, sip022]
 title: "SS2022 协议处理管道"
 layer: core
-source: "I:/code/Prism/include/prism/pipeline/protocols/shadowsocks.hpp"
+source: "include/prism/pipeline/protocols/shadowsocks.hpp"
 module: pipeline
 updated: 2026-05-27
 ---

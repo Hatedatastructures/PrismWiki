@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/shadowtls/transport.hpp
+source: include/prism/stealth/shadowtls/transport.hpp
 title: ShadowTLS v3 传输层包装器
 tags:
   - stealth
@@ -12,7 +12,7 @@ tags:
 
 # ShadowTLS v3 传输层包装器
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/transport.hpp`
+> 源码位置: `include/prism/stealth/shadowtls/transport.hpp`
 
 ## 设计决策（WHY）
 

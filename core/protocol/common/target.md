@@ -3,7 +3,7 @@ title: 目标地址结构
 created: 2026-05-25
 updated: 2026-05-27
 layer: core
-source: I:/code/Prism/include/prism/protocol/common/target.hpp
+source: include/prism/protocol/common/target.hpp
 tags: [protocol, common, target, host, port]
 ---
 

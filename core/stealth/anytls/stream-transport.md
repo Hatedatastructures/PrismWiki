@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/anytls/mux/transport.hpp
+source: include/prism/stealth/anytls/mux/transport.hpp
 title: AnyTLS Stream Transport
 created: 2026-05-25
 updated: 2026-05-27

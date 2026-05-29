@@ -1,8 +1,8 @@
 ---
 layer: core
-source:
-  - I:/code/Prism/include/prism/crypto/aead.hpp
-  - I:/code/Prism/src/prism/crypto/aead.cpp
+source: include/prism/crypto/aead.hpp
+  - include/prism/crypto/aead.hpp
+  - src/prism/crypto/aead.cpp
 tags: [crypto, aead, encryption]
 title: AEAD 认证加密
 ---
@@ -75,8 +75,8 @@ SS2022 (SIP022) TCP 流量加密要求连续数据包使用递增 nonce。将 no
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/crypto/aead.hpp`
-- 实现：`I:/code/Prism/src/prism/crypto/aead.cpp`
+- 头文件：`include/prism/crypto/aead.hpp`
+- 实现：`src/prism/crypto/aead.cpp`
 
 ## 支持的算法
 

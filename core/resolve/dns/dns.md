@@ -1,7 +1,7 @@
 ---
 title: resolver — DNS 解析器抽象接口
 layer: core
-source: I:/code/Prism/include/prism/resolve/dns/dns.hpp
+source: include/prism/resolve/dns/dns.hpp
 module: resolve/dns
 type: interface
 tags: [dns, resolver, async, interface]

@@ -1,7 +1,7 @@
 ---
 tags: [transport, encrypted]
 layer: core
-source: I:/code/Prism/include/prism/transport/encrypted.hpp
+source: include/prism/transport/encrypted.hpp
 title: encrypted — TLS 加密传输层
 module: transport
 updated: 2026-05-27

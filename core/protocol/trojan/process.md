@@ -1,9 +1,9 @@
 ---
 layer: core
 source:
-  - "I:/code/Prism/include/prism/protocol/trojan/process.hpp"
-  - "I:/code/Prism/src/prism/protocol/trojan/process.cpp"
-  - "I:/code/Prism/include/prism/protocol/trojan/packet.hpp"
+  - "include/prism/protocol/trojan/process.hpp"
+  - "src/prism/protocol/trojan/process.cpp"
+  - "include/prism/protocol/trojan/packet.hpp"
 title: Trojan 协议处理入口与请求结构
 tags: [protocol, trojan, process, request, dispatch, connect, udp, mux]
 ---

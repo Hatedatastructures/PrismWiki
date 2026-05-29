@@ -1,9 +1,9 @@
 ---
 title: ShadowTLS 深层限制与故障分析
 source:
-  - I:/code/Prism/src/prism/stealth/shadowtls/handshake.cpp
-  - I:/code/Prism/src/prism/stealth/shadowtls/transport.cpp
-  - I:/code/Prism/src/prism/stealth/shadowtls/util/auth.cpp
+  - src/prism/stealth/shadowtls/handshake.cpp
+  - src/prism/stealth/shadowtls/transport.cpp
+  - src/prism/stealth/shadowtls/util/auth.cpp
 module: debugging
 type: deep-dive
 tags: [debugging, shadowtls, tls, hmac, resource-exhaustion, failure-analysis]

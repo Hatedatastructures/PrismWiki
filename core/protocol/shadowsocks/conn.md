@@ -2,8 +2,8 @@
 title: SS2022 AEAD 流加密中继器
 layer: core
 source:
-  - I:/code/Prism/include/prism/protocol/shadowsocks/conn.hpp
-  - I:/code/Prism/src/prism/protocol/shadowsocks/conn.cpp
+  - include/prism/protocol/shadowsocks/conn.hpp
+  - src/prism/protocol/shadowsocks/conn.cpp
 tags: [protocol, shadowsocks, conn]
 ---
 

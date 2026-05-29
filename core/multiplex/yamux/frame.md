@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/yamux/frame.hpp
+source: include/prism/multiplex/yamux/frame.hpp
 title: yamux::frame - yamux 协议帧格式定义
 tags: [multiplex, yamux, frame, protocol, encoding]
 updated: 2026-05-28
@@ -10,7 +10,7 @@ updated: 2026-05-28
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/yamux/frame.hpp`
+`include/prism/multiplex/yamux/frame.hpp`
 
 ## 概述
 

@@ -2,7 +2,7 @@
 tags: [fault, compatible]
 layer: core
 module: fault
-source: I:/code/Prism/include/prism/fault/compatible.hpp
+source: include/prism/fault/compatible.hpp
 title: fault::compatible
 ---
 

@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/anytls/mux/frame.hpp
+source: include/prism/stealth/anytls/mux/frame.hpp
 title: AnyTLS Frame Protocol
 created: 2026-05-25
 updated: 2026-05-27

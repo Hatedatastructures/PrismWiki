@@ -2,13 +2,13 @@
 layer: dev
 title: 配置文件完整参考
 source:
-  - I:/code/Prism/src/configuration.json
-  - I:/code/Prism/include/prism/config.hpp
-  - I:/code/Prism/include/prism/instance/config.hpp
-  - I:/code/Prism/include/prism/connect/pool/pool.hpp
-  - I:/code/Prism/include/prism/multiplex/config.hpp
-  - I:/code/Prism/include/prism/resolve/dns/config.hpp
-  - I:/code/Prism/include/prism/trace/config.hpp
+  - src/configuration.json
+  - include/prism/config.hpp
+  - include/prism/instance/config.hpp
+  - include/prism/connect/pool/pool.hpp
+  - include/prism/multiplex/config.hpp
+  - include/prism/resolve/dns/config.hpp
+  - include/prism/trace/config.hpp
 module: config
 type: reference
 tags: [configuration, json, agent, pool, protocol, multiplex, stealth, dns, trace, glaze]

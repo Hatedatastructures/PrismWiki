@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/instance/worker/worker.hpp
+source: include/prism/instance/worker/worker.hpp
 title: worker 模块
 created: 2026-05-17
 updated: 2026-05-28

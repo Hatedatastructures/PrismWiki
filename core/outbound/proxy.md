@@ -1,7 +1,7 @@
 ---
 title: "proxy — 出站代理抽象接口"
 layer: core
-source: "I:/code/Prism/include/prism/outbound/proxy.hpp"
+source: "include/prism/outbound/proxy.hpp"
 module: outbound
 tags: [outbound, proxy, interface, adapter]
 updated: 2026-05-27

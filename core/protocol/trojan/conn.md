@@ -1,8 +1,8 @@
 ---
 layer: core
 source:
-  - "I:/code/Prism/include/prism/protocol/trojan/conn.hpp"
-  - "I:/code/Prism/src/prism/protocol/trojan/conn.cpp"
+  - "include/prism/protocol/trojan/conn.hpp"
+  - "src/prism/protocol/trojan/conn.cpp"
 title: Trojan 协议连接中继器
 tags: [protocol, trojan, conn, handshake, credential, command, dispatch, udp]
 ---

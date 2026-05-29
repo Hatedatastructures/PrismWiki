@@ -3,8 +3,8 @@ title: Memory Tracker 内存分配统计追踪器
 created: 2026-05-17
 updated: 2026-05-27
 layer: core
-source:
-  - I:/code/Prism/include/prism/stats/memory.hpp
+source: include/prism/stats/memory.hpp
+  - include/prism/stats/memory.hpp
 tags: [stats, memory, tracker, pmr, atomic, instrumented, singleton, allocation]
 ---
 

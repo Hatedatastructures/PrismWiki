@@ -1,13 +1,13 @@
 ---
 tags: [stealth, restls, scheme]
 layer: core
-source: I:/code/Prism/include/prism/stealth/restls/scheme.hpp
+source: include/prism/stealth/restls/scheme.hpp
 title: Restls 伪装方案
 ---
 
 # Restls 伪装方案
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/restls/scheme.hpp`
+> 源码位置: `include/prism/stealth/restls/scheme.hpp`
 
 ## 概述
 

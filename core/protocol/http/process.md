@@ -2,8 +2,8 @@
 title: HTTP 协议处理入口
 layer: core
 source:
-  - I:/code/Prism/include/prism/protocol/http/process.hpp
-  - I:/code/Prism/src/prism/protocol/http/process.cpp
+  - include/prism/protocol/http/process.hpp
+  - src/prism/protocol/http/process.cpp
 tags: [protocol, http, process]
 ---
 

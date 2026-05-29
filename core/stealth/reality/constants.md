@@ -1,7 +1,7 @@
 ---
 tags: [stealth, reality, constants]
 layer: core
-source: I:/code/Prism/include/prism/stealth/reality/constants.hpp
+source: include/prism/stealth/reality/constants.hpp
 title: Reality Constants
 ---
 
@@ -11,7 +11,7 @@ TLS 1.3 记录层和握手协议的常量定义。
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/stealth/reality/constants.hpp`
+- 头文件：`include/prism/stealth/reality/constants.hpp`
 
 ## 常量定义
 

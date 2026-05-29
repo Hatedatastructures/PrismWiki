@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/shadowsocks/config.hpp"
+source: "include/prism/protocol/shadowsocks/config.hpp"
 title: SS2022 协议配置
 tags: [protocol, shadowsocks, config, psk, aead, method, timestamp]
 ---
 
 # SS2022 协议配置
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/shadowsocks/config.hpp`
+> 源码位置: `include/prism/protocol/shadowsocks/config.hpp`
 
 ## 概述
 

@@ -1,7 +1,7 @@
 ---
 title: router
 layer: core
-source: I:/code/Prism/include/prism/connect/dial/router.hpp
+source: include/prism/connect/dial/router.hpp
 module: connect
 tags:
   - router

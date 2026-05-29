@@ -2,7 +2,7 @@
 tags: [memory, pool]
 layer: core
 module: memory
-source: I:/code/Prism/include/prism/memory/pool.hpp
+source: include/prism/memory/pool.hpp
 title: memory::pool
 ---
 

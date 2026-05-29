@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/shadowtls/constants.hpp
+source: include/prism/stealth/shadowtls/constants.hpp
 title: ShadowTLS v3 协议常量
 tags:
   - stealth
@@ -10,7 +10,7 @@ tags:
 
 # ShadowTLS v3 协议常量
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/constants.hpp`
+> 源码位置: `include/prism/stealth/shadowtls/constants.hpp`
 
 ## 设计决策（WHY）
 

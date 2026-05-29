@@ -2,10 +2,10 @@
 tags: [fault, overview]
 layer: core
 module: fault
-source:
-  - I:/code/Prism/include/prism/fault/code.hpp
-  - I:/code/Prism/include/prism/fault/handling.hpp
-  - I:/code/Prism/include/prism/fault/compatible.hpp
+source: include/prism/fault/code.hpp
+  - include/prism/fault/code.hpp
+  - include/prism/fault/handling.hpp
+  - include/prism/fault/compatible.hpp
 title: Fault 模块
 ---
 
@@ -88,3 +88,78 @@ namespace psm::fault {
 - [[core/exception/overview|Exception 模块]]：异常系统（仅启动/致命路径）
 - [[core/connect/dial/dial|Dial]]：连接层错误码消费者
 - [[core/stealth/scheme|Stealth]]：伪装方案错误码消费者
+## 约束
+
+| 约束 | 规则 | 违反后果 | 来源 |
+|------|------|----------|------|
+| header-only | 所有函数必须为 `constexpr` 或 `inline`，禁止 .cpp 文件 | 链接错误或 ODR 违规 | `code.hpp`, `handling.hpp`, `compatible.hpp` |
+| 零分配 | `describe()` 返回 `string_view` 指向静态字面量，禁止堆分配 | 热路径日志引入 GC 压力 | `code.hpp` describe() |
+| noexcept 保证 | 所有公共 API 标记 `noexcept`，不可抛异常 | 调用方异常安全假设被打破 | 所有公共函数签名 |
+| 枚举值不可变 | 已发布的 `code` 值不可更改，仅可追加 | ABI 破坏，二进制兼容性丧失 | `code.hpp` enum class code |
+| _count 内部专用 | `code::_count` 仅用于内部边界检查，不可用于错误处理 | 越界枚举值传入 describe() 返回 "unknown" | `code.hpp` 注释 |
+| 双轨分流 | 热路径禁止 `try/catch`，冷路径必须使用异常层次 | 混用导致性能退化或错误丢失 | 项目架构约定 |
+
+## 故障场景
+
+### 1. 未知错误码传入 describe()
+
+**触发**: 新增枚举值但未更新 `describe()` 的 switch 语句（编译器不会警告 default 分支遗漏）。
+
+**表现**: 返回 `"unknown"`，日志中丢失具体错误信息，排查困难。
+
+**恢复**: 无法自动恢复，需代码修复。CI 应检查 `describe()` 覆盖所有枚举值。
+
+### 2. to_code() 映射不完整
+
+**触发**: Boost.Asio 或标准库新增错误类型未被 `to_code()` 覆盖。
+
+**表现**: 未映射的错误回退为 `code::io_error`，原始错误语义丢失。例如新的 TLS alert 被归类为通用 I/O 错误。
+
+**恢复**: 日志中记录原始 `error_code` 用于事后排查，但运行时无法区分具体原因。
+
+### 3. cached_message() 静态析构竞争
+
+**触发**: 在程序退出阶段（静态析构期间）调用 `cached_message()` 或 `category()`。
+
+**表现**: 静态局部变量 `messages` 可能已被销毁，返回悬垂引用，导致 UB（崩溃或乱码）。
+
+**恢复**: 无法恢复。文档已标注禁止在静态析构阶段使用。
+
+### 4. 错误码静默丢弃
+
+**触发**: 调用方不检查 `fault::code` 返回值（C++ 不强制 `[[nodiscard]]` 检查）。
+
+**表现**: 错误被忽略，后续逻辑基于成功假设执行，可能导致数据损坏或连接泄漏。
+
+**恢复**: 编译期添加 `[[nodiscard]]` 到返回 `fault::code` 的函数可部分缓解，但无法根治。
+
+## 跨模块契约
+
+| 契约 | 方向 | 说明 |
+|------|------|------|
+| 错误码传播 | fault → 所有热路径模块 | transport/connect/stealth/protocol 等模块的异步操作返回 `fault::code` |
+| 异常委托 | fault → exception | 冷路径通过 `exception::deviant` 层次报告致命错误，与 fault 互补 |
+| Boost 互操作 | fault ↔ boost::asio | `to_code()` 将 `boost::system::error_code` 转为 `fault::code`，`compatible.hpp` 支持反向隐式转换 |
+| 标准库互操作 | fault ↔ std | `is_error_code_enum` 特化启用 `fault::code` 到 `std::error_code` 隐式转换 |
+| 日志消费 | fault → trace | `describe()` 输出被 spdlog 日志系统消费，格式变更影响日志可读性 |
+| Dial 层消费 | connect → fault | `dial()` 返回 `fault::code`，router/racer 根据错误码决定重试或切换节点 |
+
+## 变更敏感度
+
+### 对外影响
+
+| 变更类型 | 影响范围 | 破坏性 |
+|----------|----------|--------|
+| 新增枚举值 | 所有包含 `switch(code)` 的代码需更新 default 分支 | 低（追加式） |
+| 修改已有枚举值 | 二进制兼容性破坏，所有依赖模块需重编译 | **高** |
+| `describe()` 签名变更 | 所有日志/格式化代码需适配 | **高** |
+| `to_code()` 映射表变更 | 错误传播语义改变，可能影响重试/故障切换逻辑 | 中 |
+| 删除枚举值 | 编译错误，所有引用处需修改 | **高** |
+
+### 对内影响
+
+| 变更类型 | 影响范围 | 风险 |
+|----------|----------|------|
+| `compatible.hpp` 结构调整 | 影响 `std::hash` 和 `is_error_code_enum` 特化，可能触发 ODR 问题 | 中 |
+| `handling.hpp` 新增模板重载 | 需确保 `static_assert` 覆盖所有不支持的类型 | 低 |
+| `cached_message()` 缓存策略变更 | 首次调用延迟和内存占用可能改变 | 低 |

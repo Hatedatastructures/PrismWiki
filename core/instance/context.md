@@ -1,7 +1,7 @@
 ---
 title: "context — 三层上下文类型定义"
 layer: core
-source: "I:/code/Prism/include/prism/context/context.hpp"
+source: "include/prism/context/context.hpp"
 created: 2026-05-17
 updated: 2026-05-28
 tags: [context, server_context, worker_context, session_context, PMR]

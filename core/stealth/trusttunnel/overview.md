@@ -3,7 +3,7 @@ title: TrustTunnel 协议
 created: 2026-05-27
 updated: 2026-05-29
 layer: core
-source:
+source: include/prism/stealth/stack/trusttunnel/scheme.hpp
   - include/prism/stealth/stack/trusttunnel/scheme.hpp
   - include/prism/stealth/stack/trusttunnel/config.hpp
   - src/prism/stealth/stack/trusttunnel/scheme.cpp

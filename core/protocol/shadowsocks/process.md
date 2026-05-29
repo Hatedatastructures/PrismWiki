@@ -2,9 +2,9 @@
 title: SS2022 协议处理入口
 layer: core
 source:
-  - I:/code/Prism/include/prism/protocol/shadowsocks/process.hpp
-  - I:/code/Prism/src/prism/protocol/shadowsocks/process.cpp
-  - I:/code/Prism/include/prism/protocol/shadowsocks/packet.hpp
+  - include/prism/protocol/shadowsocks/process.hpp
+  - src/prism/protocol/shadowsocks/process.cpp
+  - include/prism/protocol/shadowsocks/packet.hpp
 tags: [protocol, shadowsocks, process]
 ---
 

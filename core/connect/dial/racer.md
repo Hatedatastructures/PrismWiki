@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/connect/dial/racer.hpp
+source: include/prism/connect/dial/racer.hpp
 title: address_racer
 tags: [connect, dial, racer, happy-eyeballs, rfc8305, concurrent]
 ---

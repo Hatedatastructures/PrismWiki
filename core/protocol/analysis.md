@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/analysis.hpp"
+source: "include/prism/protocol/analysis.hpp"
 title: 协议分析与识别
 tags: [protocol, analysis, detect, resolve, target, protocol-type]
 ---
 
 # 协议分析与识别
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/analysis.hpp`
+> 源码位置: `include/prism/protocol/analysis.hpp`
 
 ## 概述
 

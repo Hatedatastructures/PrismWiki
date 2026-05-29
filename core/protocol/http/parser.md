@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/protocol/http/parser.hpp
+source: include/prism/protocol/http/parser.hpp
 title: HTTP 代理请求解析器
 tags: [protocol, http, parser, proxy, auth, basic]
 ---
@@ -11,7 +11,7 @@ tags: [protocol, http, parser, proxy, auth, basic]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/protocol/http/parser.hpp`
+`include/prism/protocol/http/parser.hpp`
 
 ## 结构定义
 

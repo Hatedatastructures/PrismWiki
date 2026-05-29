@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/tls/types.hpp"
+source: "include/prism/protocol/tls/types.hpp"
 title: TLS 协议共享类型
 tags: [protocol, tls, types, constants, clienthello, record, handshake]
 ---
 
 # TLS 协议共享类型
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/tls/types.hpp`
+> 源码位置: `include/prism/protocol/tls/types.hpp`
 
 ## 概述
 

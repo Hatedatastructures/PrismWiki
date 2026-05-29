@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/protocol/socks5/constants.hpp
+source: include/prism/protocol/socks5/constants.hpp
 title: SOCKS5 协议常量
 tags: [protocol, socks5, constants, command, address-type, auth, reply]
 ---
@@ -11,7 +11,7 @@ tags: [protocol, socks5, constants, command, address-type, auth, reply]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/protocol/socks5/constants.hpp`
+`include/prism/protocol/socks5/constants.hpp`
 
 ## 命令类型
 

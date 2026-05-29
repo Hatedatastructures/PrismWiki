@@ -1,7 +1,7 @@
 ---
 title: "cache — DNS 结果缓存"
 layer: core
-source: "I:/code/Prism/include/prism/resolve/dns/detail/cache.hpp"
+source: "include/prism/resolve/dns/detail/cache.hpp"
 module: "resolve/dns/detail"
 type: component
 tags: [dns, cache, ttl, serve-stale, negative-cache]
@@ -15,7 +15,7 @@ related:
 
 # cache — DNS 结果缓存
 
-> 源码位置: `I:/code/Prism/include/prism/resolve/dns/detail/cache.hpp`
+> 源码位置: `include/prism/resolve/dns/detail/cache.hpp`
 > 模块: [[core/resolve|resolve]] / [[core/resolve/dns|dns]] / detail
 
 ## 组件定位

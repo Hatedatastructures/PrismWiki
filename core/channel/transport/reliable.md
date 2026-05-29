@@ -1,7 +1,7 @@
 ---
 tags: [transport, reliable]
 layer: core
-source: I:/code/Prism/include/prism/transport/reliable.hpp
+source: include/prism/transport/reliable.hpp
 title: reliable — TCP 可靠传输
 module: transport
 updated: 2026-05-27

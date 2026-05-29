@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/shadowtls/handshake.hpp
+source: include/prism/stealth/shadowtls/handshake.hpp
 title: ShadowTLS v3 服务端握手
 tags:
   - stealth
@@ -12,7 +12,7 @@ tags:
 
 # ShadowTLS v3 服务端握手
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/handshake.hpp`
+> 源码位置: `include/prism/stealth/shadowtls/handshake.hpp`
 
 ## 设计决策（WHY）
 

@@ -11,8 +11,8 @@ related:
   - "[[dev/building/commands]]"
   - "[[dev/building/options]]"
 sources:
-  - I:/code/Prism/CLAUDE.md
-  - I:/code/Prism/CMakeLists.txt
+  - CLAUDE.md
+  - CMakeLists.txt
 confidence: high
 layer: dev
 ---
@@ -232,5 +232,5 @@ target_link_libraries(MemoryStress PRIVATE prism_static_library)
 - [[dev/building/dependencies|依赖项]] — 外部依赖说明
 - [[dev/building/commands|构建命令]] — 常用构建命令
 - [[dev/building/options|构建选项]] — 可配置构建选项
-- [[dev/testing|测试指南]] — 测试详情
+- [[dev/testing/overview|测试指南]] — 测试详情
 - [[dev/performance/report|性能基准]] — 基准测试结果

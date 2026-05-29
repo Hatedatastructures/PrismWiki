@@ -3,9 +3,9 @@ title: SOCKS5 协议处理入口
 layer: core
 module: protocol/socks5
 source:
-  - I:/code/Prism/include/prism/protocol/socks5/process.hpp
-  - I:/code/Prism/src/prism/protocol/socks5/process.cpp
-  - I:/code/Prism/include/prism/protocol/socks5/packet.hpp
+  - include/prism/protocol/socks5/process.hpp
+  - src/prism/protocol/socks5/process.cpp
+  - include/prism/protocol/socks5/packet.hpp
 tags: [protocol, socks5, process]
 ---
 

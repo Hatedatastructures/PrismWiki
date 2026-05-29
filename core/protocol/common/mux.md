@@ -3,7 +3,7 @@ title: 多路复用目标检测
 created: 2026-05-25
 updated: 2026-05-27
 layer: core
-source: I:/code/Prism/include/prism/protocol/common/mux.hpp
+source: include/prism/protocol/common/mux.hpp
 tags: [protocol, common, mux, sing-box, multiplex]
 ---
 

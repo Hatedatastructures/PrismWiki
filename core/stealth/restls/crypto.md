@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/restls/crypto.hpp
+source: include/prism/stealth/restls/crypto.hpp
 title: Restls Crypto
 created: 2026-05-25
 updated: 2026-05-27

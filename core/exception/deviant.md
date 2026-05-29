@@ -2,7 +2,7 @@
 tags: [exception, deviant]
 layer: core
 module: exception
-source: I:/code/Prism/include/prism/exception/deviant.hpp
+source: include/prism/exception/deviant.hpp
 title: exception::deviant
 ---
 

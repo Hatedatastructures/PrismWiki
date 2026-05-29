@@ -174,4 +174,4 @@ score = (active_sessions / session_capacity) * weight_session
 - [[core/instance/front/listener|listener]] -- 监听器
 - [[core/instance/worker/worker|worker]] -- 工作线程
 - [[core/instance/worker/stats|stats]] -- 负载统计
-- [[startup]] -- 启动流程
+- [[core/startup]] -- 启动流程

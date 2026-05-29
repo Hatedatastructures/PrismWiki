@@ -2,8 +2,8 @@
 title: HTTP 代理中继器
 layer: core
 source:
-  - I:/code/Prism/include/prism/protocol/http/conn.hpp
-  - I:/code/Prism/src/prism/protocol/http/conn.cpp
+  - include/prism/protocol/http/conn.hpp
+  - src/prism/protocol/http/conn.cpp
 tags: [protocol, http, conn]
 ---
 

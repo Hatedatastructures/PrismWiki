@@ -1,7 +1,7 @@
 ---
 layer: dev
 title: 压力测试
-source: I:/code/Prism/stresses/
+source: stresses/
 module: testing
 type: reference
 tags: [testing, stress, memory, pool, arena, multiplex, concurrency, performance]

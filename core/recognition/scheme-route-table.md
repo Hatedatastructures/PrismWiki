@@ -2,7 +2,7 @@
 tags: [recognition, scheme-route-table]
 layer: core
 module: recognition
-source: I:/code/Prism/include/prism/recognition/routes.hpp
+source: include/prism/recognition/routes.hpp
 title: route_table
 ---
 

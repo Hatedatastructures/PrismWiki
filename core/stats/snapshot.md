@@ -1,7 +1,7 @@
 ---
 title: Snapshot 统计快照类型
 layer: core
-source: I:/code/Prism/include/prism/stats/snapshot.hpp
+source: include/prism/stats/snapshot.hpp
 module: stats
 tags: [stats, snapshot, data-structure]
 created: 2026-05-23

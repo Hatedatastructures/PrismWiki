@@ -206,4 +206,4 @@ listener.cpp  dispatcher_.dispatch(worker_index, socket)
 - [[core/instance/front/balancer|balancer]] -- 负载均衡器
 - [[core/instance/worker/worker|worker]] -- 工作线程
 - [[core/instance/config|config]] -- 配置详解
-- [[startup]] -- 启动流程
+- [[core/startup]] -- 启动流程

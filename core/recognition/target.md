@@ -4,7 +4,7 @@ created: 2026-05-17
 updated: 2026-05-27
 layer: core
 module: recognition
-source: I:/code/Prism/include/prism/recognition/target.hpp
+source: include/prism/recognition/target.hpp
 tags: [recognition, target, address, resolve, parse, host-port, uri-extraction]
 ---
 

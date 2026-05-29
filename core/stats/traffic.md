@@ -1,9 +1,9 @@
 ---
 title: Traffic 流量统计
 layer: core
-source:
-  - I:/code/Prism/include/prism/stats/traffic.hpp
-  - I:/code/Prism/src/prism/stats/traffic.cpp
+source: include/prism/stats/traffic.hpp
+  - include/prism/stats/traffic.hpp
+  - src/prism/stats/traffic.cpp
 module: stats
 tags: [stats, traffic, protocol, cow, performance]
 updated: 2026-05-27

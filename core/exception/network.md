@@ -2,7 +2,7 @@
 tags: [exception, network]
 layer: core
 module: exception
-source: I:/code/Prism/include/prism/exception/network.hpp
+source: include/prism/exception/network.hpp
 title: exception::network
 ---
 

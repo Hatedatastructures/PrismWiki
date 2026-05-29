@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/restls/handshake.hpp
+source: include/prism/stealth/restls/handshake.hpp
 title: Restls Handshake
 created: 2026-05-25
 updated: 2026-05-27

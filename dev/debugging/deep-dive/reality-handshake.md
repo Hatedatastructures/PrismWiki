@@ -1,12 +1,12 @@
 ---
 title: Reality 握手深层故障分析
 source:
-  - I:/code/Prism/src/prism/stealth/reality/handshake.cpp
-  - I:/code/Prism/src/prism/stealth/reality/util/auth.cpp
-  - I:/code/Prism/src/prism/stealth/reality/util/keygen.cpp
-  - I:/code/Prism/src/prism/stealth/reality/seal.cpp
-  - I:/code/Prism/src/prism/stealth/reality/util/response.cpp
-  - I:/code/Prism/src/prism/stealth/executor.cpp
+  - src/prism/stealth/reality/handshake.cpp
+  - src/prism/stealth/reality/util/auth.cpp
+  - src/prism/stealth/reality/util/keygen.cpp
+  - src/prism/stealth/reality/seal.cpp
+  - src/prism/stealth/reality/util/response.cpp
+  - src/prism/stealth/executor.cpp
 module: debugging
 type: deep-dive
 tags: [debugging, reality, handshake, tls, authentication, failure-analysis]

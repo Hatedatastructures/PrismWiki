@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/reality/seal.hpp
+source: include/prism/stealth/reality/seal.hpp
 title: Reality Seal
 tags:
   - stealth
@@ -16,7 +16,7 @@ Reality 加密传输层实现。
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/stealth/reality/seal.hpp`
+- 头文件：`include/prism/stealth/reality/seal.hpp`
 
 ## 设计决策（WHY）
 

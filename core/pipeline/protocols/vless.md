@@ -2,7 +2,7 @@
 tags: [pipeline, vless, protocol-handler, uuid, mux]
 title: "VLESS 协议处理管道"
 layer: core
-source: "I:/code/Prism/include/prism/pipeline/protocols/vless.hpp"
+source: "include/prism/pipeline/protocols/vless.hpp"
 module: pipeline
 updated: 2026-05-27
 ---

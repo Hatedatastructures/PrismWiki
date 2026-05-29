@@ -1,8 +1,8 @@
 ---
 title: 多路复用边界条件分析
 source:
-  - I:/code/Prism/include/prism/multiplex/
-  - I:/code/Prism/src/prism/multiplex/
+  - include/prism/multiplex/
+  - src/prism/multiplex/
 module: debugging
 type: deep-dive
 tags: [debugging, multiplex, smux, yamux, resource-limit, failure-analysis]

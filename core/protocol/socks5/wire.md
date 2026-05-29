@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/protocol/socks5/wire.hpp
+source: include/prism/protocol/socks5/wire.hpp
 title: SOCKS5 协议线级解析
 tags: [protocol, socks5, wire, parse, udp, auth, header]
 ---
@@ -11,7 +11,7 @@ tags: [protocol, socks5, wire, parse, udp, auth, header]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/protocol/socks5/wire.hpp`
+`include/prism/protocol/socks5/wire.hpp`
 
 ## 结构定义
 

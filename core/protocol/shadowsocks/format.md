@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/shadowsocks/framing.hpp"
+source: "include/prism/protocol/shadowsocks/framing.hpp"
 title: SS2022 协议格式编解码
 tags: [protocol, shadowsocks, format, framing, parse, psk, aead]
 ---
 
 # SS2022 协议格式编解码
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/shadowsocks/framing.hpp`
+> 源码位置: `include/prism/protocol/shadowsocks/framing.hpp`
 
 ## 概述
 

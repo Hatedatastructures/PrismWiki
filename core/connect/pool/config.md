@@ -1,7 +1,7 @@
 ---
 title: config
 layer: core
-source: I:/code/Prism/include/prism/connect/pool/config.hpp
+source: include/prism/connect/pool/config.hpp
 module: connect
 tags:
   - config

@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/vless/constants.hpp"
+source: "include/prism/protocol/vless/constants.hpp"
 title: VLESS 协议常量
 tags: [protocol, vless, constants, command, address-type, version]
 ---
 
 # VLESS 协议常量
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/vless/constants.hpp`
+> 源码位置: `include/prism/protocol/vless/constants.hpp`
 
 ## 概述
 

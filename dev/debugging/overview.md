@@ -1,9 +1,9 @@
 ---
 title: 调试与排障体系概述
 source:
-  - I:/code/Prism/include/prism/trace/
-  - I:/code/Prism/src/prism/trace/
-  - I:/code/Prism/include/prism/fault/
+  - include/prism/trace/
+  - src/prism/trace/
+  - include/prism/fault/
 module: debugging
 type: reference
 tags: [debugging, troubleshooting, logging, diagnostics, fault]

@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/shadowtls/auth.hpp
+source: include/prism/stealth/shadowtls/auth.hpp
 title: ShadowTLS v3 认证逻辑
 tags:
   - stealth
@@ -11,7 +11,7 @@ tags:
 
 # ShadowTLS v3 认证逻辑
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/shadowtls/auth.hpp`
+> 源码位置: `include/prism/stealth/shadowtls/auth.hpp`
 
 ## 设计决策（WHY）
 

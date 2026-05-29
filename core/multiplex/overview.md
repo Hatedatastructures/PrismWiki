@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/smux/craft.hpp, I:/code/Prism/include/prism/multiplex/smux/frame.hpp, I:/code/Prism/include/prism/multiplex/smux/config.hpp, I:/code/Prism/include/prism/multiplex/core.hpp, I:/code/Prism/include/prism/multiplex/bootstrap.hpp, I:/code/Prism/include/prism/multiplex/duct.hpp, I:/code/Prism/include/prism/multiplex/parcel.hpp, I:/code/Prism/include/prism/multiplex/yamux/craft.hpp, I:/code/Prism/include/prism/multiplex/yamux/frame.hpp, I:/code/Prism/include/prism/multiplex/yamux/config.hpp
+source: include/prism/multiplex/smux/craft.hpp, include/prism/multiplex/smux/frame.hpp, include/prism/multiplex/smux/config.hpp, include/prism/multiplex/core.hpp, include/prism/multiplex/bootstrap.hpp, include/prism/multiplex/duct.hpp, include/prism/multiplex/parcel.hpp, include/prism/multiplex/yamux/craft.hpp, include/prism/multiplex/yamux/frame.hpp, include/prism/multiplex/yamux/config.hpp
 title: multiplex - 多路复用模块
 tags: [multiplex, smux, yamux, h2mux, core, duct, parcel, bootstrap]
 ---
@@ -258,3 +258,25 @@ Prism 的 multiplex 模块同时实现了 smux、yamux 和 h2mux 三种多路复
 - [[core/memory|memory]] - PMR 内存管理
 - [[core/transport|transport]] - 传输层抽象
 - [[core/stats|stats]] - 运行时统计
+## 变更敏感度
+
+### 对外影响
+
+| 变更 | 影响范围 | 影响 |
+|------|---------|------|
+| `core` 纯虚函数签名变更（send_data/send_fin/executor/run） | `smux::craft`、`yamux::craft`、`h2mux` 实现 | 必须同步更新所有协议子类，否则编译失败 |
+| `core_options` 结构变更 | `bootstrap` 引导流程、所有协议工厂 | 构造参数传递链路需修改 |
+| `config` 字段变更（max_streams/ping_interval 等） | 资源上限、超时行为 | 运行时行为变化，可能影响稳定性 |
+| `pending_entry` 结构变更 | `activate_stream` 地址解析逻辑 | SYN→PSH 数据累积和地址提取可能中断 |
+| `duct`/`parcel` 公开接口变更 | `core` 内部的流管理逻辑 | 创建/关闭/移除流程需同步修改 |
+
+### 对内影响
+
+| 上游变更 | 本模块受影响 | 需要检查 |
+|---------|------------|---------|
+| `transport::transmission` 接口变更 | `frame_loop` 帧读取、`send_loop` 帧写入 | async_read_some/async_write 调用点 |
+| `connect::router` 接口变更 | `activate_stream` 目标连接建立 | 路由选择和拨号逻辑 |
+| `memory` 模块 PMR 容器变更 | `pending_`/`ducts_`/`parcels_` 映射、帧缓冲区 | 容器类型和分配器兼容性 |
+| `protocol::protocol_type` 枚举变更 | `set_traffic` 流量统计归属 | stats 模块的协议分类统计 |
+| `stats::traffic::traffic_state` 接口变更 | `accumulate_traffic` 和 `close` 时的 flush | 流量上报路径 |
+| sing-mux 协商格式变更 | `bootstrap` 协议头解析 | Version/Protocol 字段读取和分流逻辑 |

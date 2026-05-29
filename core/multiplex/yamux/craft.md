@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/yamux/craft.hpp
+source: include/prism/multiplex/yamux/craft.hpp
 title: yamux::craft - yamux 多路复用会话服务端
 tags: [multiplex, yamux, craft, flow-control, window]
 ---
@@ -9,7 +9,7 @@ tags: [multiplex, yamux, craft, flow-control, window]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/multiplex/yamux/craft.hpp`
+`include/prism/multiplex/yamux/craft.hpp`
 
 ## 概述
 

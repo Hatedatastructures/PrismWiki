@@ -3,7 +3,7 @@ title: h2mux::craft - h2mux 多路复用会话服务端
 created: 2026-05-25
 updated: 2026-05-27
 layer: core
-source: I:/code/Prism/include/prism/multiplex/h2mux/craft.hpp
+source: include/prism/multiplex/h2mux/craft.hpp
 tags: [multiplex, h2mux, craft, nghttp2]
 ---
 

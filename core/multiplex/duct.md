@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/duct.hpp
+source: include/prism/multiplex/duct.hpp
 title: multiplex::duct — TCP 双向转发管道
 module: multiplex
 tags: [multiplex, duct, tcp, bidirectional, half-close]

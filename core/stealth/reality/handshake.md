@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/src/prism/stealth/reality/handshake.cpp
+source: src/prism/stealth/reality/handshake.cpp
 title: Reality Handshake — 握手状态机
 module: stealth/reality
 tags: [stealth, reality, handshake, state-machine]

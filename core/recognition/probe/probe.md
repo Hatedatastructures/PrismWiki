@@ -2,7 +2,7 @@
 tags: [recognition, probe]
 layer: core
 module: recognition
-source: I:/code/Prism/include/prism/recognition/probe/probe.hpp
+source: include/prism/recognition/probe/probe.hpp
 title: probe.hpp
 ---
 

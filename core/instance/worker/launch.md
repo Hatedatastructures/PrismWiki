@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/instance/worker/launch.hpp
+source: include/prism/instance/worker/launch.hpp
 title: launch — 会话启动与连接分发
 module: instance
 tags: [instance, worker, launch, session-create, coroutine]

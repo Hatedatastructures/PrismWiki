@@ -93,7 +93,7 @@ wiki/
 - core/infrastructure.md、core/overview.md：补充 source 字段
 
 #### Phase 2: Source 路径统一
-- 10 个文件：相对路径 `include/prism/...` → 绝对路径 `I:/code/Prism/include/prism/...`
+- 10 个文件：相对路径 `include/prism/...` → 绝对路径 `include/prism/...`
 
 #### Phase 3: Mihomo 协议字段补充
 - VLESS：5 个新字段（packet-addr、packet-encoding、encryption、ws-headers、servername）

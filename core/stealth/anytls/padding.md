@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/anytls/padding.hpp
+source: include/prism/stealth/anytls/padding.hpp
 title: AnyTLS Padding
 created: 2026-05-25
 updated: 2026-05-27

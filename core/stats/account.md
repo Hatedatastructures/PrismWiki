@@ -1,7 +1,7 @@
 ---
 title: Account 账户统计观察者
 layer: core
-source: I:/code/Prism/include/prism/stats/account.hpp
+source: include/prism/stats/account.hpp
 module: stats
 tags: [stats, account, observer]
 created: 2026-05-23

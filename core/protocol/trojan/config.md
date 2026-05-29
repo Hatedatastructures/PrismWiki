@@ -1,13 +1,13 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/trojan/config.hpp"
+source: "include/prism/protocol/trojan/config.hpp"
 title: Trojan 协议配置
 tags: [protocol, trojan, config, tcp, udp]
 ---
 
 # Trojan 协议配置
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/trojan/config.hpp`
+> 源码位置: `include/prism/protocol/trojan/config.hpp`
 
 ## 概述
 

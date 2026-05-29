@@ -11,8 +11,8 @@ related:
   - "[[dev/building/commands]]"
   - "[[core/crypto/overview]]"
 sources:
-  - I:/code/Prism/CLAUDE.md
-  - I:/code/Prism/CMakeLists.txt
+  - CLAUDE.md
+  - CMakeLists.txt
 confidence: high
 layer: dev
 ---

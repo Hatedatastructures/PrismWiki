@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/protocol/http/relay.hpp
+source: include/prism/protocol/http/relay.hpp
 title: HTTP 代理中继器
 tags: [protocol, http, relay, connect, forward]
 ---
@@ -11,7 +11,7 @@ HTTP 代理协议层的核心处理类，封装请求头读取、解析、认证
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/protocol/http/relay.hpp`
+`include/prism/protocol/http/relay.hpp`
 
 ## 类定义
 

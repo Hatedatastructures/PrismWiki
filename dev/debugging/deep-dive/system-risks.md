@@ -1,12 +1,12 @@
 ---
 title: 系统级风险与资源耗尽分析
 source:
-  - I:/code/Prism/src/prism/instance/worker/worker.cpp
-  - I:/code/Prism/src/prism/instance/session/session.cpp
-  - I:/code/Prism/src/prism/connect/pool/pool.cpp
-  - I:/code/Prism/src/prism/resolve/dns/resolver.cpp
-  - I:/code/Prism/src/prism/instance/front/listener.cpp
-  - I:/code/Prism/src/prism/connect/tunnel/tunnel.cpp
+  - src/prism/instance/worker/worker.cpp
+  - src/prism/instance/session/session.cpp
+  - src/prism/connect/pool/pool.cpp
+  - src/prism/resolve/dns/resolver.cpp
+  - src/prism/instance/front/listener.cpp
+  - src/prism/connect/tunnel/tunnel.cpp
 module: debugging
 type: deep-dive
 tags: [debugging, system, resource-exhaustion, connection-pool, dns, shutdown, failure-analysis]

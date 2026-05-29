@@ -1,7 +1,7 @@
 ---
 title: Counter 缓存行对齐原子计数器
 layer: core
-source: I:/code/Prism/include/prism/stats/counter.hpp
+source: include/prism/stats/counter.hpp
 module: stats
 tags: [stats, counter, atomic, performance]
 created: 2026-05-23

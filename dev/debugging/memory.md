@@ -1,8 +1,8 @@
 ---
 title: 内存问题排查指南
 source:
-  - I:/code/Prism/include/prism/memory/
-  - I:/code/Prism/src/prism/memory/
+  - include/prism/memory/
+  - src/prism/memory/
 module: debugging
 type: reference
 tags: [memory, pmr, leak, fragmentation, pool, troubleshooting]

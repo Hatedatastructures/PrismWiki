@@ -1,7 +1,7 @@
 ---
 title: Gauge EMA 平滑瞬时值原语
 layer: core
-source: I:/code/Prism/include/prism/stats/gauge.hpp
+source: include/prism/stats/gauge.hpp
 module: stats
 tags: [stats, gauge, ema, performance]
 created: 2026-05-23

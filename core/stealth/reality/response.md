@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/reality/response.hpp
+source: include/prism/stealth/reality/response.hpp
 title: Reality Response
 tags:
   - stealth
@@ -15,7 +15,7 @@ TLS 1.3 ServerHello 生成器。
 
 ## 源码位置
 
-- 头文件：`I:/code/Prism/include/prism/stealth/reality/response.hpp`
+- 头文件：`include/prism/stealth/reality/response.hpp`
 
 ## 设计决策（WHY）
 

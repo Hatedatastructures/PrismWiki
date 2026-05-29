@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/scheme.hpp
+source: include/prism/stealth/scheme.hpp
 title: scheme 模块
 tags:
   - stealth
@@ -14,7 +14,7 @@ tags:
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/stealth/scheme.hpp`
+`include/prism/stealth/scheme.hpp`
 
 ## 模块职责
 

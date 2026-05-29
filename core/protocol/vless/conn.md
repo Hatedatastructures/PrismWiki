@@ -1,17 +1,17 @@
 ---
 layer: core
-source:
-  - "I:/code/Prism/include/prism/protocol/vless/conn.hpp"
-  - "I:/code/Prism/src/prism/protocol/vless/conn.cpp"
-  - "I:/code/Prism/src/prism/protocol/vless/framing.cpp"
+source: include/prism/protocol/vless/conn.hpp
+  - "include/prism/protocol/vless/conn.hpp"
+  - "src/prism/protocol/vless/conn.cpp"
+  - "src/prism/protocol/vless/framing.cpp"
 title: VLESS 连接中继器
 tags: [protocol, vless, conn, handshake, uuid, mux, udp, decorator]
 ---
 
 # VLESS 连接中继器
 
-> 源码位置: `I:/code/Prism/include/prism/protocol/vless/conn.hpp`
-> 实现位置: `I:/code/Prism/src/prism/protocol/vless/conn.cpp`
+> 源码位置: `include/prism/protocol/vless/conn.hpp`
+> 实现位置: `src/prism/protocol/vless/conn.cpp`
 
 ## 模块概述
 

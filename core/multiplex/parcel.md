@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/multiplex/parcel.hpp
+source: include/prism/multiplex/parcel.hpp
 title: multiplex::parcel — UDP 数据报中继管道
 module: multiplex
 tags: [multiplex, parcel, udp, datagram, relay]

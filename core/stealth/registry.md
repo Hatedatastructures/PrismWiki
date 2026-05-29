@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/registry.hpp
+source: include/prism/stealth/registry.hpp
 title: registry 模块
 tags:
   - stealth
@@ -13,7 +13,7 @@ tags:
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/stealth/registry.hpp`
+`include/prism/stealth/registry.hpp`
 
 ## 模块职责
 

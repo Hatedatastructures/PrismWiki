@@ -2,7 +2,7 @@
 tags: [exception, protocol]
 layer: core
 module: exception
-source: I:/code/Prism/include/prism/exception/protocol.hpp
+source: include/prism/exception/protocol.hpp
 title: exception::protocol
 ---
 

@@ -1,7 +1,7 @@
 ---
 layer: dev
 title: 测试体系概览
-source: I:/code/Prism/tests/
+source: tests/
 module: testing
 type: overview
 tags: [testing, unit-test, integration, e2e, ctest]

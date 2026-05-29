@@ -1,7 +1,7 @@
 ---
 title: "health — Socket 健康检测"
 layer: core
-source: "I:/code/Prism/include/prism/connect/pool/health.hpp"
+source: "include/prism/connect/pool/health.hpp"
 module: "channel"
 type: api
 tags: [channel, health, socket, 连接池, 健康检测]
@@ -15,7 +15,7 @@ related:
 
 # health — Socket 健康检测
 
-> 源码: `I:/code/Prism/include/prism/connect/pool/health.hpp`
+> 源码: `include/prism/connect/pool/health.hpp`
 > 实现: `src/prism/channel/health.cpp`
 > 模块: [[core/connect/overview|connect]]
 
@@ -41,8 +41,8 @@ Socket 健康检测模块。提供 TCP socket 健康状态检测功能，用于�
 
 | 文件 | 路径 |
 |------|------|
-| 头文件 | `I:/code/Prism/include/prism/connect/pool/health.hpp` |
-| 实现 | `I:/code/Prism/src/prism/channel/health.cpp` |
+| 头文件 | `include/prism/connect/pool/health.hpp` |
+| 实现 | `src/prism/channel/health.cpp` |
 
 ## API
 

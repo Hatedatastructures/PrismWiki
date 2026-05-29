@@ -14,8 +14,8 @@ related:
   - "[[dev/coding/coroutine|coroutines]]"
   - "[[dev/coding/pmr|pmr]]"
 sources:
-  - I:/code/Prism/CLAUDE.md
-  - I:/code/Prism/include/prism/
+  - CLAUDE.md
+  - include/prism/
 confidence: high
 layer: dev
 ---

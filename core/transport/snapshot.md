@@ -143,5 +143,5 @@ make_snapshot(inbound)
 - [[core/transport/preview|preview -- 预读数据回放]]
 - [[core/transport/transmission|transmission -- 传输抽象]]
 - [[core/stealth/overview|stealth -- TLS 伪装]]
-- [[core/recognition|recognition -- 协议识别]]
+- [[core/recognition/overview|recognition -- 协议识别]]
 - [[core/memory/overview|memory -- PMR 内存管理]]

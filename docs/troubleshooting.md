@@ -277,5 +277,5 @@ Prism 存在一些已知的实现限制，可能导致排错困难。详见 [[do
 
 - [[docs/faq|常见问题]]
 - [[log|日志系统]]
-- [[dev/testing|测试框架]]
+- [[dev/testing/overview|测试框架]]
 - [[docs/configuration|配置说明]]

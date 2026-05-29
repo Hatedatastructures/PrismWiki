@@ -1,7 +1,7 @@
 ---
 title: "direct — 直连出站代理"
 layer: core
-source: "I:/code/Prism/include/prism/outbound/direct.hpp"
+source: "include/prism/outbound/direct.hpp"
 module: outbound
 tags: [outbound, direct, adapter, router]
 updated: 2026-05-27

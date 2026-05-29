@@ -12,7 +12,7 @@ related:
   - "[[dev/building/options]]"
   - "[[dev/building/configuration|configuration]]"
 sources:
-  - I:/code/Prism/CLAUDE.md
+  - CLAUDE.md
 confidence: high
 layer: dev
 ---

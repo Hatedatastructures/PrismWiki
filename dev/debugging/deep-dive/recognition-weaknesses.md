@@ -1,8 +1,8 @@
 ---
 title: 协议识别弱点与误判分析
 source:
-  - I:/code/Prism/include/prism/recognition/probe/analyzer.hpp
-  - I:/code/Prism/src/prism/recognition/recognition.cpp
+  - include/prism/recognition/probe/analyzer.hpp
+  - src/prism/recognition/recognition.cpp
 module: debugging
 type: deep-dive
 tags: [debugging, recognition, misclassification, probe, fingerprint, failure-analysis]

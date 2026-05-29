@@ -1,7 +1,7 @@
 ---
 title: dial
 layer: core
-source: I:/code/Prism/include/prism/connect/dial/dial.hpp
+source: include/prism/connect/dial/dial.hpp
 module: connect
 tags:
   - dial

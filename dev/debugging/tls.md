@@ -2,9 +2,9 @@
 layer: dev
 title: TLS 协议参考与问题排查指南
 source:
-  - I:/code/Prism/include/prism/stealth/
-  - I:/code/Prism/src/prism/stealth/
-  - I:/code/Prism/include/prism/crypto/
+  - include/prism/stealth/
+  - src/prism/stealth/
+  - include/prism/crypto/
 module: debugging
 type: reference
 tags: [tls, encryption, security, certificate, handshake, fingerprint, reality, shadowtls, troubleshooting]

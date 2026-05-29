@@ -1,7 +1,7 @@
 ---
 title: "primitives — 管道原语"
 layer: core
-source: "I:/code/Prism/include/prism/connect/"
+source: "include/prism/connect/"
 created: 2026-05-17
 updated: 2026-05-27
 tags: [pipeline, primitives, dial, tunnel, forward]

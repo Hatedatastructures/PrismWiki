@@ -1,6 +1,6 @@
 ---
 layer: core
-source: I:/code/Prism/include/prism/stealth/executor.hpp
+source: include/prism/stealth/executor.hpp
 title: executor 模块
 tags:
   - stealth
@@ -14,7 +14,7 @@ tags:
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/stealth/executor.hpp`
+`include/prism/stealth/executor.hpp`
 
 ## 模块职责
 

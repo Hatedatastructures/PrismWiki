@@ -3,14 +3,14 @@ title: Crypto 加密模块
 layer: core
 module: crypto
 source:
-  - I:/code/Prism/include/prism/crypto.hpp
-  - I:/code/Prism/include/prism/crypto/aead.hpp
-  - I:/code/Prism/include/prism/crypto/hkdf.hpp
-  - I:/code/Prism/include/prism/crypto/x25519.hpp
-  - I:/code/Prism/include/prism/crypto/blake3.hpp
-  - I:/code/Prism/include/prism/crypto/block.hpp
-  - I:/code/Prism/include/prism/crypto/base64.hpp
-  - I:/code/Prism/include/prism/crypto/sha224.hpp
+  - include/prism/crypto.hpp
+  - include/prism/crypto/aead.hpp
+  - include/prism/crypto/hkdf.hpp
+  - include/prism/crypto/x25519.hpp
+  - include/prism/crypto/blake3.hpp
+  - include/prism/crypto/block.hpp
+  - include/prism/crypto/base64.hpp
+  - include/prism/crypto/sha224.hpp
 tags: [crypto, overview]
 ---
 

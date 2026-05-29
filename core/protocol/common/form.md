@@ -1,6 +1,6 @@
 ---
 layer: core
-source: "I:/code/Prism/include/prism/protocol/common/form.hpp"
+source: "include/prism/protocol/common/form.hpp"
 title: 传输形态枚举
 tags: [protocol, common, form, stream, datagram, tcp, udp]
 ---
@@ -11,7 +11,7 @@ tags: [protocol, common, form, stream, datagram, tcp, udp]
 
 ## 源码位置
 
-`I:/code/Prism/include/prism/protocol/common/form.hpp`
+`include/prism/protocol/common/form.hpp`
 
 ## 枚举定义
 

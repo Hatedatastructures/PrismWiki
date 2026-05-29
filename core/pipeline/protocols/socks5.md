@@ -2,7 +2,7 @@
 tags: [pipeline, socks5, protocol-handler, handshake, udp]
 title: "SOCKS5 协议处理管道"
 layer: core
-source: "I:/code/Prism/include/prism/pipeline/protocols/socks5.hpp"
+source: "include/prism/pipeline/protocols/socks5.hpp"
 module: pipeline
 updated: 2026-05-27
 ---

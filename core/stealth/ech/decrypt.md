@@ -1,13 +1,13 @@
 ---
 tags: [stealth, ech, decrypt]
 layer: core
-source: I:/code/Prism/include/prism/stealth/ech/decrypt.hpp
+source: include/prism/stealth/ech/decrypt.hpp
 title: ECH 解密接口
 ---
 
 # ECH 解密接口
 
-> 源码位置: `I:/code/Prism/include/prism/stealth/ech/decrypt.hpp`
+> 源码位置: `include/prism/stealth/ech/decrypt.hpp`
 
 ## 设计决策（WHY）
 

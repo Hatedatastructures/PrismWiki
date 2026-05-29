@@ -3,7 +3,7 @@ title: 共享 UDP 中继
 created: 2026-05-25
 updated: 2026-05-27
 layer: core
-source: I:/code/Prism/include/prism/protocol/common/udprelay.hpp
+source: include/prism/protocol/common/udprelay.hpp
 tags: [protocol, common, udp, relay, frame-loop, tls]
 ---
 
